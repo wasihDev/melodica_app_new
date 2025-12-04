@@ -1,0 +1,48 @@
+import 'package:flutter/material.dart';
+import 'package:melodica_app_new/views/auth/change_password_screen.dart';
+import 'package:melodica_app_new/views/auth/forgot_email_screen.dart';
+import 'package:melodica_app_new/views/auth/login_screen.dart';
+import 'package:melodica_app_new/views/auth/signup_screen.dart';
+import 'package:melodica_app_new/views/auth/verification_code_screen.dart';
+import 'package:melodica_app_new/views/dashboard/dashboard_screen.dart';
+import 'package:melodica_app_new/views/dashboard/home/home_screen.dart';
+import 'package:melodica_app_new/views/dashboard/home/new_student_screen.dart';
+import 'package:melodica_app_new/views/dashboard/home/package_selection_screen.dart';
+import 'package:melodica_app_new/views/onboarding/onboarding_screen.dart';
+import 'package:melodica_app_new/views/splash/splash_screen.dart';
+
+class AppRoutes {
+  static const splash = '/';
+  static const onboarding = '/onboarding';
+  static const login = '/login';
+  static const forget = '/forget';
+  static const signup = '/signup';
+  static const verification = '/verification_code';
+  static const changepassword = '/changepassword';
+  static const home = '/home';
+  static const dashboard = '/dashboard';
+  static const packageSelection = '/packageSelection';
+  static const newStudent = '/newStudent';
+  // static const packageSelection = '/packageSelection';
+  // static const packageSelection = '/packageSelection';
+  // static const packageSelection = '/packageSelection';
+
+  static Map<String, WidgetBuilder> routes = {
+    splash: (context) => const SplashScreen(),
+    onboarding: (context) => const OnboardingScreen(),
+    login: (context) => const LoginScreen(),
+    signup: (context) => SignUpScreen(),
+    forget: (context) => ForgotEmailScreen(),
+    verification: (context) => VerificationCodeScreen(),
+    changepassword: (context) => ChangePasswordScreen(),
+    dashboard: (context) => DashboardScreen(),
+    home: (context) => HomeScreen(),
+    packageSelection: (context) => PackageSelectionScreen(),
+    newStudent: (context) => NewStudentScreen(),
+    // contactSelection: (context) => ContactsSelection(),
+    // contactSelection: (context) => ContactsSelection(),
+    // contactSelection: (context) => ContactsSelection(),
+    // contactSelection: (context) => ContactsSelection(),
+    // contactSelection: (context) => ContactsSelection(),
+  };
+}

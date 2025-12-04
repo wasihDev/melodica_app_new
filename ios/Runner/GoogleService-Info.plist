@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>260359240000-uutgnp2laejffq850vgsnrg3da9ku2vs.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.260359240000-uutgnp2laejffq850vgsnrg3da9ku2vs</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>260359240000-78j4bgrqqu9gau64261afm0gtpdvqoaf.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDWD7bwfpBGImKMR6NntqBsVeOhpN-yxdQ</string>
+	<key>GCM_SENDER_ID</key>
+	<string>260359240000</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.melodicaAppNew</string>
+	<key>PROJECT_ID</key>
+	<string>melodica-customer-self-service</string>
+	<key>STORAGE_BUCKET</key>
+	<string>melodica-customer-self-service.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:260359240000:ios:fa01ff1bb95c30f3b9a2a5</string>
+</dict>
+</plist>
