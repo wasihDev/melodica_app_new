@@ -44,7 +44,7 @@ class OnboardingScreen extends StatelessWidget {
                 imagePath: 'assets/images/ob3.png',
                 title: 'Largest music instrument\nprovider in the UAE',
               ),
-              _buildFinalPage(context, imagePath: 'assets/images/ob1.png'),
+              _buildFinalPage(context, imagePath: 'assets/images/ob4.png'),
             ],
           ),
           // Positioned bottom controls

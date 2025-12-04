@@ -29,65 +29,66 @@ class _HomeScreenState extends State<HomeScreen> {
                 Divider(),
                 SizedBox(height: 16.h),
                 // Welcome Banner
-                Container(
-                  height: 96.h,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Welcome',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Keep Shine in the Worlds',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black.withOpacity(0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Stack(
-                        children: [
-                          const Text('🎹', style: TextStyle(fontSize: 60)),
-                          Positioned(
-                            right: -10,
-                            top: -10,
-                            child: Text('✨', style: TextStyle(fontSize: 20)),
-                          ),
-                          Positioned(
-                            right: 20,
-                            top: 10,
-                            child: Text('✨', style: TextStyle(fontSize: 16)),
-                          ),
-                          Positioned(
-                            right: -5,
-                            bottom: 15,
-                            child: Text('✨', style: TextStyle(fontSize: 14)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 25.h),
+                // Container(
+                //   height: 96.h,
+                //   margin: const EdgeInsets.symmetric(horizontal: 16),
+                //   padding: const EdgeInsets.symmetric(horizontal: 10),
+                //   decoration: BoxDecoration(
+                //     color: AppColors.primary,
+                //     borderRadius: BorderRadius.circular(12),
+                //   ),
+                //   alignment: Alignment.center,
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     crossAxisAlignment: CrossAxisAlignment.center,
+                //     children: [
+                //       Column(
+                //         mainAxisAlignment: MainAxisAlignment.center,
+                //         crossAxisAlignment: CrossAxisAlignment.start,
+                //         children: [
+                //           const Text(
+                //             'Welcome',
+                //             style: TextStyle(
+                //               fontSize: 18,
+                //               fontWeight: FontWeight.bold,
+                //               color: Colors.black,
+                //             ),
+                //           ),
+                //           const SizedBox(height: 4),
+                //           Text(
+                //             'Keep Shine in the Worlds',
+                //             style: TextStyle(
+                //               fontSize: 14,
+                //               color: Colors.black.withOpacity(0.8),
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //       Stack(
+                //         children: [
+                //           const Text('🎹', style: TextStyle(fontSize: 60)),
+                //           Positioned(
+                //             right: -10,
+                //             top: -10,
+                //             child: Text('✨', style: TextStyle(fontSize: 20)),
+                //           ),
+                //           Positioned(
+                //             right: 20,
+                //             top: 10,
+                //             child: Text('✨', style: TextStyle(fontSize: 16)),
+                //           ),
+                //           Positioned(
+                //             right: -5,
+                //             bottom: 15,
+                //             child: Text('✨', style: TextStyle(fontSize: 14)),
+                //           ),
+                //         ],
+                //       ),
+                //     ],
+                //   ),
+                // ),
+                // SizedBox(height: 25.h),
+
                 // Category Cards
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),

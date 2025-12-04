@@ -37,10 +37,8 @@ class AuthService {
       userModel = UserModel(
         uid: uid,
         email: email,
-        isGuest: false,
-        name: name,
+        firstName: name,
         tokenId: await userCredential.user!.getIdToken(),
-        userSubcriptionRecipt: '',
         image:
             'https://cdn4.iconfinder.com/data/icons/mixed-set-1-1/128/28-512.png',
       );

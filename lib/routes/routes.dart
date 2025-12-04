@@ -5,10 +5,14 @@ import 'package:melodica_app_new/views/auth/login_screen.dart';
 import 'package:melodica_app_new/views/auth/signup_screen.dart';
 import 'package:melodica_app_new/views/auth/verification_code_screen.dart';
 import 'package:melodica_app_new/views/dashboard/dashboard_screen.dart';
+import 'package:melodica_app_new/views/dashboard/home/checkout/receipt_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/home_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/new_student_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/package_selection_screen.dart';
 import 'package:melodica_app_new/views/onboarding/onboarding_screen.dart';
+import 'package:melodica_app_new/views/profile/edit_profile_screen.dart';
+import 'package:melodica_app_new/views/profile/order/order_screen.dart';
+import 'package:melodica_app_new/views/profile/students/students_screen.dart';
 import 'package:melodica_app_new/views/splash/splash_screen.dart';
 
 class AppRoutes {
@@ -23,9 +27,10 @@ class AppRoutes {
   static const dashboard = '/dashboard';
   static const packageSelection = '/packageSelection';
   static const newStudent = '/newStudent';
-  // static const packageSelection = '/packageSelection';
-  // static const packageSelection = '/packageSelection';
-  // static const packageSelection = '/packageSelection';
+  static const editprofile = '/editprofile';
+  static const ordersScreen = '/ordersScreen';
+  static const receiptScreen = '/receiptScreen';
+  static const studentsScreen = '/studentsScreen';
 
   static Map<String, WidgetBuilder> routes = {
     splash: (context) => const SplashScreen(),
@@ -39,10 +44,10 @@ class AppRoutes {
     home: (context) => HomeScreen(),
     packageSelection: (context) => PackageSelectionScreen(),
     newStudent: (context) => NewStudentScreen(),
-    // contactSelection: (context) => ContactsSelection(),
-    // contactSelection: (context) => ContactsSelection(),
-    // contactSelection: (context) => ContactsSelection(),
-    // contactSelection: (context) => ContactsSelection(),
+    editprofile: (context) => EditProfileScreen(),
+    receiptScreen: (context) => ReceiptScreen(),
+    ordersScreen: (context) => OrdersScreen(),
+    studentsScreen: (context) => StudentsScreen(),
     // contactSelection: (context) => ContactsSelection(),
   };
 }

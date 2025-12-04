@@ -33,6 +33,17 @@ class UserprofileProvider extends ChangeNotifier {
   UserModel get userModel => _userModel;
   File? get pickedImage => _pickedImage;
   Uint8List? get uint8list => _uint8list;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> saveProfile({required Map<String, dynamic> data}) async {
+    final user = auth.currentUser;
+    if (user == null) throw Exception('No signed-in user');
+
+    final docRef = _firestore.collection('users').doc(user.uid);
+    // set with merge true to create or update partial fields
+    await docRef.set(data, SetOptions(merge: true));
+    // no need to call notifyListeners because snapshot listener will update model
+  }
 
   // Fetch User Data
   Future<UserModel?> fetchUserData() async {
@@ -67,16 +78,17 @@ class UserprofileProvider extends ChangeNotifier {
   // Update User Data
   Future<UserModel?> updateUserData(
     BuildContext context, {
-    required String username,
+    required Map<String, dynamic> data,
   }) async {
     setLoading(true);
     final uid = auth.currentUser?.uid;
 
     if (uid != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(uid).update({
-          'name': username,
-        });
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .update(data);
         DocumentSnapshot snapshot = await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
@@ -153,7 +165,7 @@ class UserprofileProvider extends ChangeNotifier {
 
   void clearUser() {
     print('before ${userModel.image}');
-    _userModel = UserModel(uid: '', name: '', email: '', image: '');
+    _userModel = UserModel(uid: '', firstName: '', email: '', image: '');
     print('after ${userModel.image}');
     notifyListeners();
   }

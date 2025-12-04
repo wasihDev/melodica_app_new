@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:melodica_app_new/constants/app_colors.dart';
+import 'package:melodica_app_new/providers/auth_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
+import 'package:melodica_app_new/routes/routes.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -31,9 +34,11 @@ class ProfileScreen extends StatelessWidget {
                         radius: 56,
                         backgroundColor: Colors.blue[50],
                         // replace with AssetImage('assets/avatar.png') if you add asset
-                        backgroundImage: const NetworkImage(
-                          'https://picsum.photos/200',
-                        ),
+                        backgroundImage: provider.uint8list == null
+                            ? const NetworkImage(
+                                'https://cdn-icons-png.flaticon.com/512/219/219983.png',
+                              )
+                            : MemoryImage(provider.uint8list!),
                       ),
                     ),
                   ),
@@ -42,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
 
                   // Name
                   Text(
-                    provider.userModel.name ?? "",
+                    provider.userModel.firstName ?? "",
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: 24,
@@ -64,7 +69,15 @@ class ProfileScreen extends StatelessWidget {
 
                   // Edit info link
                   InkWell(
-                    onTap: () {},
+                    onTap: () async {
+                      // final provider = Provider.of<AuthProviders>(
+                      //   context,
+                      //   listen: false,
+                      // );
+                      // await provider.logout(context);
+
+                      Navigator.pushNamed(context, AppRoutes.editprofile);
+                    },
                     child: Text(
                       'Edit info',
                       style: textTheme.bodyMedium?.copyWith(
@@ -84,7 +97,7 @@ class ProfileScreen extends StatelessWidget {
                       'Personal info',
                       style: textTheme.labelLarge?.copyWith(
                         color: Colors.grey[600],
-                        fontSize: 13,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -93,7 +106,10 @@ class ProfileScreen extends StatelessWidget {
 
                   _buildInfoRow('Email', provider.userModel.email ?? ""),
                   const SizedBox(height: 8),
-                  _buildInfoRow('Phone', '+971 123 456 89'),
+                  _buildInfoRow(
+                    'Phone',
+                    '${provider.userModel.phoneCode} ${provider.userModel.phoneNumber}',
+                  ),
                   const SizedBox(height: 8),
                   _buildInfoRow('Date of Birth', '08 Feb 2001'),
 
@@ -105,7 +121,7 @@ class ProfileScreen extends StatelessWidget {
                       'Preferences',
                       style: textTheme.labelLarge?.copyWith(
                         color: Colors.grey[600],
-                        fontSize: 13,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -117,25 +133,27 @@ class ProfileScreen extends StatelessWidget {
                     context,
                     title: 'Students',
                     subtitle: 'Manage students profiles here',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.studentsScreen);
+                    },
                   ),
                   const SizedBox(height: 12),
                   _buildPreferenceCard(
                     context,
                     title: 'Packages',
                     subtitle: 'Manage students profiles here',
+                    onTap: () {},
                   ),
                   const SizedBox(height: 12),
                   _buildPreferenceCard(
                     context,
                     title: 'Orders',
                     subtitle: 'Manage students profiles here',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.ordersScreen);
+                    },
                   ),
-                  const SizedBox(height: 12),
-                  _buildPreferenceCard(
-                    context,
-                    title: 'Payment methods',
-                    subtitle: 'Manage students profiles here',
-                  ),
+
                   const SizedBox(height: 12),
                   _buildSettingsCard(context),
 
@@ -164,12 +182,15 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildPreferenceCard(
     BuildContext context, {
+    required void Function()? onTap,
     required String title,
     required String subtitle,
   }) {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
+    return InkWell(
+      splashColor: AppColors.thirdPrimary,
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Ink(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -182,7 +203,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
             Expanded(
@@ -192,14 +213,14 @@ class ProfileScreen extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -216,9 +237,11 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildSettingsCard(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
+      splashColor: AppColors.thirdPrimary,
+      borderRadius: BorderRadius.circular(12),
       onTap: () {},
-      child: Container(
+      child: Ink(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -231,7 +254,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
             Expanded(

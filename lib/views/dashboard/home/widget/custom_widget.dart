@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String text;
@@ -114,6 +115,7 @@ class CustomTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final bool readOnly;
   final VoidCallback? onTap;
+  final TextEditingController? controller;
 
   const CustomTextField({
     super.key,
@@ -121,6 +123,7 @@ class CustomTextField extends StatelessWidget {
     this.initialValue,
     this.suffixIcon,
     this.readOnly = false,
+    this.controller,
     this.onTap,
   });
 
@@ -140,11 +143,16 @@ class CustomTextField extends StatelessWidget {
           ),
         ),
         TextFormField(
-          initialValue: initialValue,
+          controller: controller,
+          // initialValue: initialValue,
           readOnly: readOnly,
           onTap: onTap,
           decoration: InputDecoration(
             filled: true,
+            hint: Text(
+              initialValue ?? "",
+              style: TextStyle(fontSize: 14.fSize),
+            ),
             fillColor: AppColors.lightGrey,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,

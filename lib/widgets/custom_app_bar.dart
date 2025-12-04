@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/student_model.dart';
+import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/custom_student_item_widget.dart';
+import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   // final String title;
@@ -93,16 +95,26 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       // --- Title ---
       title: Row(
         children: [
-          Container(
-            width: 40.w,
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: Colors.pink[100],
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(students[0].id, style: const TextStyle(fontSize: 30)),
-            ),
+          Consumer<UserprofileProvider>(
+            builder: (context, provider, child) {
+              return Container(
+                width: 40.w,
+                height: 40.h,
+                decoration: BoxDecoration(
+                  color: Colors.pink[100],
+                  shape: BoxShape.circle,
+                ),
+                child: CircleAvatar(
+                  backgroundImage: provider.uint8list == null
+                      ? const NetworkImage(
+                          'https://cdn-icons-png.flaticon.com/512/219/219983.png',
+                        )
+                      : MemoryImage(provider.uint8list!),
+                  radius: 22.h,
+                  backgroundColor: AppColors.primary,
+                ),
+              );
+            },
           ),
           const SizedBox(width: 12),
           Column(
@@ -110,12 +122,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               Row(
                 children: [
-                  Text(
-                    students[0].name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Consumer<UserprofileProvider>(
+                    builder: (context, provider, child) {
+                      return Text(
+                        provider.userModel.firstName ?? "...",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 8),
                   _buildCustomMenuButton(context),

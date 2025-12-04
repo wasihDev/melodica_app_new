@@ -66,11 +66,12 @@ class AuthProviders extends ChangeNotifier {
 
       if (_userModel != null) {
         // fetch profile and resources only if login succeeded
+
         _userModel = await Provider.of<UserprofileProvider>(
           context,
           listen: false,
         ).fetchUserData();
-
+        print('_userModel ==>>> $_userModel   ');
         // final bool isPremium = userprovider.resources?.user?.ispremium ?? false;
 
         Navigator.pushNamedAndRemoveUntil(
@@ -84,7 +85,7 @@ class AuthProviders extends ChangeNotifier {
       }
     } on FirebaseAuthException catch (e) {
       final errorMsg = AuthExceptionHandler.handleAuthException(e);
-      SnackbarUtils.showError(context, errorMsg);
+      SnackbarUtils.showError(navigatorKey.currentContext!, errorMsg);
     } finally {
       setLoading(false);
     }
@@ -152,10 +153,8 @@ class AuthProviders extends ChangeNotifier {
         _userModel = UserModel(
           uid: uid,
           email: email,
-          isGuest: false,
-          name: userAuth.user!.displayName,
+          firstName: userAuth.user!.displayName,
           tokenId: await userAuth.user!.getIdToken(),
-          userSubcriptionRecipt: '',
           image:
               'https://cdn4.iconfinder.com/data/icons/mixed-set-1-1/128/28-512.png',
         );
@@ -229,13 +228,11 @@ class AuthProviders extends ChangeNotifier {
         _userModel = UserModel(
           uid: user.uid,
           email: user.email ?? "",
-          isGuest: false,
-          name:
+          firstName:
               appleCredential.givenName ??
               user.displayName ??
               "Apple User", // fallback
           tokenId: await user.getIdToken(),
-          userSubcriptionRecipt: '',
           image:
               'https://cdn4.iconfinder.com/data/icons/mixed-set-1-1/128/28-512.png',
         );

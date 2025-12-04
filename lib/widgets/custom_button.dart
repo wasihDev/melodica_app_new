@@ -25,7 +25,7 @@ class CustomButton extends StatelessWidget {
         //   end: Alignment.topCenter,
         //   colors: [Color(0xff0241FF), Color(0xff2F62FF)],
         // ),
-        borderRadius: BorderRadius.circular(15.adaptSize),
+        borderRadius: BorderRadius.circular(12.adaptSize),
       ),
       child: Material(
         color: Colors.transparent,

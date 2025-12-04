@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/views/dashboard/home/checkout/checkout_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/custom_widget.dart';
+import 'package:melodica_app_new/widgets/custom_appbar.dart';
 
 class PackageSelectionScreen extends StatefulWidget {
   const PackageSelectionScreen({super.key});
@@ -76,37 +77,8 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: const Text(
-          'Package Selection',
-          style: TextStyle(
-            color: AppColors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: SvgPicture.asset(
-              'assets/svg/exit.svg',
-              width: 24,
-              height: 24,
-            ),
-            onPressed: () {
-              // Handle forward action
-            },
-          ),
-        ],
-      ),
+      appBar: AppBarWidget(title: 'Package Selection'),
+
       body: Column(
         children: [
           Expanded(

@@ -132,11 +132,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 email: _email.text,
                                 password: _pass.text,
                               );
-                              final appState = Provider.of<AppstateProvider>(
-                                context,
-                                listen: false,
-                              );
-                              appState.setLoggedIn(true);
+                              if (context.mounted) {
+                                final appState = Provider.of<AppstateProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                                appState.setLoggedIn(true);
+                              }
                             } else {
                               print('Form is invalid');
                             }
