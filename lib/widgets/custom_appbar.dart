@@ -8,8 +8,8 @@ import 'package:provider/provider.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-
-  AppBarWidget({super.key, required this.title});
+  bool isShowLogout = false;
+  AppBarWidget({super.key, required this.title, required this.isShowLogout});
 
   @override
   Widget build(BuildContext context) {
@@ -34,21 +34,23 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: SvgPicture.asset(
-                'assets/svg/exit.svg',
-                width: 24,
-                height: 24,
-              ),
-              onPressed: () {
-                final provider = Provider.of<AuthProviders>(
-                  context,
-                  listen: false,
-                );
-                provider.logout(context);
-                // Handle forward action
-              },
-            ),
+            isShowLogout
+                ? IconButton(
+                    icon: SvgPicture.asset(
+                      'assets/svg/exit.svg',
+                      width: 24,
+                      height: 24,
+                    ),
+                    onPressed: () {
+                      final provider = Provider.of<AuthProviders>(
+                        context,
+                        listen: false,
+                      );
+                      provider.logout(context);
+                      // Handle forward action
+                    },
+                  )
+                : SizedBox(),
           ],
         );
       },

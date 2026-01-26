@@ -5,8 +5,13 @@ import 'package:melodica_app_new/utils/responsive_sizer.dart';
 class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-
-  const PrimaryButton({super.key, required this.text, required this.onPressed});
+  final Widget? child;
+  PrimaryButton({
+    super.key,
+    this.child,
+    required this.text,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,18 +23,20 @@ class PrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(30),
           ),
           elevation: 0,
         ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.darkText, // Text color is dark on yellow
-          ),
-        ),
+        child: child == null
+            ? Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkText, // Text color is dark on yellow
+                ),
+              )
+            : child,
       ),
     );
   }
@@ -151,7 +158,7 @@ class CustomTextField extends StatelessWidget {
             filled: true,
             hint: Text(
               initialValue ?? "",
-              style: TextStyle(fontSize: 14.fSize),
+              style: TextStyle(fontSize: 14.fSize, color: Colors.grey[400]),
             ),
             fillColor: AppColors.lightGrey,
             contentPadding: const EdgeInsets.symmetric(

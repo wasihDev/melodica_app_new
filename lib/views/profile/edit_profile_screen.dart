@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/providers/auth_provider.dart';
+import 'package:melodica_app_new/providers/country_code_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/views/dashboard/home/package_selection_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/custom_widget.dart';
+import 'package:melodica_app_new/views/profile/widget/number_dropdown.dart';
 import 'package:melodica_app_new/widgets/custom_appbar.dart';
 import 'package:provider/provider.dart';
 
@@ -117,6 +119,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
+
     _areaController = TextEditingController();
     _phoneController = TextEditingController();
   }
@@ -161,7 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBarWidget(title: 'New Student'),
+      appBar: AppBarWidget(title: 'Edit Profile', isShowLogout: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -263,21 +266,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   // flex: 1,
-                  child: _smallTile(
-                    child: DropdownButtonFormField<String>(
-                      value: _countryCode,
-                      items: ['971', '54', "231"]
-                          .map(
-                            (c) => DropdownMenuItem(value: c, child: Text(c)),
-                          )
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => _countryCode = v ?? _countryCode),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
+                  child:
+                      // CountryCodeDropdown(),
+                      _smallTile(
+                        child: DropdownButtonFormField<String>(
+                          value: _countryCode,
+                          items: ['971', '54', "231"]
+                              .map(
+                                (c) =>
+                                    DropdownMenuItem(value: c, child: Text(c)),
+                              )
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _countryCode = v ?? _countryCode),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -299,21 +305,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Date of Birth & Gender
             Row(
               children: [
-                Expanded(
-                  child: CustomTextField(
-                    labelText: 'Date of Birth',
-                    initialValue: _dob,
-                    // controller: ,
-                    readOnly: true,
-                    onTap: () => _selectDate(context),
-                    suffixIcon: SvgPicture.asset(
-                      'assets/svg/schedule.svg',
-                      width: 24,
-                      height: 24,
-                    ), // Calendar icon
-                  ),
-                ),
-                const SizedBox(width: 16),
+                // Expanded(
+                //   child: CustomTextField(
+                //     labelText: 'Date of Birth',
+                //     initialValue: _dob,
+                //     // controller: ,
+                //     readOnly: true,
+                //     onTap: () => _selectDate(context),
+                //     suffixIcon: SvgPicture.asset(
+                //       'assets/svg/schedule.svg',
+                //       width: 24,
+                //       height: 24,
+                //     ), // Calendar icon
+                //   ),
+                // ),
+                // const SizedBox(width: 16),
                 Expanded(
                   child: CustomDropdownField<String>(
                     labelText: 'Gender',

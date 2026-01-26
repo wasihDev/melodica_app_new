@@ -43,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Container(
             height: 260.h,
+            width: double.infinity,
             decoration: BoxDecoration(
               color: color,
               borderRadius: const BorderRadius.vertical(
@@ -51,18 +52,20 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             padding: const EdgeInsets.only(top: 10, left: 6),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: 38.h),
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(Icons.arrow_back_ios),
-                    ),
-                    const SizedBox(width: 6),
-                  ],
-                ),
-                SizedBox(height: 30.h),
+                // SizedBox(height: 50.h),
+                // Row(
+                //   children: [
+                //     IconButton(
+                //       onPressed: () => Navigator.of(context).maybePop(),
+                //       icon: const Icon(Icons.arrow_back_ios),
+                //     ),
+                //     const SizedBox(width: 6),
+                //   ],
+                // ),
+                // SizedBox(height: 30.h),
                 Text(
                   'Login',
                   style: TextStyle(
@@ -91,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       controller: _email,
                       wigdet: const Icon(
-                        Icons.alternate_email_rounded,
+                        Icons.person,
                         color: AppColors.secondPrimary,
                       ),
                       hintText: "enter email",
@@ -193,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Platform.isIOS
                                 ? IconButton(
                                     onPressed: () async {
-                                      await provider.signInWithGoogle(context);
+                                      await provider.signInWithApple(context);
                                     },
                                     icon: provider.isLoadingApple
                                         ? LoadingIndicatorWideget()

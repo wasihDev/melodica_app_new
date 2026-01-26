@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:melodica_app_new/models/student_models.dart';
+import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/widgets/custom_appbar.dart';
 import 'package:melodica_app_new/widgets/custom_button.dart';
+import 'package:provider/provider.dart';
 
-class Student {
+class MatchStudent {
   final String name;
   final String id;
 
-  Student({required this.name, required this.id});
+  MatchStudent({required this.name, required this.id});
 }
 
 class StudentsScreen extends StatefulWidget {
@@ -18,27 +21,43 @@ class StudentsScreen extends StatefulWidget {
 }
 
 class _StudentsScreenState extends State<StudentsScreen> {
-  final List<Student> students = [
-    Student(name: "Jawan Parent", id: "000123"),
-    Student(name: "Jawan Parent", id: "000123"),
-    Student(name: "Jawan Parent", id: "000123"),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final ctrl = Provider.of<CustomerController>(context, listen: false);
+
     return Scaffold(
-      appBar: AppBarWidget(title: 'Students'),
+      appBar: AppBarWidget(title: 'Students', isShowLogout: false),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildAddStudentSection(),
+      floatingActionButton: _buildAddStudentSection(ctrl.students.first),
       body: Column(
         children: [
           Divider(),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              itemCount: students.length,
+              itemCount: ctrl.students.length,
               itemBuilder: (context, index) {
-                return _buildStudentCard(students[index]);
+                return InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.studentDetails,
+                      arguments: {
+                        'student': ctrl.students[index],
+                        'isShowBtn': false,
+                      },
+                    );
+                    // Navigator.pushNamed(
+                    //   context,
+                    //   AppRoutes.newStudent,
+                    //   arguments: {
+                    //     'student': ctrl.students[index],
+                    //     'isEdit': true,
+                    //   },
+                    // );
+                  },
+                  child: _buildStudentCard(ctrl.students[index]),
+                );
               },
             ),
           ),
@@ -83,7 +102,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      student.name,
+                      student.fullName,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -91,7 +110,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'ID: ${student.id}',
+                      'ID: ${student.mbId}',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -113,12 +132,16 @@ class _StudentsScreenState extends State<StudentsScreen> {
     );
   }
 
-  Widget _buildAddStudentSection() {
+  Widget _buildAddStudentSection(Student student) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15.0),
       child: CustomButton(
         onTap: () {
-          Navigator.pushNamed(context, AppRoutes.newStudent);
+          Navigator.pushNamed(
+            context,
+            AppRoutes.newStudent,
+            arguments: {'isEdit': false, 'student': student},
+          );
         },
         widget: Text(
           'Add new Students',

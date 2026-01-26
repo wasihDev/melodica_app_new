@@ -10,7 +10,7 @@ class OrdersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = List.generate(5, (i) => i + 1);
     return Scaffold(
-      appBar: AppBarWidget(title: 'Orders'),
+      appBar: AppBarWidget(title: 'Orders', isShowLogout: false),
       body: Column(
         children: [
           Divider(),

@@ -3,23 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>260359240000-uutgnp2laejffq850vgsnrg3da9ku2vs.apps.googleusercontent.com</string>
+	<string>536294537372-kl63k24196037onm7p1dehn6kdj68i86.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.260359240000-uutgnp2laejffq850vgsnrg3da9ku2vs</string>
-	<key>ANDROID_CLIENT_ID</key>
-	<string>260359240000-78j4bgrqqu9gau64261afm0gtpdvqoaf.apps.googleusercontent.com</string>
+	<string>com.googleusercontent.apps.536294537372-kl63k24196037onm7p1dehn6kdj68i86</string>
 	<key>API_KEY</key>
-	<string>AIzaSyDWD7bwfpBGImKMR6NntqBsVeOhpN-yxdQ</string>
+	<string>AIzaSyAQ_zh_W2GEvON9BZPT15hL4PHQ9yYUIhs</string>
 	<key>GCM_SENDER_ID</key>
-	<string>260359240000</string>
+	<string>536294537372</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.melodicaAppNew</string>
+	<string>com.melodica.fitness.app</string>
 	<key>PROJECT_ID</key>
-	<string>melodica-customer-self-service</string>
+	<string>melodica-mobile</string>
 	<key>STORAGE_BUCKET</key>
-	<string>melodica-customer-self-service.appspot.com</string>
+	<string>melodica-mobile.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -31,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:260359240000:ios:fa01ff1bb95c30f3b9a2a5</string>
+	<string>1:536294537372:ios:3e8def2053da0c7d8e1559</string>
 </dict>
 </plist>

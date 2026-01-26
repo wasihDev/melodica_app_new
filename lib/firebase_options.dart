@@ -50,21 +50,21 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCYhV41GdlRPNjZQc5LWvwcVV52-Y3VKOE',
-    appId: '1:260359240000:android:963d98f003e2798ab9a2a5',
-    messagingSenderId: '260359240000',
-    projectId: 'melodica-customer-self-service',
-    storageBucket: 'melodica-customer-self-service.appspot.com',
+    apiKey: 'AIzaSyCQO22avaQ-xhIWGFUDgz0JXfLVxy0tNTM',
+    appId: '1:536294537372:android:4fc5d1d3645c27028e1559',
+    messagingSenderId: '536294537372',
+    projectId: 'melodica-mobile',
+    storageBucket: 'melodica-mobile.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDWD7bwfpBGImKMR6NntqBsVeOhpN-yxdQ',
-    appId: '1:260359240000:ios:fa01ff1bb95c30f3b9a2a5',
-    messagingSenderId: '260359240000',
-    projectId: 'melodica-customer-self-service',
-    storageBucket: 'melodica-customer-self-service.appspot.com',
-    androidClientId: '260359240000-78j4bgrqqu9gau64261afm0gtpdvqoaf.apps.googleusercontent.com',
-    iosClientId: '260359240000-uutgnp2laejffq850vgsnrg3da9ku2vs.apps.googleusercontent.com',
-    iosBundleId: 'com.example.melodicaAppNew',
+    apiKey: 'AIzaSyAQ_zh_W2GEvON9BZPT15hL4PHQ9yYUIhs',
+    appId: '1:536294537372:ios:3e8def2053da0c7d8e1559',
+    messagingSenderId: '536294537372',
+    projectId: 'melodica-mobile',
+    storageBucket: 'melodica-mobile.firebasestorage.app',
+    iosClientId: '536294537372-kl63k24196037onm7p1dehn6kdj68i86.apps.googleusercontent.com',
+    iosBundleId: 'com.melodica.fitness.app',
   );
+
 }

@@ -1,100 +1,40 @@
 {
   "project_info": {
-    "project_number": "260359240000",
-    "project_id": "melodica-customer-self-service",
-    "storage_bucket": "melodica-customer-self-service.appspot.com"
+    "project_number": "536294537372",
+    "project_id": "melodica-mobile",
+    "storage_bucket": "melodica-mobile.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:260359240000:android:818d46057934b842b9a2a5",
-        "android_client_info": {
-          "package_name": "com.example.melodica_mobile"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "260359240000-78j4bgrqqu9gau64261afm0gtpdvqoaf.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.melodica_mobile",
-            "certificate_hash": "995dfaf3f2039289d2e27930ea69c892f943f618"
-          }
-        },
-        {
-          "client_id": "260359240000-99sff525do0qfrhnate8bhcic4u7feg1.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.melodica_mobile",
-            "certificate_hash": "1f28391846b7899dc58a11a2732cec2609583bf1"
-          }
-        },
-        {
-          "client_id": "260359240000-b65dr9af6gi4ed42s29g63k33027rldi.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.melodica_mobile",
-            "certificate_hash": "85763240a745ddddd48c3eb2a350b27ca2dc51ef"
-          }
-        },
-        {
-          "client_id": "260359240000-nlgdi5465i1juh6ki55fmqg75es18s64.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCYhV41GdlRPNjZQc5LWvwcVV52-Y3VKOE"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "260359240000-joaq9eo1tgt12m9sr7tvnkb6igmgj8p7.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "260359240000-osu4aqtvm166gt2195gvk2hvqqi6r5h6.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.melodicaMobile"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:260359240000:android:963d98f003e2798ab9a2a5",
+        "mobilesdk_app_id": "1:536294537372:android:4fc5d1d3645c27028e1559",
         "android_client_info": {
           "package_name": "com.melodica_app_new"
         }
       },
       "oauth_client": [
         {
-          "client_id": "260359240000-nlgdi5465i1juh6ki55fmqg75es18s64.apps.googleusercontent.com",
+          "client_id": "536294537372-47u23hk1lir6683vb8osv9slbsf7s6ts.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCYhV41GdlRPNjZQc5LWvwcVV52-Y3VKOE"
+          "current_key": "AIzaSyCQO22avaQ-xhIWGFUDgz0JXfLVxy0tNTM"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "260359240000-joaq9eo1tgt12m9sr7tvnkb6igmgj8p7.apps.googleusercontent.com",
+              "client_id": "536294537372-47u23hk1lir6683vb8osv9slbsf7s6ts.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "260359240000-osu4aqtvm166gt2195gvk2hvqqi6r5h6.apps.googleusercontent.com",
+              "client_id": "536294537372-kl63k24196037onm7p1dehn6kdj68i86.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.melodicaMobile"
+                "bundle_id": "com.melodica.fitness.app"
               }
             }
           ]

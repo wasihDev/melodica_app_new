@@ -1,7 +1,5 @@
 // change_password_screen.dart
 import 'package:flutter/material.dart';
-import 'package:melodica_app_new/providers/auth_provider.dart';
-import 'package:provider/provider.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});

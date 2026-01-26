@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/models/user_model.dart';
+import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:image_picker/image_picker.dart';
@@ -50,29 +51,35 @@ class UserprofileProvider extends ChangeNotifier {
     try {
       print('data call');
       setLoading(true);
-      final uid = auth.currentUser?.uid;
-      if (uid != null) {
-        DocumentSnapshot snapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .get();
-        _userModel = UserModel.fromJson(
-          snapshot.data() as Map<String, dynamic>,
-        );
-        print('data $_userModel');
-      }
-      setLoading(false);
-      notifyListeners();
 
+      final uid = auth.currentUser?.uid;
+      if (uid == null) return null;
+
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (!snapshot.exists || snapshot.data() == null) {
+        print('User document does not exist');
+        Navigator.pushReplacementNamed(
+          navigatorKey.currentContext!,
+          AppRoutes.login,
+        );
+        return null;
+      }
+
+      _userModel = UserModel.fromJson(snapshot.data() as Map<String, dynamic>);
+
+      print('data $_userModel');
+      notifyListeners();
       return _userModel;
     } catch (e) {
-      print('error $e');
-      // SnackbarUtils.showError(context, 'Error $e');
+      print('errorssdasdas $e');
+      return null;
     } finally {
       setLoading(false);
     }
-    notifyListeners();
-    return _userModel;
   }
 
   // Update User Data

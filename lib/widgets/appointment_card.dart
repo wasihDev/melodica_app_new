@@ -21,24 +21,27 @@ class AppointmentCard extends StatelessWidget {
     required this.teacher,
     required this.time,
     this.isToday = false,
-    this.isSelected = false,
+    required this.isSelected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    Color cardColor = isSelected ? AppColors.primary : AppColors.white;
-    Color borderColor = isToday ? AppColors.primary : AppColors.white;
+    // print('isSelected $isSelected');
+    Color cardColor = isSelected
+        ? Color.fromARGB(76, 255, 205, 5)
+        : AppColors.white;
+    // Color borderColor = isToday ? AppColors.primary : AppColors.white;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        padding: const EdgeInsets.all(16.0),
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, width: 2),
+          border: Border.all(color: AppColors.lightGrey, width: 2),
           boxShadow: [
             BoxShadow(
               color: AppColors.lightGrey.withOpacity(0.5),
@@ -54,17 +57,17 @@ class AppointmentCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  dayOfWeek,
+                  dayOfWeek.isEmpty ? '' : dayOfWeek.substring(0, 3),
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 10,
                     color: AppColors.darkText,
                   ),
                 ),
                 Container(
-                  height: 30,
-                  width: 30,
+                  height: 25,
+                  width: 25,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(4),
                     color: AppColors.primary,
                   ),
                   child: Center(

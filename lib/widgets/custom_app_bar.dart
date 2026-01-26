@@ -1,78 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
-import 'package:melodica_app_new/models/student_model.dart';
+import 'package:melodica_app_new/providers/notification_provider.dart';
+import 'package:melodica_app_new/providers/schedule_provider.dart';
+import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
-import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/custom_student_item_widget.dart';
+import 'package:melodica_app_new/views/dashboard/notification/notification_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:badges/badges.dart' as badges;
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  // final String title;
-  // final Color backgroundColor;
-  // final Color foregroundColor;
-  // final bool showBackButton;
-  // final Widget?
-  // rightAction; // For icons like Exit, Notification, or Forward Arrow
+class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final double height;
 
-  CustomAppBar({
-    super.key,
-    // required this.title,
-    // this.backgroundColor = AppColors.white,
-    // this.foregroundColor = AppColors.darkText,
-    // this.showBackButton = true,
-    // this.rightAction,
-    this.height = kToolbarHeight, // Standard AppBar height
-  });
+  const CustomAppBar({super.key, this.height = kToolbarHeight});
 
-  final List<Student> students = [
-    // Note: Replace with your actual image assets or NetworkImage setup
-    Student('Tonald Drump', 'ID', 'assets/avatar_1.png'),
-    Student('Bul Gates', 'ID: 000124', 'assets/avatar_2.png'),
-    Student('Tonald Drump', 'ID: 000128', 'assets/avatar_3.png'),
-  ];
+  @override
+  State<CustomAppBar> createState() => _CustomAppBarState();
 
-  Widget _buildCustomMenuButton(BuildContext context) {
+  @override
+  Size get preferredSize => Size.fromHeight(height);
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+  Widget _studentDropdown(BuildContext context, Widget child) {
+    final ctrl = context.read<CustomerController>();
+    final Schedulectrl = context.read<ScheduleProvider>();
+
     return PopupMenuButton<String>(
-      // 1. Define the content of the menu items
-      itemBuilder: (BuildContext context) {
-        List<PopupMenuEntry<String>> items = [];
-
-        // Add student items (Custom Widget)
-        for (int i = 0; i < students.length; i++) {
-          items.add(
-            CustomStudentItem(student: students[i], value: students[i].id),
-          );
-        }
-
-        // Add a divider
-        items.add(const PopupMenuDivider(height: 1));
-
-        // Add the 'Add New Students' item (Custom Widget)
-        items.add(const AddStudentItem(value: 'add_new'));
-
-        return items;
-      },
-
-      // 2. Define what happens when an item is selected
-      onSelected: (String value) {
-        if (value == 'add_new') {
-          print('Navigate to Add New Students screen!');
-        } else {
-          print('Student selected with ID: $value');
-        }
-      },
-
-      // 3. Customize the appearance of the button and menu
-      offset: const Offset(
-        0,
-        50,
-      ), // Position the menu slightly below the button
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      offset: const Offset(0, 50),
       elevation: 8,
       color: Colors.white,
-      // This is the widget that appears in the AppBar
-      child: Icon(Icons.arrow_drop_down, size: 30),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      padding: EdgeInsets.zero,
+
+      itemBuilder: (_) => [
+        ...ctrl.students.map(
+          (student) => CustomStudentItem(
+            student: student,
+            value: student.mbId.toString(),
+          ),
+        ),
+        const PopupMenuDivider(),
+        AddStudentItem(value: 'add_new'),
+      ],
+
+      onSelected: (value) async {
+        print('callue $value');
+        if (value == 'add_new') {
+          Navigator.pushNamed(context, AppRoutes.newStudent);
+          return;
+        }
+
+        final student = ctrl.students.firstWhere(
+          (e) => e.mbId.toString() == value,
+        );
+        // call here upcoming classes
+        await Schedulectrl.fetchSchedule(context);
+        ctrl.selectStudent(student);
+        setState(() {});
+      },
+      child: child,
     );
   }
 
@@ -82,105 +70,106 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: AppColors.white,
       elevation: 0,
       automaticallyImplyLeading: false,
-      // --- Leading Widget: Back Button ---
-      // leading: showBackButton
-      //     ? IconButton(
-      //         icon: Icon(Icons.arrow_back_ios, color: foregroundColor),
-      //         onPressed: () {
-      //           Navigator.of(context).pop();
-      //         },
-      //       )
-      //     : const SizedBox.shrink(),
 
-      // --- Title ---
-      title: Row(
-        children: [
-          Consumer<UserprofileProvider>(
-            builder: (context, provider, child) {
-              return Container(
-                width: 40.w,
-                height: 40.h,
-                decoration: BoxDecoration(
-                  color: Colors.pink[100],
-                  shape: BoxShape.circle,
-                ),
-                child: CircleAvatar(
+      title: _studentDropdown(
+        context,
+
+        Row(
+          children: [
+            /// PROFILE IMAGE
+            Consumer<UserprofileProvider>(
+              builder: (_, provider, __) {
+                return CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppColors.primary,
                   backgroundImage: provider.uint8list == null
                       ? const NetworkImage(
                           'https://cdn-icons-png.flaticon.com/512/219/219983.png',
                         )
                       : MemoryImage(provider.uint8list!),
-                  radius: 22.h,
-                  backgroundColor: AppColors.primary,
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Consumer<UserprofileProvider>(
-                    builder: (context, provider, child) {
-                      return Text(
-                        provider.userModel.firstName ?? "...",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildCustomMenuButton(context),
-                ],
-              ),
-              Text(
-                students[0].id,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-            ],
-          ),
-        ],
-      ),
-      centerTitle: false,
+                );
+              },
+            ),
 
-      // --- Actions Widget: Notification/Exit/Forward Icon ---
-      actions: [
-        Stack(
-          children: [
-            const Text('🔔', style: TextStyle(fontSize: 32)),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                width: 18,
-                height: 18,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text(
-                    '1',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+            const SizedBox(width: 12),
+
+            /// STUDENT NAME + ID
+            Consumer<CustomerController>(
+              builder: (_, provider, __) {
+                final student = provider.selectedStudent;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          student?.fullName ?? 'Loading...',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Icon(Icons.arrow_drop_down),
+                      ],
                     ),
-                  ),
-                ),
-              ),
+                    Text(
+                      "${student?.mbId ?? ''}",
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                );
+                // _studentDropdown(
+                //   context,
+
+                // );
+              },
             ),
           ],
+        ),
+      ),
+
+      actions: [
+        Consumer<NotificationProvider>(
+          builder: (context, pro, child) {
+            return InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => NotificationScreen()),
+                );
+              },
+              child: badges.Badge(
+                showBadge: pro.unread.length == 0 ? false : true,
+                badgeContent: Text(
+                  pro.unread.length.toString(),
+                  style: TextStyle(color: Colors.white, fontSize: 12),
+                ),
+                child: Icon(
+                  Icons.notifications,
+                  color: const Color.fromARGB(255, 255, 188, 5),
+                ),
+              ),
+            );
+          },
         ),
         SizedBox(width: 16),
       ],
     );
   }
+}
 
-  @override
-  Size get preferredSize => Size.fromHeight(height);
+// --- Custom PopupMenuEntry for "Add New Students" Row ---
+class AddStudentItem extends PopupMenuItem<String> {
+  AddStudentItem({super.key, required String value})
+    : super(
+        value: value,
+        child: Row(
+          children: const [
+            Icon(Icons.add, size: 18),
+            SizedBox(width: 10),
+            Text('Add New Student'),
+          ],
+        ),
+      );
 }

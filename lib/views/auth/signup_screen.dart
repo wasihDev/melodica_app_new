@@ -1,17 +1,19 @@
 // signup_screen.dart
+import 'dart:io';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/providers/appstate_provider.dart';
 import 'package:melodica_app_new/providers/auth_provider.dart';
-import 'package:melodica_app_new/routes/routes.dart';
+import 'package:melodica_app_new/utils/common.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
-import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/utils/validator.dart';
 import 'package:melodica_app_new/widgets/common_textfield.dart';
 import 'package:melodica_app_new/widgets/custom_button.dart';
-import 'package:nb_utils/nb_utils.dart';
+import 'package:melodica_app_new/widgets/loading_indicator_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -25,8 +27,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _agree = false;
-  bool _obscure = true;
-  bool _loading = false;
+  // bool _obscure = true;
+  // bool _loading = false;
   String? _error;
 
   @override
@@ -46,6 +48,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           // main white body with curved yellow header
           Positioned.fill(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // top curved yellow area
                 Container(
@@ -57,19 +61,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                   padding: const EdgeInsets.only(top: 24, left: 12),
-                  alignment: Alignment.topLeft,
+                  alignment: Alignment.topCenter,
                   child: Column(
                     children: [
                       SizedBox(height: 38.h),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => Navigator.of(context).maybePop(),
-                            icon: const Icon(Icons.arrow_back_ios),
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                      ),
+                      Navigator.of(context).canPop()
+                          ? Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).maybePop(),
+                                  icon: const Icon(Icons.arrow_back_ios),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                            )
+                          : SizedBox(),
                       SizedBox(height: 30.h),
                       Text(
                         'Sign up',
@@ -124,7 +131,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             heading: "Email",
                             controller: _emailCtrl,
                             wigdet: const Icon(
-                              Icons.alternate_email_rounded,
+                              Icons.person,
                               color: AppColors.secondPrimary,
                             ),
                             hintText: 'Ex.abc#example.com',
@@ -167,6 +174,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         style: const TextStyle(
                                           decoration: TextDecoration.underline,
                                         ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            _launchUrl(privacypolicy);
+                                          },
                                       ),
                                       const TextSpan(text: ' & '),
                                       TextSpan(
@@ -174,6 +185,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         style: const TextStyle(
                                           decoration: TextDecoration.underline,
                                         ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            _launchUrl(termscondition);
+                                          },
                                       ),
                                     ],
                                   ),
@@ -196,7 +211,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               // } else {
                               return CustomButton(
                                 isLoading: provider.isLoading,
-                                //provider.isLoading,
                                 onTap: () async {
                                   if (_form.currentState!.validate()) {
                                     await provider.registrationFunc(
@@ -217,14 +231,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     print('chec22k');
                                   }
                                 },
-                                widget: Text(
-                                  "Sign up",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 16.fSize,
-                                    color: AppColors.black,
-                                  ),
-                                ),
+                                widget: provider.isLoading
+                                    ? CircularProgressIndicator()
+                                    : Text(
+                                        "Sign up",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16.fSize,
+                                          color: AppColors.black,
+                                        ),
+                                      ),
                               );
                               // }
                             },
@@ -237,24 +253,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              IconButton(
-                                onPressed: () {},
-                                icon: SvgPicture.asset('assets/svg/google.svg'),
-                              ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: SvgPicture.asset(
-                                  'assets/svg/facebook.svg',
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: SvgPicture.asset('assets/svg/apple.svg'),
-                              ),
-                            ],
+                          Consumer<AuthProviders>(
+                            builder: (context, provider, child) {
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    onPressed: () async {
+                                      await provider.signInWithGoogle(context);
+                                    },
+                                    icon: provider.isLoadingGoogle
+                                        ? LoadingIndicatorWideget()
+                                        : SvgPicture.asset(
+                                            'assets/svg/google.svg',
+                                          ),
+                                  ),
+                                  // IconButton(
+                                  //   onPressed: () {},
+                                  //   icon: SvgPicture.asset(
+                                  //     'assets/svg/facebook.svg',
+                                  //   ),
+                                  // ),
+                                  Platform.isIOS
+                                      ? IconButton(
+                                          onPressed: () async {
+                                            await provider.signInWithApple(
+                                              context,
+                                            );
+                                          },
+                                          icon: provider.isLoadingApple
+                                              ? LoadingIndicatorWideget()
+                                              : SvgPicture.asset(
+                                                  'assets/svg/apple.svg',
+                                                ),
+                                        )
+                                      : SizedBox(),
+                                ],
+                              );
+                            },
                           ),
                           const SizedBox(height: 16),
                           Center(
@@ -288,5 +324,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw 'Could not launch $url';
+    }
   }
 }

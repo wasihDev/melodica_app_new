@@ -8,7 +8,7 @@ class ReceiptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBarWidget(title: 'Receipt'),
+      appBar: AppBarWidget(title: 'Receipt', isShowLogout: false),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class OnboardingProvider extends ChangeNotifier {
-  final PageController pageController = PageController();
+  PageController pageController = PageController();
   int _page = 0;
   int get page => _page;
 
@@ -12,9 +12,15 @@ class OnboardingProvider extends ChangeNotifier {
 
   void nextPage() {
     if (_page < 3) {
+      final next = _page + 1;
+      print('next $next');
+      _page = next; // ✅ update state first
+      print('_page $_page');
+      notifyListeners(); // ✅ notify dots immediately
+
       pageController.animateToPage(
-        _page + 1,
-        duration: const Duration(milliseconds: 450),
+        next,
+        duration: Duration(milliseconds: 450),
         curve: Curves.ease,
       );
       notifyListeners();

@@ -18,8 +18,8 @@ class ForgotEmailScreen extends StatefulWidget {
 class _ForgotEmailScreenState extends State<ForgotEmailScreen> {
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
-  bool _loading = false;
-  String? _error;
+  // bool _loading = false;
+  // String? _error;
 
   @override
   void dispose() {
@@ -29,7 +29,7 @@ class _ForgotEmailScreenState extends State<ForgotEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.primary;
+    // final color = AppColors.primary;
     // show email mask as small instruction
     return Scaffold(
       resizeToAvoidBottomInset: false,

@@ -7,6 +7,7 @@ class AssetImages {
 	static const String ob2 = 'assets/images/ob2.png';
 	static const String ob3 = 'assets/images/ob3.png';
 	static const String ob4 = 'assets/images/ob4.png';
+	static const String off = 'assets/images/off.png';
 }
 
 class AssetLottie {
@@ -15,6 +16,7 @@ class AssetLottie {
 class AssetSvg {
 	static const String apple = 'assets/svg/apple.svg';
 	static const String danceClass = 'assets/svg/dance_class.svg';
+	static const String dirham = 'assets/svg/dirham.svg';
 	static const String exit = 'assets/svg/exit.svg';
 	static const String facebook = 'assets/svg/facebook.svg';
 	static const String google = 'assets/svg/google.svg';
