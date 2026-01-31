@@ -13,7 +13,9 @@ class AppNotification {
   final String? imageUrl;
   final String? iconUrl;
   final List<NotificationAction> actions;
-
+  // 🔹 NEW
+  final DateTime? validFrom;
+  final DateTime? validTo;
   AppNotification({
     required this.notificationId,
     required this.title,
@@ -27,24 +29,36 @@ class AppNotification {
     this.imageUrl,
     this.iconUrl,
     required this.actions,
+    this.validFrom,
+    this.validTo,
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
+    // print('NotificationAction json ${json} ');
     return AppNotification(
-      notificationId: json['NotificationId'],
-      title: json['Title'],
-      messageText: json['MessageText'],
-      messageRich: json['MessageRich'],
-      category: json['Category'],
-      type: json['Type'],
-      layout: json['Layout'],
-      priority: json['Priority'],
-      status: json['Status'],
+      // Use the ?? operator to provide a fallback if the API returns null
+      notificationId: json['NotificationId']?.toString() ?? '',
+      title: json['Title'] ?? 'No Title',
+      messageText: json['MessageText'] ?? '',
+      messageRich: json['MessageRich'] ?? '', // This is often null
+      category: json['Category'] ?? 'default',
+      type: json['Type'] ?? 'general',
+      layout: json['Layout'] ?? 'basic',
+      priority: json['Priority'] ?? 0,
+      status: json['Status'] ?? 'unread',
       imageUrl: json['ImageUrl'],
       iconUrl: json['IconUrl'],
-      actions: (json['Actions'] as List)
-          .map((e) => NotificationAction.fromJson(e))
-          .toList(),
+      actions:
+          (json['Actions'] as List?)
+              ?.map((e) => NotificationAction.fromJson(e))
+              .toList() ??
+          [], // Handle case where Actions list itself is null
+      validFrom: json['ValidFromUtc'] != null
+          ? DateTime.parse(json['ValidFromUtc'])
+          : null,
+      validTo: json['ValidToUtc'] != null
+          ? DateTime.parse(json['ValidToUtc'])
+          : null,
     );
   }
 
@@ -60,6 +74,10 @@ class NotificationAction {
   final String? url;
   final Map<String, dynamic>? routeParams;
   final bool dismissOnTap;
+
+  // /// ⏳ Expiry fields (STRING from API)
+  // final String? validFrom; // yyyy-MM-dd
+  // final String? validTo; // yyyy-MM-dd
 
   NotificationAction({
     required this.id,
@@ -84,6 +102,62 @@ class NotificationAction {
           ? jsonDecode(json['RouteParamsJson'])
           : null,
       dismissOnTap: json['DismissOnTap'] ?? false,
+
+      // validFrom: json['valid_from'],
+      // validTo: json['valid_to'],
+      // 🔹 NEW
     );
   }
+
+  /// ✅ Action availability logic for STRING
+  ///
+  // bool get isActive {
+  //   if (validFrom == null && validTo == null) return true;
+
+  //   final now = DateTime.now();
+
+  //   final from = validFrom != null ? DateTime.tryParse(validFrom!) : null;
+
+  //   final to = validTo != null ? DateTime.tryParse(validTo!) : null;
+
+  //   if (from != null && now.isBefore(from)) return false;
+  //   if (to != null && now.isAfter(to)) return false;
+
+  //   return true;
+  // }
 }
+
+extension NotificationActionX on AppNotification {
+  bool get isValidNow {
+    final now = DateTime.now();
+
+    if (validFrom != null && now.isBefore(validFrom!)) {
+      print('❌ Failed: Current time $now is BEFORE $validFrom');
+      return false;
+    }
+
+    if (validTo != null && now.isAfter(validTo!)) {
+      print('❌ Failed: Current time $now is AFTER $validTo');
+      return false;
+    }
+
+    print('✅ Valid: $now is within range');
+    return true;
+  }
+}
+  // extension NotificationActionX on AppNotification {
+  //   bool get isValidNow {
+  //     final now = DateTime.now();
+  //     print('validFrom $validFrom');
+  //     print('validTo $validTo');
+  //     if (validFrom != null && now.isBefore(validFrom!)) {
+  //       return false;
+  //     }
+
+  //     if (validTo != null && now.isAfter(validTo!)) {
+  //       return false;
+  //     }
+
+  //     return true;
+  //   }
+// }

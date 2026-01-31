@@ -61,7 +61,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final schedules = provider.upcomingSchedules;
+    // final schedules = provider.upcomingSchedules;
+    final schedules = provider.schedules;
 
     if (schedules.isEmpty) {
       return const Scaffold(body: Center(child: Text('No upcoming classes')));
@@ -88,45 +89,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           SizedBox(height: 16.h),
 
           /// SELECT DATE HEADER
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 24),
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //     children: const [
-          //       Text(
-          //         'Select Date',
-          //         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          //       ),
-          //       Icon(Icons.keyboard_arrow_down),
-          //     ],
-          //   ),
-          // ),
-
-          // const SizedBox(height: 16),
-
-          /// WEEK DATE PICKER
-          // SizedBox(
-          //   height: 80,
-          //   child: ListView.builder(
-          //     scrollDirection: Axis.horizontal,
-          //     padding: const EdgeInsets.symmetric(horizontal: 24),
-          //     itemCount: grouped.keys.length,
-          //     itemBuilder: (_, i) {
-          //       final dateKey = grouped.keys.elementAt(i);
-          //       final date = DateTime.parse(dateKey);
-
-          //       return DateCell(
-          //         dayOfWeek: DateFormat('EE').format(date),
-          //         dayOfMonth: DateFormat('d').format(date),
-          //         isSelected: DateUtils.isSameDay(selectedDate, date),
-          //         isHighlighted: false,
-          //         onTap: () {
-          //           setState(() => selectedDate = date);
-          //         },
-          //       );
-          //     },
-          //   ),
-          // ),
           d.CustomWeeklyDatePicker(),
 
           const SizedBox(height: 16),
@@ -196,6 +158,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         ],
       ),
     );
+  }
+
+  String removingTimeFromDate(String datetime) {
+    DateFormat inputFormat = DateFormat("dd MMM yyyy hh:mm a");
+
+    // 2. Parse the string into a DateTime object
+    DateTime dateTime = inputFormat.parse("${datetime}");
+
+    // 3. Format it back to just the date
+    String dateOnly = DateFormat("dd MMM yyyy").format(dateTime);
+    return dateOnly;
   }
 
   void showAppointmentBottomSheet(BuildContext context, ScheduleModel s) {
@@ -292,7 +265,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
                       // DateFormat('dd/MM/yyyy hh:mm a').parse(PackageExpiry);
                       Text(
-                        'Reschedule before the ${DateFormat('dd MMM yyyy').format(expiryDate)} to avoid using your cancellation.',
+                        "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
+                        // 'Reschedule before the ${DateFormat('dd MMM yyyy').format(expiryDate)} to avoid using your cancellation.',
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 13,
@@ -302,36 +276,42 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
                 // Action Buttons
-                SizedBox(
-                  width: double.infinity,
-                  height: 50.h,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      ///call get availablity api
+                s.subject == "Ballet" ||
+                        s.subject == "Belly Dance" ||
+                        s.subject == 'Contemporary' ||
+                        s.subject == 'Hip Hop'
+                    ? SizedBox()
+                    : SizedBox(
+                        width: double.infinity,
+                        height: 50.h,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            ///call get availablity api
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => RescheduleScreen(s: s),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RescheduleScreen(s: s),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(
+                              0xFFFFD152,
+                            ), // Yellow button
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Reschedule',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFD152), // Yellow button
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    child: const Text(
-                      'Reschedule',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -487,7 +467,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       elevation: 0,
                     ),
                     child: const Text(
-                      "AED ${50 * 1.05}",
+                      "AED ${50}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -538,27 +518,5 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     return DateFormat('hh:mm a').format(dt);
   }
 
-  // Widget _timeBox(
-  //   BuildContext context, {
-  //   required String label,
-  //   required VoidCallback onTap,
-  // }) {
-  //   return InkWell(
-  //     onTap: onTap,
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-  //       decoration: BoxDecoration(
-  //         color: Colors.grey.shade100,
-  //         borderRadius: BorderRadius.circular(8),
-  //       ),
-  //       child: Row(
-  //         children: [
-  //           Text(label),
-  //           const SizedBox(width: 6),
-  //           const Icon(Icons.arrow_drop_down),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
+  ///
 }

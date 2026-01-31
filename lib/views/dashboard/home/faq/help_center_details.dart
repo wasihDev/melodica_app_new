@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -98,31 +100,29 @@ class TopicDetailScreen extends StatelessWidget {
   const TopicDetailScreen({super.key, required this.category});
 
   // The logic for opening WhatsApp
-  Future<void> _launchWhatsApp(String topicName) async {
-    // const String customerNumber =
-    //     "97145591000"; // Replace with your support number
-    // final String message = "Hello, I need help with the mobile app, $topicName";
-
-    // Proper URL encoding for special characters
-    // final Uri whatsappUrl = Uri.parse(
-    //   "https://wa.me/$customerNumber?text=${Uri.encodeComponent(message)}",
-    // );
+  Future<void> launchWhatsApp(String topicName) async {
     final phone = '97145591000';
-
     final message =
         'Hello, I need assistance. Kindly help me regarding my query.\n\n'
         'Topic: $topicName';
-
     final encodedMessage = Uri.encodeComponent(message);
-    final whatsappUrl = Uri.parse(
-      'https://api.whatsapp.com/send/?phone=$phone&text=$encodedMessage',
-    );
 
-    // https://api.whatsapp.com/send/?phone=$phone&text=$encodedMessage
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+    Uri url;
+
+    if (Platform.isAndroid) {
+      url = Uri.parse('whatsapp://send?phone=$phone&text=$encodedMessage');
     } else {
-      debugPrint("Could not launch WhatsApp");
+      // Web or unsupported platform
+      url = Uri.parse(
+        'https://api.whatsapp.com/send?phone=$phone&text=$encodedMessage',
+      );
+    }
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      debugPrint('Could not launch WhatsApp. Make sure the app is installed.');
+      // Optional: show alert to user
     }
   }
 
@@ -169,7 +169,7 @@ class TopicDetailScreen extends StatelessWidget {
                   width: 24,
                   height: 24,
                 ),
-                onTap: () => _launchWhatsApp(topic.title),
+                onTap: () => launchWhatsApp(topic.title),
               ),
             ),
           );

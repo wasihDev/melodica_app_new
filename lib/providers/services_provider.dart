@@ -7,19 +7,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:melodica_app_new/providers/pacakge_provider.dart';
+import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/services/api_config_service.dart';
-import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/views/dashboard/home/checkout/download_pdf.dart';
-import 'package:melodica_app_new/views/dashboard/home/checkout/receipt_screen.dart';
 import 'package:melodica_app_new/widgets/custom_recipet_screen.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:signature/signature.dart';
 import 'dart:math';
 
-// import 'package:provider/provider.dart';
-// import 'package:url_launcher/url_launcher.dart';
 enum PaymentType {
   packagesOrder,
   freezingPoints,
@@ -29,13 +26,8 @@ enum PaymentType {
 
 class ServicesProvider extends ChangeNotifier {
   CustomerController customerController;
-  // PackageProvider packageProvider;
 
-  ServicesProvider({
-    required this.customerController,
-    // required this.packageProvider,
-  });
-  // final AppLinks _appLinks = AppLinks();
+  ServicesProvider({required this.customerController});
   SignatureController _signratureCtrl = SignatureController(
     penStrokeWidth: 3,
     penColor: Colors.black,
@@ -48,7 +40,6 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   Uint8List? signatureBytes;
-  // Uint8List get signatureBytes => _signatureBytes!;
   SignatureController get signratureCtrl => _signratureCtrl;
   bool _loading = false;
   bool get loading => _loading;
@@ -77,8 +68,6 @@ class ServicesProvider extends ChangeNotifier {
 
   List<dynamic> get selectedPackages => List.unmodifiable(_selectedPackages);
   final AppLinks _appLinks = AppLinks();
-  // bool _initialized = false;
-  // bool _linkHandled = false;
 
   /// Call ONCE
   void init(BuildContext context) {
@@ -122,35 +111,60 @@ class ServicesProvider extends ChangeNotifier {
           navigatorKey.currentContext!,
           listen: false,
         );
+        print("provider.selectedReason ${provider.selectedReason}");
+        print("provider.selectedPackage ${provider.selectedPackage}");
+        if (provider.selectedPackage != null &&
+            provider.selectedReason != null) {
+          await provider
+              .callFreezingApi(
+                navigatorKey.currentContext!,
+                provider.selectedReason!,
+                provider.selectedPackage!,
+                ref: ref, // ✅ payment reference
+              )
+              .then((val) {
+                Navigator.push(
+                  navigatorKey.currentContext!,
+                  MaterialPageRoute(
+                    builder: (_) => CustomRecipetScreen(
+                      orderId: ref,
+                      amount: provider.extraCharge.toString(),
+                      paymentMethod: 'Network International',
+                      status: 'success',
+                      date: DateTime.now(),
+                      //  package: Package,
+                    ),
+                  ),
+                );
+              });
+        }
 
-        Navigator.push(
-          navigatorKey.currentContext!,
-          MaterialPageRoute(
-            builder: (_) => CustomRecipetScreen(
-              orderId: ref,
-              amount: provider.extraCharge.toString(),
-              paymentMethod: 'Network International',
-              status: 'success',
-              date: DateTime.now(),
-            ),
-          ),
-        );
         break;
 
       case PaymentType.schedulePoints:
         debugPrint('Handling schedule points');
-        Navigator.push(
+        final Packageprovider = Provider.of<ScheduleProvider>(
           navigatorKey.currentContext!,
-          MaterialPageRoute(
-            builder: (_) => CustomRecipetScreen(
-              orderId: ref,
-              amount: "${50 * 1.05}",
-              paymentMethod: 'Network International',
-              status: 'success',
-              date: DateTime.now(),
-            ),
-          ),
+          listen: false,
         );
+        await Packageprovider.submitScheduleRequestAfterPayment(ref).then((
+          val,
+        ) {
+          Navigator.push(
+            navigatorKey.currentContext!,
+            MaterialPageRoute(
+              builder: (_) => CustomRecipetScreen(
+                orderId: ref,
+                amount: "${50 * 1.05}",
+                paymentMethod: 'Network International',
+                status: 'success',
+                date: DateTime.now(),
+                // package: null,
+              ),
+            ),
+          );
+        });
+
         // navigate to schedule receipt if needed
         break;
 
@@ -176,77 +190,7 @@ class ServicesProvider extends ChangeNotifier {
 
     // ✅ ALWAYS reset after handling
     currentPaymentType = null;
-
-    // if (currentPaymentType != PaymentType.freezingPoints) {
-    //   final provider = Provider.of<PackageProvider>(
-    //     navigatorKey.currentContext!,
-    //     listen: false,
-    //   );
-    //   Navigator.push(
-    //     navigatorKey.currentContext!,
-    //     MaterialPageRoute(
-    //       builder: (_) => CustomRecipetScreen(
-    //         orderId: '$ref',
-    //         amount: provider.extraCharge.toString(),
-    //         paymentMethod: 'Network International',
-    //         status: 'success',
-    //         date: DateTime.now(),
-    //       ),
-    //     ),
-    //   );
-    //   debugPrint('freezingPoints');
-    //   return;
-    // } else if (currentPaymentType != PaymentType.schedulePoints) {
-    //   // Navigator.push(
-    //   //   navigatorKey.currentContext!,
-    //   //   MaterialPageRoute(builder: (_) => ReceiptScreen()),
-    //   // );
-    //   debugPrint('schedulePoints');
-    //   return;
-    // } else {
-    //   // 3. Process the Payment / Order
-    //   try {
-    //     debugPrint('install order');
-    //     final val = await installOrder(ref: ref);
-    //     if (val) {
-    //       // Use the navigatorKey to ensure we have the right context
-    //       Navigator.push(
-    //         navigatorKey.currentContext!,
-    //         MaterialPageRoute(builder: (_) => ReceiptScreen()),
-    //       );
-    //     }
-    //   } catch (e) {
-    //     debugPrint('Error processing order: $e');
-    //   }
-    // }
   }
-
-  // void _handleUri(Uri? uri, BuildContext context) async {
-  //   // if (_linkHandled) return; // 🔐 BLOCK SECOND CALL
-  //   // _linkHandled = true;
-  //   debugPrint('uri =====>>> $uri');
-  //   if (uri == null) return;
-  //   if (uri.scheme != 'https' || uri.host != 'melodica-mobile.web.app') return;
-  //   final ref = uri.queryParameters['ref'];
-  //   // final type = uri.queryParameters['type']; // 👈 NEW
-  //   // print('type ${type}');
-  //   print('uri.queryParameters ${uri.queryParameters}');
-  //   if (ref == null || ref.isEmpty) return;
-  //   /// Delegate to ServicesProvider
-  //   if (uri.scheme == 'https' && uri.host == 'melodica-mobile.web.app') {
-  //     final ref = uri.queryParameters['ref'];
-  //     if (ref != null && ref.isNotEmpty) {
-  //       final val = await installOrder(ref: ref);
-  //       if (val) {
-  //         Navigator.push(
-  //           navigatorKey.currentContext!,
-  //           MaterialPageRoute(builder: (_) => ReceiptScreen()),
-  //         );
-  //       }
-  //       // if the install order is called true navigate to recieot screen
-  //     }
-  //   }
-  // }
 
   void clearList() {
     _selectedPackages = [];
@@ -280,6 +224,8 @@ class ServicesProvider extends ChangeNotifier {
 
   /// Clear checkout
   void clear() {
+    String val;
+    // val.split('.').last
     _selectedPackages.clear();
     notifyListeners();
   }
@@ -312,36 +258,17 @@ class ServicesProvider extends ChangeNotifier {
     return (totalPrice - totalDiscount) + vatAmount;
   }
 
-  // /// TOTAL PRICE
-  // double get totalPrice {
-  //   return _selectedPackages.fold(0, (sum, item) => sum + item.price);
-  // }
-
-  // // /// TOTAL DISCOUNT
-
-  // double get totalDiscount {
-  //   return _selectedPackages.fold(
-  //     0.0,
-  //     (sum, item) => sum + (double.tryParse(item.discount ?? '0') ?? 0.0),
-  //   );
-  // }
-
-  // // return totalPrice - totalDiscount + vat;
-
-  // /// FINAL AMOUNT
-  // double get payableAmount {
-  //   return totalPrice - totalDiscount;
-  // }
-
   // music list package
-  Future<void> fetch(String terrirtoryId) async {
+  Future<void> fetch() async {
     _loading = true;
     _error = null;
     notifyListeners();
-
+    // final auth = FirebaseAuth.instance.currentUser;
     try {
+      // TODO
       final uri = Uri.parse(
-        '${ApiConfigService.endpoints.getServices}${terrirtoryId}',
+        // '${ApiConfigService.endpoints.getServices}${auth?.email}',
+        '${ApiConfigService.endpoints.getServices}${customerController.selectedBranch}',
       );
 
       final resp = await http.get(uri);
@@ -398,16 +325,18 @@ class ServicesProvider extends ChangeNotifier {
     _loading = true;
     _error = null;
     notifyListeners();
-    print(
-      "${ApiConfigService.endpoints.getMemberships}${customerController.customer!.territoryid}",
-    );
+    // TODO:
+    // final auth = FirebaseAuth.instance.currentUser;
+    // print("${ApiConfigService.endpoints.getMemberships}${auth?.email}");
     try {
       final uri = Uri.parse(
-        '${ApiConfigService.endpoints.getMemberships}${customerController.customer!.territoryid}',
+        '${ApiConfigService.endpoints.getMemberships}${customerController.selectedBranch}',
         //C27B1894-7C6E-EE11-9AE7-0022489F8146',
         // 'https://bf67c0337b6de47faeee4735e1fe49.46.environment.api.powerplatform.com/powerautomate/automations/direct/workflows/19d12f88493c44eca47defb553aab05e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=adzRWIXbH-lg5lnxWCNgD-w9SbvgQ0zgnqIrAWQADo8&locationid=C27B1894-7C6E-EE11-9AE7-0022489F8146',
       );
       final resp = await http.get(uri);
+      // print("resp fetchDancePackages ${resp.statusCode}");
+      // print("resp fetchDancePackages ${resp.body.length}");
       if (resp.statusCode != 200) {
         throw Exception('HTTP ${resp.statusCode}');
       }
@@ -492,38 +421,6 @@ class ServicesProvider extends ChangeNotifier {
   List<int> get durationsForSelectedService =>
       _getDurationsForService(_selectedServiceName);
 
-  // List<ServiceModel> get filteredList {
-  //   return _all.where((s) {
-  //     final okService = _selectedServiceName == null
-  //         ? true
-  //         : s.service == _selectedServiceName;
-  //     final okDuration = _selectedDuration == null
-  //         ? true
-  //         : s.duration == _selectedDuration;
-  //     return okService && okDuration;
-  //   }).toList();
-  // }
-  // List<ServiceModel> get filteredList {
-  //   final filtered = _all.where((s) {
-  //     final okService = _selectedServiceName == null
-  //         ? true
-  //         : s.service == _selectedServiceName;
-  //     final okDuration = _selectedDuration == null
-  //         ? true
-  //         : s.duration == _selectedDuration;
-  //     return okService && okDuration;
-  //   });
-
-  //   final seen = <String>{};
-
-  //   return filtered.where((s) {
-  //     final key = '${s.sessions}_${s.duration}_${s.service}';
-  //     if (seen.contains(key)) return false;
-  //     seen.add(key);
-  //     return true;
-  //   }).toList();
-  // }
-
   List<ServiceModel> get filteredList {
     final filtered = _all.where((s) {
       final okService = _selectedServiceName == null
@@ -563,7 +460,8 @@ class ServicesProvider extends ChangeNotifier {
     }
   }
 
-  String? _selectedFrequency; // UI value: Once a week / Twice a week
+  String? _selectedFrequency =
+      'Once a week'; // UI value: Once a week / Twice a week
   String? get selectedFrequency => _selectedFrequency;
 
   void setFrequency(String? value) {
@@ -591,42 +489,6 @@ class ServicesProvider extends ChangeNotifier {
   String? get paymentUrl => _paymentUrl;
   String? _orderReference;
   String? get orderReference => _orderReference;
-
-  // Future<void> collectPayment({required num amount}) async {
-  //   _loading = true;
-  //   _error = null;
-  //   notifyListeners();
-  //   try {
-  //     final response = await http.post(
-  //       Uri.parse(ApiConfigService.endpoints.collectPayment),
-  //       headers: {"Content-Type": "application/json"},
-  //       body: jsonEncode({
-  //         "branch": customerController.customer!.territoryid,
-  //         "amount": amount,
-  //       }),
-  //     );
-  //     if (response.statusCode != 200) {
-  //       throw Exception(response.body);
-  //     }
-  //     final data = jsonDecode(response.body);
-  //     _paymentUrl = data["URL"];
-  //     _orderReference = data["merchantOrderReference"];
-  //     /// 🔥 Open payment page immediately
-  //     await _openPaymentUrl(_paymentUrl!);
-  //   } catch (e) {
-  //     _error = e.toString();
-  //   } finally {
-  //     _loading = false;
-  //     notifyListeners();
-  //   }
-  // }
-
-  // Future<void> _openPaymentUrl(String url) async {
-  //   final uri = Uri.parse(url);
-  //   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-  //     throw Exception("Could not open payment page");
-  //   }
-  // }
 
   Future<String?> _getAccessToken() async {
     try {
@@ -780,7 +642,7 @@ class ServicesProvider extends ChangeNotifier {
         "lastname": customerController.customer?.lastName,
         "relatedcontact":
             "${customerController.students.map((e) => e.mbId).join(",")}",
-        "branch": "${customerController.customer?.territoryid}",
+        "branch": "${customerController.selectedBranch}",
         "transactionid":
             "$ref", // after payment is completed the refrence id should be here
         "salesid": "$randomNumber",

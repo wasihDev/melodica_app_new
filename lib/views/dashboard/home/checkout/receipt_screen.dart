@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
+import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/utils/date_format.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/utils/whatsapp_link.dart';
@@ -156,7 +157,7 @@ class ReceiptScreen extends StatelessWidget {
                       // --- Products ---
                       // _buildSectionTitle('Products'),
                       const Text(
-                        'Products we buy',
+                        'Orders',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.secondaryText,
@@ -173,7 +174,7 @@ class ReceiptScreen extends StatelessWidget {
                         itemBuilder: (context, index) {
                           return _buildProductDetail(
                             '${ctrl.selectedPackages[index].service}',
-                            '${ctrl.selectedPackages[index].durationtext}',
+                            '${ctrl.selectedPackages[index].sessionstext} - ${ctrl.selectedPackages[index].durationtext}',
                             "${ctrl.selectedPackages[index].price}",
                           );
                         },
@@ -201,25 +202,29 @@ class ReceiptScreen extends StatelessWidget {
                                   .fullName,
                               valueColor: AppColors.secondaryText,
                             ),
-                            SummaryRow(
-                              label: 'Start Date',
-                              value: formatCreatedOn(
-                                ctrl
-                                    .customerController
-                                    .selectedStudent!
-                                    .overriddenCreatedOn,
-                              ),
-                              valueColor: AppColors.secondaryText,
-                            ),
-                            const SummaryRow(
-                              label: 'Scheduled Date',
-                              value: 'Flexible',
-                              valueColor: AppColors.secondaryText,
-                            ),
-                            const SummaryRow(
-                              label: 'Branch',
-                              value: 'Dubai',
-                              valueColor: AppColors.secondaryText,
+                            // SummaryRow(
+                            //   label: 'Start Date',
+                            //   value: formatCreatedOn(
+                            //     ctrl
+                            //         .customerController
+                            //         .selectedStudent!
+                            //         .overriddenCreatedOn,
+                            //   ),
+                            //   valueColor: AppColors.secondaryText,
+                            // ),
+                            // const SummaryRow(
+                            //   label: 'Scheduled Date',
+                            //   value: 'Flexible',
+                            //   valueColor: AppColors.secondaryText,
+                            // ),
+                            Consumer<CustomerController>(
+                              builder: (context, ctrl, child) {
+                                return SummaryRow(
+                                  label: 'Branch',
+                                  value: '${ctrl.selectedBranch}',
+                                  valueColor: AppColors.secondaryText,
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -245,15 +250,20 @@ class ReceiptScreen extends StatelessWidget {
                               value: 'AED ${ctrl.totalPrice}',
                               valueColor: AppColors.darkText,
                             ),
-                            const SummaryRow(
-                              label: 'Registration Fees',
-                              value: 'AED 0',
-                              valueColor: AppColors.darkText,
-                            ),
+                            // SummaryRow(
+                            //   label: 'Registration Fees',
+                            //   value: 'AED 0',
+                            //   valueColor: AppColors.darkText,
+                            // ),
                             SummaryRow(
                               label: 'Discount',
                               value: '-AED ${ctrl.totalDiscount}',
                               valueColor: AppColors.redError,
+                            ),
+                            SummaryRow(
+                              label: 'VAT',
+                              value: 'AED ${ctrl.vatAmount}',
+                              valueColor: Colors.green,
                             ),
                             SummaryRow(
                               label: 'Total',
@@ -275,8 +285,16 @@ class ReceiptScreen extends StatelessWidget {
                     height: 52,
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        final productNames = ctrl.selectedProductNames;
-                        openWhatsApp(productNames);
+                        int totalClasses = 0;
+                        ctrl.selectedPackages.map((e) {
+                          // print('procdcut ${e.sessionstext}');
+                          final text = e.sessionstext; // e.g. "20 Classes"
+                          final count =
+                              int.tryParse(text.split(' ').first) ?? 0;
+                          totalClasses += count;
+                        }).toList();
+                        // print('Total Classes: $totalClasses');
+                        openWhatsApp("${totalClasses} Classes");
                       },
                       icon: const Icon(
                         Icons.check_circle_outline,
@@ -300,6 +318,7 @@ class ReceiptScreen extends StatelessWidget {
                   );
                 },
               ),
+
               // --- Fixed Bottom Button ---
               Padding(
                 padding: const EdgeInsets.only(

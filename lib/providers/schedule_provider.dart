@@ -29,6 +29,62 @@ class ScheduleProvider extends ChangeNotifier {
 
   DateTime? selectedDate;
 
+  String? subject;
+  String? classDateTime;
+  String? action; // Rebook or Reschedule
+  String? preferredSlot;
+  String? lateNotice; // Early / Late
+  String? branch;
+  String? packageId;
+
+  void setScheduleRequests({
+    required String subject,
+    required String classDateTime,
+    required String action,
+    required String preferredSlot,
+    required String lateNotice,
+    required String branch,
+    required String packageId,
+  }) {
+    this.subject = subject;
+    this.classDateTime = classDateTime;
+    this.action = action;
+    this.preferredSlot = preferredSlot;
+    this.lateNotice = lateNotice;
+    this.branch = branch;
+    this.packageId = packageId;
+  }
+
+  Future<void> submitScheduleRequestAfterPayment(String transactionRef) async {
+    if (subject == null ||
+        classDateTime == null ||
+        action == null ||
+        preferredSlot == null)
+      return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await submitScheduleRequest(
+        subject: subject!,
+        classDateTime: classDateTime!,
+        action: action!,
+        preferredSlot: preferredSlot!,
+        reason: "", // can customize if needed
+        branch: branch!,
+        packageid: packageId!,
+        lateNotic: lateNotice!,
+        transactionId: transactionRef, // ✅ payment reference
+      );
+    } catch (e) {
+      debugPrint("Error submitting schedule request: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void selectDate(DateTime date) {
     selectedDate = date;
     notifyListeners();
@@ -72,6 +128,8 @@ class ScheduleProvider extends ChangeNotifier {
 
     try {
       schedules = await ScheduleService.getSchedule(context);
+
+      // print('fetchSchedule ${schedules.length}');
     } catch (e) {
       debugPrint('Schedule error: $e');
     }
@@ -173,27 +231,12 @@ class ScheduleProvider extends ChangeNotifier {
     required String preferredSlot,
     required String branch,
     required String reason,
-    String transactionId = "",
+    required String lateNotic,
+    String? transactionId,
   }) async {
     _isLoading = true;
     notifyListeners();
-    // print(
-    //   'customerController.customer!.firstName ${customerController.customer!.firstName}',
-    // );
-    // print('customerController2 ${customerController.customer!.firstName}');
-    // print('customerController4 ${customerController.customer!.lastName}');
-    // print(
-    //   'customerController3 ${customerController.students.map((e) => e.mbId).join(",")}',
-    // );
-    // print('customerController5 ${customerController.selectedStudent!.mbId}');
-    // print('customerController6 ${subject}');
 
-    // print('customerController7 ${classDateTime}');
-    // print('customerController8 ${preferredSlot}');
-    // print('bracj ${customerController.customer!.territoryid}');
-    // print(
-    //   'customerController ${customerController.selectedStudent!.firstName}',
-    // );
     try {
       final response = await http.post(
         Uri.parse(ApiConfigService.endpoints.postCancellation),
@@ -215,9 +258,12 @@ class ScheduleProvider extends ChangeNotifier {
           "preferredslot": "${preferredSlot}",
           "reason": reason,
           "transactionid": "${transactionId}",
+          "noticetype": "${lateNotic}",
         }),
       );
+      print('response.body ${response.body}');
       print('response.statusCode ${response.body}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
@@ -243,11 +289,12 @@ class ScheduleProvider extends ChangeNotifier {
     final now = DateTime.now();
     return schedules.where((s) {
         // ❌ REMOVE empty / dummy schedules
+
         if (s.bookingDateTime == null) return false;
-        if (s.bookingRoom == '') return false;
-        if (s.bookingDay == null || s.bookingDay!.isEmpty) return false;
-        if (s.day == null || s.day == 0) return false;
-        if (s.monthShort == null || s.monthShort!.isEmpty) return false;
+        // if (s.bookingRoom == '') return false;
+        // if (s.bookingDay == '' || s.bookingDay.isEmpty) return false;
+        if (s.day == '' || s.day == 0) return false;
+        if (s.monthShort == '' || s.monthShort.isEmpty) return false;
         final bookingDate = s.bookingDateTime!;
         // ✅ upcoming date only
         if (!bookingDate.isAfter(now)) return false;
@@ -258,19 +305,17 @@ class ScheduleProvider extends ChangeNotifier {
       }).toList()
       ..sort((a, b) => a.bookingDateTime!.compareTo(b.bookingDateTime!));
   }
+
   // List<ScheduleModel> get upcomingSchedules {
   //   final now = DateTime.now();
-
   //   return schedules.where((s) {
   //       if (s.bookingDateTime == null) return false;
   //       if (s.bookingRoom == '') return false;
   //       if (s.bookingDay == null || s.bookingDay!.isEmpty) return false;
   //       if (s.day == null || s.day == 0) return false;
   //       if (s.monthShort == null || s.monthShort!.isEmpty) return false;
-
   //       final start = s.bookingDateTime!;
   //       final end = s.endDateTime;
-
   //       // Keep the class if:
   //       // 1️⃣ It's upcoming OR 2️⃣ It's ongoing
   //       return end.isAfter(now);

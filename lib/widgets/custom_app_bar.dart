@@ -5,6 +5,7 @@ import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/custom_student_item_widget.dart';
 import 'package:melodica_app_new/views/dashboard/notification/notification_screen.dart';
 import 'package:provider/provider.dart';
@@ -104,7 +105,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     Row(
                       children: [
                         Text(
-                          student?.fullName ?? 'Loading...',
+                          student?.fullName ?? "loading..",
+                          // provider.customer!.fullName,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -133,21 +135,31 @@ class _CustomAppBarState extends State<CustomAppBar> {
         Consumer<NotificationProvider>(
           builder: (context, pro, child) {
             return InkWell(
+              borderRadius: BorderRadius.circular(12),
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => NotificationScreen()),
                 );
               },
-              child: badges.Badge(
-                showBadge: pro.unread.length == 0 ? false : true,
-                badgeContent: Text(
-                  pro.unread.length.toString(),
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+              child: Container(
+                height: 35.h,
+                width: 35.w,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  Icons.notifications,
-                  color: const Color.fromARGB(255, 255, 188, 5),
+                child: badges.Badge(
+                  showBadge: pro.unread.length == 0 ? false : true,
+                  badgeContent: Text(
+                    pro.unread.length.toString(),
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                  child: Icon(
+                    Icons.notifications,
+                    color: const Color.fromARGB(255, 255, 188, 5),
+                  ),
                 ),
               ),
             );

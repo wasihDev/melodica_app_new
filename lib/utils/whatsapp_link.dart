@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 Future<void> openWhatsApp(String productNames) async {
@@ -8,11 +11,19 @@ Future<void> openWhatsApp(String productNames) async {
 
   final encodedMessage = Uri.encodeComponent(message);
 
-  final url = Uri.parse(
-    'https://api.whatsapp.com/send/?phone=$phone&text=$encodedMessage',
-  );
-
-  if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-    throw 'Could not launch WhatsApp';
+  Uri url;
+  if (Platform.isAndroid) {
+    url = Uri.parse('whatsapp://send?phone=$phone&text=$encodedMessage');
+  } else {
+    // Web or unsupported platform
+    url = Uri.parse(
+      'https://api.whatsapp.com/send?phone=$phone&text=$encodedMessage',
+    );
+  }
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  } else {
+    debugPrint('Could not launch WhatsApp. Make sure the app is installed.');
+    // O
   }
 }

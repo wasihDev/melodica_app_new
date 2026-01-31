@@ -81,6 +81,7 @@ class _MyAppState extends State<MyApp> {
             // routerConfig: router,
             theme: ThemeData(
               useMaterial3: true,
+              // primaryColor: Colors.white,
               scaffoldBackgroundColor: Colors.white,
             ),
             // routes

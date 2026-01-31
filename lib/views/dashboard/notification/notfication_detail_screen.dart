@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:melodica_app_new/models/notification_model.dart';
 import 'package:melodica_app_new/providers/notification_provider.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -131,7 +132,27 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                       widget.notification.messageText,
                       style: const TextStyle(fontSize: 16),
                     ),
+              SizedBox(height: 10),
 
+              widget.notification.imageUrl == '' ||
+                      widget.notification.imageUrl == null
+                  ? SizedBox()
+                  : Container(
+                      height: 300.h,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          fit: BoxFit.contain,
+                          image: NetworkImage(
+                            widget.notification.imageUrl ?? "",
+                          ),
+                        ),
+                      ),
+                    ),
+              SizedBox(height: 10),
+              Spacer(),
               ...widget.notification.actions.map(
                 (action) => SafeArea(
                   bottom: true,
@@ -140,18 +161,22 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.amber,
+                        backgroundColor: widget.notification.isValidNow == false
+                            ? Colors.grey
+                            : Colors.amber,
                         minimumSize: const Size.fromHeight(48),
                       ),
-                      onPressed: () async {
-                        await _handleNotificationAction(
-                          context,
-                          action,
-                          widget.notification.notificationId,
-                        );
-                        // provider.markAsRead(notification.notificationId);
-                        // Navigator.pop(context);
-                      },
+                      onPressed: widget.notification.isValidNow == false
+                          ? null
+                          : () async {
+                              await _handleNotificationAction(
+                                context,
+                                action,
+                                widget.notification.notificationId,
+                              );
+                              // provider.markAsRead(notification.notificationId);
+                              // Navigator.pop(context);
+                            },
                       child: Text(
                         action.label,
                         style: TextStyle(color: Colors.black),

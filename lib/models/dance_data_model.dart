@@ -20,6 +20,8 @@ class DanceDataModel {
   final int? cancellations;
   final int? freezings;
   final String discount;
+  final String subject;
+
   DanceDataModel({
     required this.sharedserviceid,
     required this.servicenumber,
@@ -39,6 +41,7 @@ class DanceDataModel {
     required this.cancellations,
     required this.freezings,
     required this.discount,
+    required this.subject,
   });
 
   factory DanceDataModel.fromJson(Map<String, dynamic> j) {
@@ -80,6 +83,7 @@ class DanceDataModel {
       extensions: tryInt(j['extensions']),
       cancellations: tryInt(j['cancellations']),
       freezings: tryInt(j['freezings']),
+      subject: j['subjects'] ?? "",
     );
   }
 }

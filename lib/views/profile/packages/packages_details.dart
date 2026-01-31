@@ -11,9 +11,7 @@ class PackageDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final remainingFreezes =
         package.totalAllowedFreezings - package.totalFreezingTaken;
-    print(
-      'remainingFreezes ${remainingFreezes} package.totalAllowedFreezings ${package.totalAllowedFreezings}',
-    );
+
     // print(' package.totalFreezingTaken ${package.totalFreezingTaken}');
     // print('package ${package.cl}')
     final unbookedClasses = package.totalClasses - package.totalBooked;
@@ -94,7 +92,7 @@ class PackageDetailScreen extends StatelessWidget {
 
               /// Remaining Sessions
               const Text(
-                "Remaining Sessions:",
+                "Remaining Classes:",
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
@@ -102,7 +100,10 @@ class PackageDetailScreen extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
-                  value: package.remainingSessions / package.totalClasses,
+                  value: package.totalClasses > 0
+                      ? (package.remainingSessions / package.totalClasses)
+                            .clamp(0.0, 1.0)
+                      : 0.0,
                   minHeight: 8,
                   backgroundColor: Colors.grey.shade300,
                   valueColor: const AlwaysStoppedAnimation(Color(0xFFF5C542)),
@@ -143,58 +144,61 @@ class PackageDetailScreen extends StatelessWidget {
       ),
 
       /// Bottom Buttons
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Text(package.totalAllowedFreezings),
-            package.packageStatus == "Completed"
-                ? SizedBox()
-                : ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF5C542),
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+      bottomNavigationBar: SafeArea(
+        bottom: true,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Text(package.totalAllowedFreezings),
+              package.packageStatus == "Completed"
+                  ? SizedBox()
+                  : ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF5C542),
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                FreezingRequestScreen(package: package),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Freeze",
+                        style: TextStyle(color: Colors.black),
                       ),
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              FreezingRequestScreen(package: package),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      "Freeze",
-                      style: TextStyle(color: Colors.black),
-                    ),
-                  ),
-            const SizedBox(height: 20),
-            // package.packageStatus == "Completed"
-            //     ? SizedBox()
-            //     : OutlinedButton(
-            //         style: OutlinedButton.styleFrom(
-            //           minimumSize: const Size(double.infinity, 48),
-            //           shape: RoundedRectangleBorder(
-            //             borderRadius: BorderRadius.circular(30),
-            //           ),
-            //         ),
-            //         onPressed: () {
-            //           showFreezingDialog(
-            //             context,
-            //             onYes: () {
-            //               Navigator.pop(context);
-            //               Navigator.pop(context);
-            //             },
-            //           );
-            //         },
-            //         child: const Text("Convert"),
-            //       ),
-          ],
+              const SizedBox(height: 20),
+              // package.packageStatus == "Completed"
+              //     ? SizedBox()
+              //     : OutlinedButton(
+              //         style: OutlinedButton.styleFrom(
+              //           minimumSize: const Size(double.infinity, 48),
+              //           shape: RoundedRectangleBorder(
+              //             borderRadius: BorderRadius.circular(30),
+              //           ),
+              //         ),
+              //         onPressed: () {
+              //           showFreezingDialog(
+              //             context,
+              //             onYes: () {
+              //               Navigator.pop(context);
+              //               Navigator.pop(context);
+              //             },
+              //           );
+              //         },
+              //         child: const Text("Convert"),
+              //       ),
+            ],
+          ),
         ),
       ),
     );

@@ -23,13 +23,15 @@ void main() async {
   await firebaseMessagingService.init(
     localNotificationsService: localNotificationsService,
   );
-
+  // final pref = await SharedPreferences.getInstance();
+  // pref.clear();
   // DeepLinkService().init();
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-
+  // frances.a@melodica.ae
+  // Melodica2020
   runApp(MyApp());
 }

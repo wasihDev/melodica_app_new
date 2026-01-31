@@ -21,6 +21,7 @@ class StudentsScreen extends StatefulWidget {
 }
 
 class _StudentsScreenState extends State<StudentsScreen> {
+  int selectedStudentIndex = 0;
   @override
   Widget build(BuildContext context) {
     final ctrl = Provider.of<CustomerController>(context, listen: false);
@@ -28,7 +29,10 @@ class _StudentsScreenState extends State<StudentsScreen> {
     return Scaffold(
       appBar: AppBarWidget(title: 'Students', isShowLogout: false),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildAddStudentSection(ctrl.students.first),
+
+      floatingActionButton: ctrl.students.isNotEmpty
+          ? _buildAddStudentSection(ctrl.students[selectedStudentIndex])
+          : null,
       body: Column(
         children: [
           Divider(),
@@ -39,6 +43,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
               itemBuilder: (context, index) {
                 return InkWell(
                   onTap: () {
+                    setState(() {
+                      selectedStudentIndex = index;
+                    });
                     Navigator.pushNamed(
                       context,
                       AppRoutes.studentDetails,
@@ -140,7 +147,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
           Navigator.pushNamed(
             context,
             AppRoutes.newStudent,
-            arguments: {'isEdit': false, 'student': student},
+            // arguments: {'isEdit': false, 'student': student},
           );
         },
         widget: Text(

@@ -13,7 +13,7 @@ class ScheduleService {
     print('response ${student}');
     final response = await http.get(
       Uri.parse(
-        "${ApiConfigService.endpoints.getSchedule}${student!.mbId}",
+        "${ApiConfigService.endpoints.getSchedule}${student?.mbId}",
         // 'https://1ef53198b5bceeb3bf46335729d185.55.environment.api.powerplatform.com/powerautomate/automations/direct/workflows/d871ca1004324568ba2b8084ebca56a4/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RbWgkV_r76qQTW3YtpikgwV_u3q0jJmSAUKS55dQORk&ClientID=100313948',
       ),
       headers: {
@@ -21,7 +21,9 @@ class ScheduleService {
         // Add token if required
       },
     );
-    print('response ${response.statusCode}');
+    print('getSchedule response ${response.statusCode}');
+    // print('getSchedule response body== >: ${response.body}');
+
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
 

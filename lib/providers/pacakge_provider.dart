@@ -8,6 +8,7 @@ import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/services/api_config_service.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -33,10 +34,30 @@ class PackageProvider extends ChangeNotifier {
   DateTime? endDate;
 
   int freezingRemaining = 0;
+  ///////////
 
+  Package? selectedPackage;
+  String? selectedReason;
+
+  PaymentType? currentPaymentType;
+
+  void setPaymentType(PaymentType type) {
+    currentPaymentType = type;
+    notifyListeners();
+  }
+
+  void setSelectedPackage(Package package) {
+    selectedPackage = package;
+  }
+
+  void setSelectedReason(String reason) {
+    selectedReason = reason;
+  }
+
+  ///////////
   void setFreezingRemaining(int value) {
     freezingRemaining = value;
-    print('freezingRemaining $freezingRemaining');
+    // print('freezingRemaining $freezingRemaining');
     notifyListeners();
   }
 
@@ -72,80 +93,106 @@ class PackageProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _showNotEnoughFreezingPopup(BuildContext context) {
+  void _showNotEnoughFreezingPopup(
+    BuildContext context, {
+    required VoidCallback ontap,
+  }) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        actionsPadding: EdgeInsets.only(bottom: 20, right: 10),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        backgroundColor: Colors.white,
-        title: Icon(Icons.warning, color: Colors.orange, size: 40),
-        content: Text(
-          "You do not have enough remaining freezing.\nConsider purchasing extensions",
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              "No, thanks",
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
+      builder: (_) => PopScope(
+        canPop: false,
+        child: Dialog(
+          child: Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
             ),
-          ),
-          InkWell(
-            onTap: () async {
-              servicesProvider.setPaymentType(PaymentType.freezingPoints);
-              final vat = extraCharge * 0.05;
-              final amountWithVat = (extraCharge + vat).toInt();
-
-              final success = await servicesProvider.startCheckout(
-                context,
-                amount: amountWithVat,
-                redirectUrl: "https://melodica-mobile.web.app",
-              );
-
-              if (success && servicesProvider.paymentUrl != null) {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-                await launchUrl(
-                  Uri.parse(servicesProvider.paymentUrl!),
-                  mode: LaunchMode.externalApplication,
-                );
-              }
-              // servicesProvider.startCheckout(amount:extraCharge, redirectUrl: '' )
-            },
-            child: Container(
-              height: 50,
-              width: 120,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  "AED ${extraCharge * 1.05}",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: 18),
+                Icon(Icons.warning, color: Colors.orange, size: 40),
+                SizedBox(height: 25),
+                Text(
+                  "You do not have enough remaining freezing.\nConsider purchasing extensions",
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 25),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            AppRoutes.dashboard,
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        splashColor: AppColors.primary.withOpacity(0.2),
+                        highlightColor: AppColors.primary.withOpacity(0.1),
+                        child: Ink(
+                          height: 45.h,
+                          width: 110.w,
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          // alignment: Alignment.center,
+                          child: Center(
+                            child: Text(
+                              'Reschedule',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: ontap,
+                      child: Container(
+                        height: 50,
+                        width: 110.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "AED 50",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 12.fSize,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    "No, thanks",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
-            },
-            child: Text(
-              'Reschedule',
-              style: TextStyle(color: AppColors.primary),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -237,8 +284,16 @@ class PackageProvider extends ChangeNotifier {
     String reason,
     Package package,
   ) async {
+    selectedPackage = package;
+    selectedReason = reason;
     if (startDate == null || endDate == null) return;
+    final bool isFourClassPackage = package.totalClasses == 4;
 
+    if (isFourClassPackage) {
+      // Show the specific alert: 'You do not have freezing allowance...'
+      _showRestrictedFreezingPopup(context);
+      return; // Stop the process here
+    }
     // // 1️⃣ Local validation
     if (await _isExactMatch(startDate!, endDate!)) {
       _showErrorPopup(
@@ -251,21 +306,44 @@ class PackageProvider extends ChangeNotifier {
     if (await _isOverlapping(startDate!, endDate!)) {
       _showErrorPopup(
         context,
-        "You have overlapping freezing dates with a previous submission.",
+        "You already submitted a freezing request for this class date, adjust your date range if you want to submit another one.",
       );
       return;
     }
     if (!hasEnoughFreezing) {
-      _showNotEnoughFreezingPopup(context);
+      _showNotEnoughFreezingPopup(
+        context,
+        ontap: () async {
+          servicesProvider.setPaymentType(PaymentType.freezingPoints);
+
+          final vat = extraCharge * 0.05;
+          final amountWithVat = (extraCharge + vat).toInt();
+
+          final success = await servicesProvider.startCheckout(
+            context,
+            amount: amountWithVat,
+            redirectUrl: "https://melodica-mobile.web.app",
+          );
+
+          if (success && servicesProvider.paymentUrl != null) {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+            await launchUrl(
+              Uri.parse(servicesProvider.paymentUrl!),
+              mode: LaunchMode.externalApplication,
+            );
+          }
+        },
+      );
       return;
     }
 
     final proceed = await _showConsumePopup(context);
     if (!proceed) return;
 
-    await _callFreezingApi(context, reason, package);
+    await callFreezingApi(context, reason, package);
     // 4️⃣ Save request locally after successful submission
-    await _saveFreezingRequest(startDate!, endDate!);
   }
 
   // Save a freezing request locally
@@ -302,6 +380,51 @@ class PackageProvider extends ChangeNotifier {
     return previous.any((f) => f["start"] == start && f["end"] == end);
   }
 
+  // 4 class package popup
+  void _showRestrictedFreezingPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.info_outline, color: Colors.orange, size: 60),
+            const SizedBox(height: 16),
+            const Text(
+              "You do not have freezing allowance, consider rescheduling in advance to avoid session loss.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD54F), // Melodica Yellow
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "OK",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Check if dates overlap
   Future<bool> _isOverlapping(DateTime start, DateTime end) async {
     final previous = await _getPreviousRequests();
@@ -316,16 +439,15 @@ class PackageProvider extends ChangeNotifier {
     return false;
   }
 
-  Future<void> _callFreezingApi(
+  Future<void> callFreezingApi(
     BuildContext context,
     String reason,
-    Package package,
-  ) async {
+    Package package, {
+    String? ref,
+  }) async {
     isLoading = true;
     notifyListeners();
-    print(
-      'startDate!.toUtc().toIso8601String() ${startDate!.toUtc().toIso8601String()}',
-    );
+
     final affectedClasses = scheduleProvider.getAffectedClasses(
       startDate: startDate!,
       endDate: endDate!,
@@ -337,27 +459,29 @@ class PackageProvider extends ChangeNotifier {
       return;
     }
 
+    print('affectedClasses${affectedClasses}');
+
     print('affectedClasses ${affectedClasses}');
     print('reason ${reason}');
     final body = {
-      "firstname": customerController.customer!.firstName,
-      "lastname": customerController.customer!.lastName,
-      "customerid": customerController.customer!.mbId.toString(),
+      "firstname": "${customerController.customer!.firstName}",
+      "lastname": "${customerController.customer!.lastName}",
+      "customerid": "${customerController.customer!.mbId.toString()}",
       "relatedcontact":
           "${customerController.students.map((e) => e.mbId).join(",")}",
       "studentfirstname": "${customerController.selectedStudent?.firstName}",
       "studentlastname": "${customerController.selectedStudent?.lastName}",
       "studentid": "${customerController.selectedStudent?.mbId}",
       "subject": "${package.subject}",
-      "branch": "${customerController.customer?.territoryid}",
-      "transactionid": "16866b7e-d056-4b08-9e6e-a3797a63bae7",
-      "salesid": "APP-208637",
+      "branch": "${customerController.selectedBranch}",
+      "transactionid": "${ref ?? ""}",
+      "salesid": "", // i need to pass a transcation id when the payment is done
       "freezingallowance": freezingRemaining,
       "freezingallocation": "Purchased",
-      "freezestart": startDate!.toUtc().toIso8601String(),
-      "freezeend": endDate!.toUtc().toIso8601String(),
+      "freezestart": "${startDate!.toUtc().toIso8601String()}",
+      "freezeend": "${endDate!.toUtc().toIso8601String()}",
       "affectedclasses": affectedClasses,
-      //  [
+      // [
       //   {
       //     "bookingid": "10010340088375110",
       //     "bookingstart": startDate!.toUtc().toIso8601String(),
@@ -376,9 +500,11 @@ class PackageProvider extends ChangeNotifier {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(body),
       );
-      print('response.statusCode ${response.statusCode}');
+      print('response ${response.statusCode}');
+      print('response freezing api ${response.body}');
       if (response.statusCode == 200) {
         _showSuccessPopup(context);
+        await _saveFreezingRequest(startDate!, endDate!);
       } else {
         _showErrorPopup(context, "Something went wrong");
       }
@@ -434,19 +560,33 @@ class PackageProvider extends ChangeNotifier {
     final ctrl = Provider.of<CustomerController>(context, listen: false);
     final student = ctrl.selectedStudent;
     try {
-      print('student!.mbId ${student!.mbId}');
+      print('student!.mbId ${student?.mbId}');
       final response = await http.get(
-        Uri.parse("${ApiConfigService.endpoints.getPackages}${student.mbId}"),
+        Uri.parse("${ApiConfigService.endpoints.getPackages}${student?.mbId}"),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
         _packages = data.map((e) => Package.fromJson(e)).toList();
+        print('_packages =====>>m $_packages');
+
+        /// 🔑 Extract unique branches
+        final branches = _packages.map((e) => e.branch).toSet().toList();
+        print('branch ===>> $branches');
+        if (branches.length == 1) {
+          /// ✅ Single branch → auto select
+          ctrl.setSelectedBranch(branches.first);
+        } else if (branches.length == 0 && branches.isEmpty) {
+          return;
+        } else {
+          /// ❌ Multiple branches → ask user
+          await _showBranchSelectionDialog(context, branches);
+        }
       } else {
         error = 'Failed to load packages';
       }
     } catch (e) {
-      print('error $e');
+      print('error fetchPackages $e');
       error = e.toString();
     }
 
@@ -480,6 +620,65 @@ class PackageProvider extends ChangeNotifier {
         "end": DateTime.parse(data["end"]),
       };
     }).toList();
+  }
+
+  Future<void> _showBranchSelectionDialog(
+    BuildContext context,
+    List<String> branches,
+  ) async {
+    final customerCtrl = Provider.of<CustomerController>(
+      context,
+      listen: false,
+    );
+
+    String? selectedBranch;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Branch'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: branches.map((branch) {
+                  return RadioListTile<String>(
+                    title: Text(branch),
+                    value: branch,
+                    groupValue: selectedBranch,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedBranch = value;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: selectedBranch == null
+                      ? null
+                      : () async {
+                          customerCtrl.setSelectedBranch(selectedBranch!);
+
+                          final cusprovider = Provider.of<CustomerController>(
+                            context,
+                            listen: false,
+                          );
+                          print('selectedBranch ${selectedBranch}');
+                          await cusprovider.getDisplayDance(selectedBranch!);
+                          Navigator.pop(context);
+                        },
+                  child: const Text('Continue'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<bool> isExactMatch(DateTime start, DateTime end) async {

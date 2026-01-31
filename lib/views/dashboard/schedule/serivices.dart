@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:melodica_app_new/models/teacher_slots_models.dart';
 import 'package:melodica_app_new/services/api_config_service.dart';
 
 class RescheduleService {
-  Future<List<AvailabilitySlot>> getAvailability(
+  Future<List<TeacherSlot>> getAvailability(
     String date,
     String resourceId,
     int duration,
+    String Subject,
+    String Branch,
   ) async {
     final response = await http.post(
       Uri.parse(ApiConfigService.endpoints.getAvailability),
@@ -15,15 +18,20 @@ class RescheduleService {
         "Date": date.toString().split(' ').first, // YYYY-MM-DD
         "Resource": resourceId,
         "Duration": duration,
+        "Subject": Subject,
+        "Branch": Branch,
       }),
     );
     print('getAvailability.statusCode ${response.statusCode}');
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      print('data ${data}');
-      List services = data['services'] ?? [];
-      print('services ${services}');
-      return services.map((s) => AvailabilitySlot.fromJson(s)).toList();
+      // print('data ${data}');
+      // List services = data['services'] ?? [];
+      // print('services ${services}');
+      final List<dynamic> rows = data['rows'] ?? [];
+
+      // Convert each row to TeacherSlot
+      return rows.map((s) => TeacherSlot.fromJson(s)).toList();
     } else {
       throw Exception("Failed to load availability");
     }

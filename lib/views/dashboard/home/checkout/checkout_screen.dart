@@ -106,7 +106,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               details:
                                   'Freezing: ${provider.selectedPackages[index].freezings == null ? 0 : provider.selectedPackages[index].freezings}',
                               price:
-                                  '${provider.selectedPackages[index].price}',
+                                  '${provider.selectedPackages[index].price.toString().split('.').first}',
                               pricePerClass:
                                   '${(provider.selectedPackages[index].price / provider.selectedPackages[index].sessions).toStringAsFixed(0)} per Class',
                               discount:
@@ -276,7 +276,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             children: [
                               SummaryRow(
                                 label: 'Course Fee',
-                                value: 'AED ${provider.totalPrice}',
+                                value:
+                                    'AED ${provider.totalPrice.toStringAsFixed(2)}',
                                 valueColor: AppColors.darkText,
                               ),
                               SummaryRow(
@@ -299,7 +300,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ), // Assuming red for negative
                               SummaryRow(
                                 label: 'VAT',
-                                value: 'AED ${provider.vatAmount}',
+                                value:
+                                    'AED ${provider.vatAmount.toStringAsFixed(2)}',
                                 valueColor: AppColors.darkText,
                               ),
                               const Divider(
@@ -310,9 +312,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               SummaryRow(
                                 label: 'Total',
                                 value:
-                                    'AED ${provider.customerController.selectedStudent!.isregistred == 'Yes' ? provider.payableAmount : provider.payableAmount + 150}',
-                                valueColor: AppColors
-                                    .redError, // Use a contrasting color for Total
+                                    'AED ${provider.customerController.selectedStudent!.isregistred == 'Yes' ? provider.payableAmount : "${(provider.payableAmount + 150).toStringAsFixed(2)}"}',
+                                valueColor: AppColors.redError,
                                 labelWeight: FontWeight.bold,
                                 valueWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -328,61 +329,64 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
 
             // --- Fixed Bottom Button ---
-            Padding(
-              padding: const EdgeInsets.only(
-                left: 24,
-                right: 24,
-                bottom: 24,
-                top: 12,
-              ),
-              child: Consumer<ServicesProvider>(
-                builder: (context, checkout, state) {
-                  return PrimaryButton(
-                    text: checkout.loading == true
-                        ? "Please wait..."
-                        : 'Payment',
-                    onPressed: () async {
-                      if (checkout.signatureBytes == null) {
-                        SnackbarUtils.showError(
+            SafeArea(
+              bottom: true,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  bottom: 24,
+                  top: 12,
+                ),
+                child: Consumer<ServicesProvider>(
+                  builder: (context, checkout, state) {
+                    return PrimaryButton(
+                      text: checkout.loading == true
+                          ? "Please wait..."
+                          : 'Payment',
+                      onPressed: () async {
+                        if (checkout.signatureBytes == null) {
+                          SnackbarUtils.showError(
+                            context,
+                            "Signature is required to proceed with the payment.",
+                          );
+                          return;
+                        }
+                        // Navigate to Receipt screen upon successful payment
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(builder: (context) => ReceiptScreen()),
+                        // );
+                        // final checkout = context.read<ServicesProvider>();
+                        // final int =double.parse(checkout.payableAmount);
+
+                        // checkout.customerController.students
+                        checkout.setPaymentType(PaymentType.packagesOrder);
+
+                        final success = await checkout.startCheckout(
                           context,
-                          "Signature is required to proceed with the payment.",
+                          amount:
+                              checkout
+                                  .customerController
+                                  .selectedStudent!
+                                  .isregistred
+                                  .contains('Yes')
+                              ? checkout.payableAmount.toInt()
+                              : checkout.payableAmount.toInt() + 150,
+                          // int.parse("${checkout.totalPrice + 150}"),
+                          redirectUrl: "https://melodica-mobile.web.app",
                         );
-                        return;
-                      }
-                      // Navigate to Receipt screen upon successful payment
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(builder: (context) => ReceiptScreen()),
-                      // );
-                      // final checkout = context.read<ServicesProvider>();
-                      // final int =double.parse(checkout.payableAmount);
 
-                      // checkout.customerController.students
-                      checkout.setPaymentType(PaymentType.packagesOrder);
-
-                      final success = await checkout.startCheckout(
-                        context,
-                        amount:
-                            checkout
-                                .customerController
-                                .selectedStudent!
-                                .isregistred
-                                .contains('Yes')
-                            ? checkout.payableAmount.toInt()
-                            : checkout.payableAmount.toInt() + 150,
-                        // int.parse("${checkout.totalPrice + 150}"),
-                        redirectUrl: "https://melodica-mobile.web.app",
-                      );
-
-                      if (success && checkout.paymentUrl != null) {
-                        await launchUrl(
-                          Uri.parse(checkout.paymentUrl!),
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                  );
-                },
+                        if (success && checkout.paymentUrl != null) {
+                          await launchUrl(
+                            Uri.parse(checkout.paymentUrl!),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ],

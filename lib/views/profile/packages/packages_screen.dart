@@ -25,13 +25,13 @@ class _PackageListScreenState extends State<PackageListScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
 
-    WidgetsBinding.instance.addPostFrameCallback((asy) async {
-      final provider = context.read<PackageProvider>();
-      // if (provider.packages.isEmpty) {
-      await provider.fetchPackages(context);
-      setState(() {});
-      // }
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((asy) async {
+    //   final provider = context.read<PackageProvider>();
+    //   // if (provider.packages.isEmpty) {
+    //   await provider.fetchPackages(context);
+    //   setState(() {});
+    //   // }
+    // });
   }
 
   @override
@@ -113,9 +113,17 @@ class _PackageListView extends StatelessWidget {
   final bool isActive;
 
   const _PackageListView({required this.packages, required this.isActive});
-  String formatCreatedOss(String isoDate) {
-    final date = DateTime.parse(isoDate); // ✅ correct
-    return DateFormat('dd MMM yyyy').format(date);
+  String formatCreatedOss(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty || isoDate == 'N/A') {
+      return 'N/A';
+    }
+
+    try {
+      final date = DateTime.parse(isoDate);
+      return DateFormat('dd MMM yyyy').format(date);
+    } catch (e) {
+      return 'N/A';
+    }
   }
 
   @override
@@ -231,10 +239,10 @@ class _PackageListView extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Remaining Cancellation: [${package.remainingCancellations}X]',
+                      'Remaining Cancellation: ${package.remainingCancellations}X',
                     ),
                     Text(
-                      'expire: ${formatCreatedOss(package.packageExpiry)}',
+                      'Expiry: ${formatCreatedOss(package.packageExpiry)}',
                       style: TextStyle(color: Colors.red, fontSize: 12.fSize),
                     ),
                   ],
@@ -242,7 +250,7 @@ class _PackageListView extends StatelessWidget {
                 SizedBox(height: 10),
 
                 SizedBox(height: 10),
-                Text('Remaining Freezing : [${remainingFreezes} Week]'),
+                Text('Remaining Freezing : ${remainingFreezes} Week'),
               ],
             ),
           ),

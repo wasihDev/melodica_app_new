@@ -22,7 +22,17 @@ class PackageCard extends StatelessWidget {
     // print(
     //   '${package.price / package.sessions} package.sessions ${package.sessions}',
     // );
-    final perClassCost = (package.price / package.sessions).toStringAsFixed(0);
+    // final perClassCost =
+    //     ((package.price - int.parse(package.discount)) / package.sessions)
+    //         .toStringAsFixed(0);
+    final double discountedPrice = double.parse(package.discount.toString());
+    final double sessions = package.sessions.toDouble();
+    final discountedAmount = package.price * (discountedPrice / 100);
+    // print('package.price ${package.price}');
+    // print('discountedAmount ${discountedAmount}');
+    // print("package.sessions ${package.sessions}");
+    final String perClassCost = ((package.price - discountedAmount) / sessions)
+        .toStringAsFixed(2);
 
     return InkWell(
       onTap: onTap,

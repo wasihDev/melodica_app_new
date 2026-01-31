@@ -46,10 +46,10 @@ class AppRoutes {
     home: (context) => HomeScreen(),
     // packageSelection: (context) => PackageSelectionScreen(),
     newStudent: (context) {
-      final args = ModalRoute.of(context)!.settings.arguments as Map;
-      final student = args['student'] as Student;
-      final isShowBtn = args['isEdit'] as bool;
-      return NewStudentScreen(student: student, isEdit: isShowBtn);
+      // final args = ModalRoute.of(context)!.settings.arguments as Map;
+      // final student = args['student'] as Student;
+      // final isShowBtn = args['isEdit'] as bool;
+      return NewStudentScreen();
     },
     editprofile: (context) => EditProfileScreen(),
     receiptScreen: (context) => ReceiptScreen(),

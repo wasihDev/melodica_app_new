@@ -35,7 +35,7 @@ class CustomerController extends ChangeNotifier {
   bool get display => _display;
   List<String> _isShowData = [];
   List<String> get isShowData => _isShowData;
-  Future<void> getDisplayDance() async {
+  Future<void> getDisplayDance(String territoryid) async {
     _loading = true;
     notifyListeners();
 
@@ -44,23 +44,26 @@ class CustomerController extends ChangeNotifier {
         ApiConfigService.endpoints.displayDance,
         // 'https://bf67c0337b6de47faeee4735e1fe49.46.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c6a709829bfc45b6...',
       );
-
+      print("territoryid in funtion ${territoryid}");
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'locationid': customer!.territoryid}),
+        body: jsonEncode({'locationid': "$territoryid"}),
+        // customer?.territoryid}),
       );
-
+      print("get disaplay dance ${response.statusCode} ");
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print("get disaplay data ${data} ");
 
         _display = data['display'] ?? false;
         // _message = data['message'] ?? '';
-      } else {
-        // _message = 'Something went wrong';
+        // } else {
+        //   print('get dance ${response.statusCode}');
+        //   // _message = 'Something went wrong';
       }
     } catch (e) {
-      print('errror $e');
+      print('errror getDisPlay $e');
       // _message = e.toString();
     }
 
@@ -78,6 +81,14 @@ class CustomerController extends ChangeNotifier {
   /// ================= FETCH =================
   bool get isCustomerRegistered {
     return _customer != null && _customer?.mbId != null;
+  }
+
+  // branch selection
+  String? selectedBranch;
+
+  void setSelectedBranch(String branch) {
+    selectedBranch = branch;
+    notifyListeners();
   }
 
   void showNotCustomerDialog(BuildContext context) {
@@ -144,14 +155,15 @@ class CustomerController extends ChangeNotifier {
 
     try {
       final auth = FirebaseAuth.instance.currentUser;
-      // print('auth.email ${auth!.email}');
+
       final uri = Uri.parse(
         // TODO current user email
         "${ApiConfigService.endpoints.getProfile}${auth?.email}",
       );
 
       final response = await http.get(uri);
-
+      print('fetch customer data ===>>> ${response.statusCode}');
+      // print('fetch customer data Body ===>>> ${response.statusCode}');
       if (response.statusCode != 200) {
         throw Exception('HTTP ${response.statusCode}');
       }
@@ -174,7 +186,7 @@ class CustomerController extends ChangeNotifier {
         });
       }
     } catch (e) {
-      print('errro $e');
+      print('errro fetch cusomter $e');
       _error = 'Failed to fetch: $e';
       _customer = null;
       _students = [];
@@ -190,7 +202,7 @@ class CustomerController extends ChangeNotifier {
     // 1. Get Device and App Information dynamically
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
-
+    final user = FirebaseAuth.instance.currentUser;
     String deviceId = '';
     if (Platform.isAndroid) {
       var androidInfo = await deviceInfo.androidInfo;
@@ -198,6 +210,8 @@ class CustomerController extends ChangeNotifier {
     } else if (Platform.isIOS) {
       var iosInfo = await deviceInfo.iosInfo;
       deviceId = iosInfo.identifierForVendor ?? ''; // Unique ID for iOS
+
+      print('deviceId = iosInfo.identifierForVendor ${deviceId}');
     }
     final token = await getDeviceToken();
     // 2. Prepare the request body (Matches your screenshot)
@@ -205,7 +219,8 @@ class CustomerController extends ChangeNotifier {
       "firstname": customer?.firstName,
       "lastname": customer?.lastName,
       "clientId": customer?.mbId,
-      "territoryid": customer?.territoryid,
+      "email": user?.email ?? "",
+      //customer?.territoryid,
       "countrycode": customer?.mobileCountryCode,
       "areacode": customer?.mobileAreaCode,
       "phone": customer?.mobilePhone,
@@ -262,12 +277,12 @@ class CustomerController extends ChangeNotifier {
       final body = {
         "firstname": firstname,
         "lastname": lastname,
-        "email": customer!.email,
-        "parentid": customer!.mbId,
+        "email": customer?.email,
+        "parentid": customer?.mbId,
         "relatedcontact": students.map((e) => e.mbId).join(","), // 👈 club ids
         "clientid": existing == false ? "" : clientId,
-        "countrycode": "${selectedCountry!.name}",
-        "areacode": "${selectedArea!.value}",
+        "countrycode": "${selectedCountry?.name}",
+        "areacode": "${selectedArea?.value}",
         "phone": phone,
         "dateofbirth": "2021-11-10T00:00:00Z" ?? "",
         "gender": gender ?? "",
@@ -299,7 +314,7 @@ class CustomerController extends ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print('error $e');
+      print('error sss $e');
 
       return false;
     } finally {
@@ -339,8 +354,8 @@ class CustomerController extends ChangeNotifier {
       final body = {
         "firstname": firstname,
         "lastname": lastname,
-        "email": customer!.email,
-        "parentid": customer!.mbId,
+        "email": customer?.email,
+        "parentid": customer?.mbId,
         "relatedcontact": students.map((e) => e.mbId).join(","), // 👈 club ids
         "clientid": existing == false ? "" : clientId,
         "countrycode": "$selectedCountry",
@@ -388,6 +403,7 @@ class CustomerController extends ChangeNotifier {
         _selectedStudent = _students.last;
       }
     } catch (e) {
+      print('erppopoer $e');
       _error = e.toString();
     } finally {
       _loading = false;

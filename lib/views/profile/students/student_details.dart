@@ -53,17 +53,17 @@ class StudentDetails extends StatelessWidget {
 
                   _label('First Name'),
                   _readOnlyField(student.firstName, Icons.person),
-
+                  SizedBox(height: 10.h),
                   _label('Last Name'),
                   _readOnlyField(student.lastName, Icons.person_outline),
-
+                  SizedBox(height: 10.h),
                   _label('Email'),
                   _readOnlyField(
                     student.email,
                     Icons.email_outlined,
                     filled: true,
                   ),
-
+                  SizedBox(height: 10.h),
                   _label('Phone Number'),
                   Row(
                     children: [
@@ -71,7 +71,7 @@ class StudentDetails extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(child: _readOnlyBox('54 ▼')),
                       const SizedBox(width: 8),
-                      Expanded(flex: 2, child: _readOnlyBox('${student.mbId}')),
+                      Expanded(flex: 2, child: _readOnlyBox('')),
                     ],
                   ),
 

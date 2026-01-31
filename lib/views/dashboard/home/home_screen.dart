@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/schedule_model.dart';
 import 'package:melodica_app_new/providers/notification_provider.dart';
+import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
@@ -17,6 +18,7 @@ import 'package:melodica_app_new/views/dashboard/schedule/reschedule_screen.dart
 import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_widgets.dart';
 import 'package:melodica_app_new/views/profile/packages/packages_screen.dart';
 import 'package:melodica_app_new/widgets/custom_app_bar.dart';
+import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -33,25 +35,36 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     print('calling init');
     WidgetsBinding.instance.addPostFrameCallback((val) async {
-      await _loadHomeData();
+      if (mounted) {
+        await _loadHomeData();
+      } else {
+        await _loadHomeData();
+      }
       setState(() {});
     });
   }
 
   Future<void> _loadHomeData() async {
+    final context = navigatorKey.currentContext!;
     final provider = Provider.of<UserprofileProvider>(context, listen: false);
     final schedule = Provider.of<ScheduleProvider>(context, listen: false);
     final cusprovider = Provider.of<CustomerController>(context, listen: false);
+    final package = Provider.of<PackageProvider>(context, listen: false);
+
     print('cusprovider.isShowData ${cusprovider.isShowData}');
     if (cusprovider.isShowData.isEmpty) {
-      await cusprovider.fetchCustomerData();
-      await cusprovider.getDisplayDance();
-      // context.read<NotificationProvider>().fetchNotifications();
       await provider.fetchUserData();
+      await cusprovider.fetchCustomerData();
+      await cusprovider.upsertCustomer();
+      await package.fetchPackages(context);
+      // if two pacakges packages using same bracnh .. if two pacakges different bracnh.
+      // same i did for selecting students..
+      await context.read<ServicesProvider>().fetchDancePackages();
+      await cusprovider.getDisplayDance(cusprovider.selectedBranch!);
       await provider.loadImageFromPrefs();
       await schedule.fetchSchedule(context);
       await cusprovider.fetchPhoneMeta();
-      await cusprovider.upsertCustomer();
+
       context.read<NotificationProvider>().fetchNotifications();
     } else {
       context.read<NotificationProvider>().fetchNotifications();
@@ -305,17 +318,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 );
                               }
+                              // print(
+                              //   'provider.upcomingSchedules ${provider.upcomingSchedules.length}',
+                              // );
                               return Container(
                                 height: 320.h,
                                 color: Colors.transparent,
                                 child: ListView.separated(
-                                  itemCount: provider.upcomingSchedules.length,
+                                  itemCount: provider.schedules.length,
                                   shrinkWrap: true,
                                   separatorBuilder: (context, index) =>
                                       SizedBox(height: 8.h),
                                   itemBuilder: (context, index) {
-                                    final item =
-                                        provider.upcomingSchedules[index];
+                                    final item = provider.schedules[index];
                                     return Container(
                                       margin: EdgeInsets.only(right: 12),
                                       decoration: BoxDecoration(
@@ -405,6 +420,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String removingTimeFromDate(String datetime) {
+    DateFormat inputFormat = DateFormat("dd MMM yyyy hh:mm a");
+
+    // 2. Parse the string into a DateTime object
+    DateTime dateTime = inputFormat.parse("${datetime}");
+
+    // 3. Format it back to just the date
+    String dateOnly = DateFormat("dd MMM yyyy").format(dateTime);
+    return dateOnly;
+  }
+
   void showAppointmentBottomSheet(BuildContext context, ScheduleModel s) {
     showModalBottomSheet(
       context: context,
@@ -414,174 +440,185 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       backgroundColor: Colors.white,
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Top Handle Bar
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top Handle Bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
 
-              // Header Date
-              Text(
-                formatCreatedOn(s.bookingDateStartTime).isEmpty
-                    ? ""
-                    : formatCreatedOn(s.bookingDateStartTime),
-                //  'Tue, 18 Nov 2025',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
+                // Header Date
+                Text(
+                  formatCreatedOn(s.bookingDateStartTime).isEmpty
+                      ? ""
+                      : formatCreatedOn(s.bookingDateStartTime),
+                  //  'Tue, 18 Nov 2025',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
 
-              // Info Section Card
-              Consumer<CustomerController>(
-                builder: (context, ctrl, child) {
-                  final expiryDate = DateTime.parse(s.PackageExpiry);
+                // Info Section Card
+                Consumer<CustomerController>(
+                  builder: (context, ctrl, child) {
+                    final expiryDate = DateTime.parse(s.PackageExpiry);
 
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildInfoRow('Location', '${s.bookingLocation}'),
-                        _buildInfoRow('Time', '${s.bookingDateStartTime}'),
-                        _buildInfoRow(
-                          'Student',
-                          '${ctrl.selectedStudent!.fullName}',
-                        ),
-                        _buildInfoRow('Teacher', '${s.bookingResource}'),
-                        _buildInfoRow(
-                          'Cancellation',
-                          '${s.RemainingCancellations}',
-                        ),
-                        _buildInfoRow(
-                          'Expiry',
-                          '${DateFormat('dd MMM yyyy').format(expiryDate)}',
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-
-              // Note Box
-              // Container(
-              //   width: double.infinity,
-              //   padding: const EdgeInsets.all(16),
-              //   decoration: BoxDecoration(
-              //     color: const Color(0xFFFFF7EC), // Light cream background
-              //     borderRadius: BorderRadius.circular(12),
-              //   ),
-              //   child: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: const [
-              //       Text(
-              //         'PLEASE NOTE',
-              //         style: TextStyle(
-              //           color: Color(0xFFE67E22), // Orange text
-              //           fontWeight: FontWeight.bold,
-              //           fontSize: 14,
-              //         ),
-              //       ),
-              //       SizedBox(height: 8),
-              //       Text(
-              //         'Reschedule before the 9th (Dynamic) to avoid using your cancellation.',
-              //         style: TextStyle(color: Colors.grey, fontSize: 13),
-              //       ),
-              //     ],
-              //   ),
-              // ),
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ///call get availablity api
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => RescheduleScreen(s: s)),
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildInfoRow('Location', '${s.bookingLocation}'),
+                          _buildInfoRow('Time', '${s.bookingDateStartTime}'),
+                          _buildInfoRow(
+                            'Student',
+                            '${ctrl.selectedStudent!.fullName}',
+                          ),
+                          _buildInfoRow('Teacher', '${s.bookingResource}'),
+                          _buildInfoRow(
+                            'Cancellation',
+                            '${s.RemainingCancellations}',
+                          ),
+                          _buildInfoRow(
+                            'Expiry',
+                            '${DateFormat('dd MMM yyyy').format(expiryDate)}',
+                          ),
+                        ],
+                      ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFD152), // Yellow button
-                    foregroundColor: Colors.black,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Reschedule',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: OutlinedButton(
-                  onPressed: () {
-                    final DateTime bookingdata = DateFormat(
-                      'dd/MM/yyyy hh:mm a',
-                    ).parse(s.bookingDateStartTime);
-                    // Current datetime
-                    final DateTime now = DateTime.now();
-                    final DateTime today = DateTime(
-                      now.year,
-                      now.month,
-                      now.day,
-                    );
-                    final DateTime scheduledDay = DateTime(
-                      bookingdata.year,
-                      bookingdata.month,
-                      bookingdata.day,
-                    );
-                    print('NOW =====>>> $now');
-                    print('SCHEDULED =====>>> $bookingdata');
+                const SizedBox(height: 20),
 
-                    // Show late notice if now is equal OR after scheduled time
-                    if (today == scheduledDay) {
-                      showLateNoticeDialog(context);
-                      return;
-                    }
-                    showDialog(
-                      context: context,
-                      builder: (context) => EarlyNoticeDialog(s: s),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.redAccent),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                // Note Box
+                // Note Box
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7EC), // Light cream background
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PLEASE NOTE',
+                        style: TextStyle(
+                          color: Color(0xFFE67E22), // Orange text
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+
+                      // DateFormat('dd/MM/yyyy hh:mm a').parse(PackageExpiry);
+                      Text(
+                        "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
+                        // 'Reschedule before the ${DateFormat('dd MMM yyyy').format(expiryDate)} to avoid using your cancellation.',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ///call get availablity api
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RescheduleScreen(s: s),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFD152), // Yellow button
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Reschedule',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      final DateTime bookingdata = DateFormat(
+                        'dd/MM/yyyy hh:mm a',
+                      ).parse(s.bookingDateStartTime);
+                      // Current datetime
+                      final DateTime now = DateTime.now();
+                      final DateTime today = DateTime(
+                        now.year,
+                        now.month,
+                        now.day,
+                      );
+                      final DateTime scheduledDay = DateTime(
+                        bookingdata.year,
+                        bookingdata.month,
+                        bookingdata.day,
+                      );
+                      print('NOW =====>>> $now');
+                      print('SCHEDULED =====>>> $bookingdata');
+
+                      // Show late notice if now is equal OR after scheduled time
+                      if (today == scheduledDay) {
+                        showLateNoticeDialog(context);
+                        return;
+                      }
+                      showDialog(
+                        context: context,
+                        builder: (context) => EarlyNoticeDialog(s: s),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.redAccent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         );
       },
@@ -746,7 +783,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       elevation: 0,
                     ),
                     child: const Text(
-                      "AED ${50 * 1.05}",
+                      "AED ${50}",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,

@@ -71,7 +71,7 @@ class UserprofileProvider extends ChangeNotifier {
 
       _userModel = UserModel.fromJson(snapshot.data() as Map<String, dynamic>);
 
-      print('data $_userModel');
+      print('data user model s $_userModel');
       notifyListeners();
       return _userModel;
     } catch (e) {

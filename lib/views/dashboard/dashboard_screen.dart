@@ -22,9 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> _pages = [
     HomeScreen(),
     ScheduleScreen(),
-    // NotificationScreen(),
     HelpCenter(),
-    // NotificationView(),
     ProfileScreen(),
   ];
 
@@ -34,14 +32,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       dialogStyle: Platform.isIOS
           ? UpgradeDialogStyle.cupertino
           : UpgradeDialogStyle.material,
-      showIgnore: false, // hide "Ignore"
-      showLater: false, // hide "Later"
-      upgrader: Upgrader(
-        debugDisplayAlways: false,
-        debugLogging: false, // remove in production
-
-        durationUntilAlertAgain: const Duration(days: 1),
-      ),
+      showIgnore: false,
+      shouldPopScope: () => false,
+      showLater: false,
+      upgrader: Upgrader(countryCode: "AE"),
       child: Scaffold(
         body: _pages[_selectedIndex],
         floatingActionButtonLocation:

@@ -43,285 +43,292 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     final color = AppColors.primary;
     return Scaffold(
-      body: Stack(
-        children: [
-          // main white body with curved yellow header
-          Positioned.fill(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // top curved yellow area
-                Container(
-                  height: 260.h,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(36),
-                    ),
-                  ),
-                  padding: const EdgeInsets.only(top: 24, left: 12),
-                  alignment: Alignment.topCenter,
-                  child: Column(
-                    children: [
-                      SizedBox(height: 38.h),
-                      Navigator.of(context).canPop()
-                          ? Row(
-                              children: [
-                                IconButton(
-                                  onPressed: () =>
-                                      Navigator.of(context).maybePop(),
-                                  icon: const Icon(Icons.arrow_back_ios),
-                                ),
-                                const SizedBox(width: 6),
-                              ],
-                            )
-                          : SizedBox(),
-                      SizedBox(height: 30.h),
-                      Text(
-                        'Sign up',
-                        style: TextStyle(
-                          fontSize: 25.fSize,
-                          fontWeight: FontWeight.w700,
-                        ),
+      body: SafeArea(
+        top: false,
+        child: Stack(
+          children: [
+            // main white body with curved yellow header
+            Positioned.fill(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // top curved yellow area
+                  Container(
+                    height: 260.h,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(36),
                       ),
-                      Text(
-                        "Let’s Start the journey",
-                        style: TextStyle(
-                          fontSize: 14.fSize,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 18,
                     ),
-                    child: Form(
-                      key: _form,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 28),
-                          // TextFormField(
-                          //   controller: _nameCtrl,
-                          //   decoration: const InputDecoration(
-                          //     labelText: 'Name',
-                          //     prefixIcon: Icon(Icons.person),
-                          //   ),
-                          //   validator: (v) =>
-                          //       (v ?? '').trim().isEmpty ? 'Enter name' : null,
-                          // ),
-                          CommonTextField(
-                            heading: "Name",
-                            controller: _nameCtrl,
-                            wigdet: const Icon(
-                              Icons.alternate_email_rounded,
-                              color: AppColors.secondPrimary,
-                            ),
-                            hintText: 'xyz',
-                            validator: Validator.validateName,
-                          ),
-                          const SizedBox(height: 12),
-                          CommonTextField(
-                            heading: "Email",
-                            controller: _emailCtrl,
-                            wigdet: const Icon(
-                              Icons.person,
-                              color: AppColors.secondPrimary,
-                            ),
-                            hintText: 'Ex.abc#example.com',
-                            validator: Validator.validateEmail,
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          CommonTextField(
-                            heading: "Password",
-                            controller: _passCtrl,
-                            obscureText: true,
-                            isShowSuffix: true,
-                            wigdet: const Icon(
-                              Icons.lock_outline,
-                              color: AppColors.secondPrimary,
-                            ),
-                            hintText: '********',
-                            validator: Validator.validatePassword,
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: _agree,
-                                onChanged: (v) => setState(() {
-                                  _agree = v ?? false;
-                                }),
-                              ),
-                              Expanded(
-                                child: RichText(
-                                  text: TextSpan(
-                                    text: 'I agree to the ',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'Privacy Policy',
-                                        style: const TextStyle(
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () {
-                                            _launchUrl(privacypolicy);
-                                          },
-                                      ),
-                                      const TextSpan(text: ' & '),
-                                      TextSpan(
-                                        text: 'Terms of Use',
-                                        style: const TextStyle(
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () {
-                                            _launchUrl(termscondition);
-                                          },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_error != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              _error!,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          Consumer<AuthProviders>(
-                            builder: (context, provider, child) {
-                              // if (provider.isLoading == true) {
-                              // return LoadingIndicatorWideget();
-                              // } else {
-                              return CustomButton(
-                                isLoading: provider.isLoading,
-                                onTap: () async {
-                                  if (_form.currentState!.validate()) {
-                                    await provider.registrationFunc(
-                                      context,
-                                      email: _emailCtrl.text.trim(),
-                                      password: _passCtrl.text.trim(),
-                                      name: _nameCtrl.text.trim(),
-                                    );
-                                    if (context.mounted) {
-                                      print('check');
-                                      final appState =
-                                          Provider.of<AppstateProvider>(
-                                            context,
-                                            listen: false,
-                                          );
-                                      appState.setLoggedIn(true);
-                                    }
-                                    print('chec22k');
-                                  }
-                                },
-                                widget: provider.isLoading
-                                    ? CircularProgressIndicator()
-                                    : Text(
-                                        "Sign up",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16.fSize,
-                                          color: AppColors.black,
-                                        ),
-                                      ),
-                              );
-                              // }
-                            },
-                          ),
-                          const SizedBox(height: 18),
-                          Center(
-                            child: Text(
-                              'Or sign up with social account',
-                              style: TextStyle(color: Colors.black54),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Consumer<AuthProviders>(
-                            builder: (context, provider, child) {
-                              return Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                    padding: const EdgeInsets.only(top: 24, left: 12),
+                    alignment: Alignment.topCenter,
+                    child: Column(
+                      children: [
+                        SizedBox(height: 38.h),
+                        Navigator.of(context).canPop()
+                            ? Row(
                                 children: [
                                   IconButton(
-                                    onPressed: () async {
-                                      await provider.signInWithGoogle(context);
-                                    },
-                                    icon: provider.isLoadingGoogle
-                                        ? LoadingIndicatorWideget()
-                                        : SvgPicture.asset(
-                                            'assets/svg/google.svg',
-                                          ),
+                                    onPressed: () =>
+                                        Navigator.of(context).maybePop(),
+                                    icon: const Icon(Icons.arrow_back_ios),
                                   ),
-                                  // IconButton(
-                                  //   onPressed: () {},
-                                  //   icon: SvgPicture.asset(
-                                  //     'assets/svg/facebook.svg',
-                                  //   ),
-                                  // ),
-                                  Platform.isIOS
-                                      ? IconButton(
-                                          onPressed: () async {
-                                            await provider.signInWithApple(
-                                              context,
-                                            );
-                                          },
-                                          icon: provider.isLoadingApple
-                                              ? LoadingIndicatorWideget()
-                                              : SvgPicture.asset(
-                                                  'assets/svg/apple.svg',
-                                                ),
-                                        )
-                                      : SizedBox(),
+                                  const SizedBox(width: 6),
                                 ],
-                              );
-                            },
+                              )
+                            : SizedBox(),
+                        SizedBox(height: 30.h),
+                        Text(
+                          'Sign up',
+                          style: TextStyle(
+                            fontSize: 25.fSize,
+                            fontWeight: FontWeight.w700,
                           ),
-                          const SizedBox(height: 16),
-                          Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                        ),
+                        Text(
+                          "Let’s Start the journey",
+                          style: TextStyle(
+                            fontSize: 14.fSize,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      child: Form(
+                        key: _form,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 28),
+                            // TextFormField(
+                            //   controller: _nameCtrl,
+                            //   decoration: const InputDecoration(
+                            //     labelText: 'Name',
+                            //     prefixIcon: Icon(Icons.person),
+                            //   ),
+                            //   validator: (v) =>
+                            //       (v ?? '').trim().isEmpty ? 'Enter name' : null,
+                            // ),
+                            CommonTextField(
+                              heading: "Name",
+                              controller: _nameCtrl,
+                              wigdet: const Icon(
+                                Icons.alternate_email_rounded,
+                                color: AppColors.secondPrimary,
+                              ),
+                              hintText: 'xyz',
+                              validator: Validator.validateName,
+                            ),
+                            const SizedBox(height: 12),
+                            CommonTextField(
+                              heading: "Email",
+                              controller: _emailCtrl,
+                              wigdet: const Icon(
+                                Icons.person,
+                                color: AppColors.secondPrimary,
+                              ),
+                              hintText: 'Ex.abc#example.com',
+                              validator: Validator.validateEmail,
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            CommonTextField(
+                              heading: "Password",
+                              controller: _passCtrl,
+                              obscureText: true,
+                              isShowSuffix: true,
+                              wigdet: const Icon(
+                                Icons.lock_outline,
+                                color: AppColors.secondPrimary,
+                              ),
+                              hintText: '********',
+                              validator: Validator.validatePassword,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
                               children: [
-                                const Text(
-                                  'Already have an account ',
-                                  style: TextStyle(color: Colors.black54),
+                                Checkbox(
+                                  value: _agree,
+                                  onChanged: (v) => setState(() {
+                                    _agree = v ?? false;
+                                  }),
                                 ),
-                                GestureDetector(
-                                  onTap: () => Navigator.of(
-                                    context,
-                                  ).pushReplacementNamed('/login'),
-                                  child: const Text(
-                                    'Login',
-                                    style: TextStyle(color: Colors.blue),
+                                Expanded(
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'I agree to the ',
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Privacy Policy',
+                                          style: const TextStyle(
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              _launchUrl(privacypolicy);
+                                            },
+                                        ),
+                                        const TextSpan(text: ' & '),
+                                        TextSpan(
+                                          text: 'Terms of Use',
+                                          style: const TextStyle(
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              _launchUrl(termscondition);
+                                            },
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                            if (_error != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                _error!,
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            Consumer<AuthProviders>(
+                              builder: (context, provider, child) {
+                                // if (provider.isLoading == true) {
+                                // return LoadingIndicatorWideget();
+                                // } else {
+                                return CustomButton(
+                                  isLoading: provider.isLoading,
+                                  onTap: () async {
+                                    if (_form.currentState!.validate()) {
+                                      await provider.registrationFunc(
+                                        context,
+                                        email: _emailCtrl.text.trim(),
+                                        password: _passCtrl.text.trim(),
+                                        name: _nameCtrl.text.trim(),
+                                      );
+                                      if (context.mounted) {
+                                        print('check');
+                                        final appState =
+                                            Provider.of<AppstateProvider>(
+                                              context,
+                                              listen: false,
+                                            );
+                                        appState.setLoggedIn(true);
+                                      }
+                                      print('chec22k');
+                                    }
+                                  },
+                                  widget: provider.isLoading
+                                      ? CircularProgressIndicator()
+                                      : Text(
+                                          "Sign up",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16.fSize,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                );
+                                // }
+                              },
+                            ),
+                            const SizedBox(height: 18),
+                            Center(
+                              child: Text(
+                                'Or sign up with social account',
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Consumer<AuthProviders>(
+                              builder: (context, provider, child) {
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () async {
+                                        await provider.signInWithGoogle(
+                                          context,
+                                        );
+                                      },
+                                      icon: provider.isLoadingGoogle
+                                          ? LoadingIndicatorWideget()
+                                          : SvgPicture.asset(
+                                              'assets/svg/google.svg',
+                                            ),
+                                    ),
+                                    // IconButton(
+                                    //   onPressed: () {},
+                                    //   icon: SvgPicture.asset(
+                                    //     'assets/svg/facebook.svg',
+                                    //   ),
+                                    // ),
+                                    Platform.isIOS
+                                        ? IconButton(
+                                            onPressed: () async {
+                                              await provider.signInWithApple(
+                                                context,
+                                              );
+                                            },
+                                            icon: provider.isLoadingApple
+                                                ? LoadingIndicatorWideget()
+                                                : SvgPicture.asset(
+                                                    'assets/svg/apple.svg',
+                                                  ),
+                                          )
+                                        : SizedBox(),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Already have an account ',
+                                    style: TextStyle(color: Colors.black54),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => Navigator.of(
+                                      context,
+                                    ).pushReplacementNamed('/login'),
+                                    child: const Text(
+                                      'Login',
+                                      style: TextStyle(color: Colors.blue),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

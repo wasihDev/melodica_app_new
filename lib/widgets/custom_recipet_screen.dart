@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
+import 'package:melodica_app_new/models/packages_model.dart';
+import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
+import 'package:provider/provider.dart';
 
 class CustomRecipetScreen extends StatelessWidget {
   final String orderId;
@@ -8,10 +11,11 @@ class CustomRecipetScreen extends StatelessWidget {
   final String paymentMethod;
   final String status;
   final DateTime date;
-
+  // final Package package;
   const CustomRecipetScreen({
     super.key,
     required this.orderId,
+    // required this.package,
     required this.amount,
     required this.paymentMethod,
     required this.status,
@@ -77,29 +81,43 @@ class CustomRecipetScreen extends StatelessWidget {
               const Spacer(),
 
               // ✅ Done Button
-              Padding(
-                padding: const EdgeInsets.only(bottom: 30.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStatePropertyAll(
-                        AppColors.primary,
+              SafeArea(
+                bottom: true,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 30.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStatePropertyAll(
+                          AppColors.primary,
+                        ),
                       ),
-                    ),
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        AppRoutes.dashboard,
-                      );
-                    },
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
+                      onPressed: () async {
+                        final provider = Provider.of<PackageProvider>(
+                          context,
+                          listen: false,
+                        );
+                        provider.selectedPackage = null;
+                        provider.selectedReason = '';
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.dashboard,
+                        );
+                        // await provider
+                        //     .callFreezingApi(context, '', package, ref: orderId)
+                        //     .then((val) {
+
+                        //     });
+                      },
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

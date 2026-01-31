@@ -25,27 +25,30 @@ class CheckoutScreenReschedule extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle("Order"),
-                  const SizedBox(height: 12),
-                  _buildSummaryCard(),
-                  const SizedBox(height: 30),
-                  _buildSectionTitle("Payment Method"),
-                  const SizedBox(height: 12),
-                  _buildNetworkInternationalOption(),
-                ],
+      body: SafeArea(
+        bottom: true,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle("Order"),
+                    const SizedBox(height: 12),
+                    _buildSummaryCard(),
+                    const SizedBox(height: 30),
+                    _buildSectionTitle("Payment Method"),
+                    const SizedBox(height: 12),
+                    _buildNetworkInternationalOption(),
+                  ],
+                ),
               ),
             ),
-          ),
-          _buildBottomAction(context),
-        ],
+            _buildBottomAction(context),
+          ],
+        ),
       ),
     );
   }
@@ -159,6 +162,7 @@ class CheckoutScreenReschedule extends StatelessWidget {
         ),
       ),
       child: SafeArea(
+        bottom: true,
         child: SizedBox(
           width: double.infinity,
           height: 56,

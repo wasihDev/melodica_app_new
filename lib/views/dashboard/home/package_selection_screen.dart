@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
-import 'package:melodica_app_new/models/services_model.dart';
-import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
@@ -9,13 +7,16 @@ import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/views/dashboard/home/checkout/checkout_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/package_card.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/package_dance_card.dart';
-import 'package:melodica_app_new/views/profile/students/students_screen.dart';
 import 'package:provider/provider.dart';
 
 class PackageSelectionScreen extends StatefulWidget {
   bool isShowdanceTab;
-
-  PackageSelectionScreen({super.key, required this.isShowdanceTab});
+  bool? iscomingFromNewStudent = false;
+  PackageSelectionScreen({
+    super.key,
+    required this.isShowdanceTab,
+    this.iscomingFromNewStudent,
+  });
 
   @override
   State<PackageSelectionScreen> createState() => _PackageSelectionScreenState();
@@ -49,10 +50,9 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((val) async {
       final provider = context.read<ServicesProvider>();
+
       if (provider.all.isEmpty) {
-        await context.read<ServicesProvider>().fetch(
-          'C27B1894-7C6E-EE11-9AE7-0022489F8146',
-        );
+        await context.read<ServicesProvider>().fetch();
 
         setState(() {});
       }
@@ -91,13 +91,6 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
         builder: (context, ctrl, child) {
           return ctrl.loading
               ? const Center(child: CircularProgressIndicator())
-              : ctrl.error != null
-              ? Center(
-                  child: Text(
-                    ctrl.error!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                )
               : Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
@@ -434,6 +427,17 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                       child: ElevatedButton(
                                         onPressed: ctrl.selectedPackages.isEmpty
                                             ? null
+                                            : widget.iscomingFromNewStudent ==
+                                                  true
+                                            ? () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        CheckoutScreen(),
+                                                  ),
+                                                );
+                                              }
                                             : () {
                                                 final selectedPackage =
                                                     ctrl.selectedPackages;
@@ -503,10 +507,17 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                         color: Colors.grey[500]!,
                                       ),
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        'Ballet, Hip Hop, Contemporary & Belly Dance',
-                                      ),
+                                    child: Consumer<ServicesProvider>(
+                                      builder: (context, provider, child) {
+                                        return Center(
+                                          child: Text(
+                                            provider.alldanceList.first.subject,
+                                            // 'Ballet, Hip Hop, Contemporary & Belly Dance',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(fontSize: 16),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                   SizedBox(height: 15),
@@ -566,41 +577,56 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                         child: SizedBox(
                                           width: double.infinity,
                                           child: ElevatedButton(
-                                            onPressed: () {
-                                              // final selected = provider.all
-                                              //     .firstWhere(
-                                              //       (e) =>
-                                              //           e.priceid ==
-                                              //           provider
-                                              //               .selectedPriceId,
-                                              //     );
-                                              // handle next step — for demo we show a snackbar
-                                              final selectedPackage =
-                                                  ctrl.selectedPackages;
-                                              if (selectedPackage.isNotEmpty) {
-                                                // ctrl.addPackage(
-                                                //   selectedPackage[],
-                                                // );
-                                                // Navigator.push(
-                                                //   context,
-                                                //   MaterialPageRoute(
-                                                //     builder: (_) =>
-                                                //         StudentsScreen(),
-                                                //   ),
-                                                // );
-                                                showStudentPicker(context);
-                                              }
+                                            onPressed:
+                                                widget.iscomingFromNewStudent ==
+                                                    true
+                                                ? () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            CheckoutScreen(),
+                                                      ),
+                                                    );
+                                                  }
+                                                : () {
+                                                    // final selected = provider.all
+                                                    //     .firstWhere(
+                                                    //       (e) =>
+                                                    //           e.priceid ==
+                                                    //           provider
+                                                    //               .selectedPriceId,
+                                                    //     );
+                                                    // handle next step — for demo we show a snackbar
+                                                    final selectedPackage =
+                                                        ctrl.selectedPackages;
+                                                    if (selectedPackage
+                                                        .isNotEmpty) {
+                                                      // ctrl.addPackage(
+                                                      //   selectedPackage[],
+                                                      // );
+                                                      // Navigator.push(
+                                                      //   context,
+                                                      //   MaterialPageRoute(
+                                                      //     builder: (_) =>
+                                                      //         StudentsScreen(),
+                                                      //   ),
+                                                      // );
+                                                      showStudentPicker(
+                                                        context,
+                                                      );
+                                                    }
 
-                                              // ScaffoldMessenger.of(
-                                              //   context,
-                                              // ).showSnackBar(
-                                              //   SnackBar(
-                                              //     content: Text(
-                                              //       'Selected: ${selected.packageName} ${selected.sessionstext} — ৳ ${selected.price}',
-                                              //     ),
-                                              //   ),
-                                              // );
-                                            },
+                                                    // ScaffoldMessenger.of(
+                                                    //   context,
+                                                    // ).showSnackBar(
+                                                    //   SnackBar(
+                                                    //     content: Text(
+                                                    //       'Selected: ${selected.packageName} ${selected.sessionstext} — ৳ ${selected.price}',
+                                                    //     ),
+                                                    //   ),
+                                                    // );
+                                                  },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(
                                                 0xFFF7CD3C,

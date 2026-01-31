@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/schedule_model.dart';
 import 'package:melodica_app_new/providers/pacakge_provider.dart';
@@ -101,6 +102,18 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
     "School Break",
     "Other",
   ];
+  String calculateNoticeType(String classDateTime) {
+    print('classDateTime $classDateTime');
+
+    // Define the format matching your string
+    final format = DateFormat('dd/MM/yyyy hh:mm a');
+    final classTime = format.parse(classDateTime);
+
+    final now = DateTime.now();
+    final diff = classTime.difference(now);
+
+    return diff.inHours > 24 ? 'Early' : 'Late';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +133,7 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
             ),
           ),
           const Text(
-            "Select a reason for Cancelation",
+            "Select a reason for Cancellation",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -149,8 +162,6 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
                   onPressed: _selectedReason == null
                       ? null // Disable button if no reason is selected
                       : () async {
-                          // Navigator.pop(context); // Close bottom sheet
-                          // Navigator.pop(context); // Close bottom sheet
                           final classdatetime = formatToApiDate(DateTime.now());
                           // Show final confirmation dialog
                           final Packageprovider = Provider.of<PackageProvider>(
@@ -161,6 +172,10 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
                             (n) =>
                                 n.paymentRef == widget.s.PackageCode.toString(),
                           );
+                          final noticeType = calculateNoticeType(
+                            widget.s.bookingDateStartTime,
+                          );
+                          print('notice $noticeType');
                           await provider
                               .submitScheduleRequest(
                                 subject: widget.s.subject,
@@ -170,6 +185,7 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
                                 reason: "$_selectedReason",
                                 branch: '${pro.branch}',
                                 packageid: '${pro.paymentRef}',
+                                lateNotic: '$noticeType', // late or early
                               )
                               .then((val) {
                                 showDialog(

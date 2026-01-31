@@ -19,11 +19,13 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
   @override
   void initState() {
     super.initState();
-    final provider = Provider.of<PackageProvider>(context, listen: false);
-    final remainingFreezes =
-        widget.package.totalAllowedFreezings -
-        widget.package.totalFreezingTaken;
-    provider.setFreezingRemaining(remainingFreezes.toInt());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<PackageProvider>(context, listen: false);
+      final remainingFreezes =
+          widget.package.totalAllowedFreezings -
+          widget.package.totalFreezingTaken;
+      provider.setFreezingRemaining(remainingFreezes.toInt());
+    });
   }
 
   List<DateTime> get daysInMonth {
@@ -51,6 +53,27 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
     if (p.startDate == null) return false;
     if (p.endDate == null) return date == p.startDate;
     return !date.isBefore(p.startDate!) && !date.isAfter(p.endDate!);
+  }
+
+  List<DateTime?> buildCalendarDays(int year, int month) {
+    final firstDay = DateTime(year, month, 1);
+    final daysInMonth = DateUtils.getDaysInMonth(year, month);
+
+    final int leadingEmptyDays = firstDay.weekday - 1;
+
+    final List<DateTime?> days = [];
+
+    // Empty cells
+    for (int i = 0; i < leadingEmptyDays; i++) {
+      days.add(null);
+    }
+
+    // Actual days
+    for (int i = 1; i <= daysInMonth; i++) {
+      days.add(DateTime(year, month, i));
+    }
+
+    return days;
   }
 
   @override
@@ -83,7 +106,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
               ),
             ),
           ),
-          bottomNavigationBar: _submitButton(p),
+          bottomNavigationBar: SafeArea(bottom: true, child: _submitButton(p)),
         );
       },
     );
@@ -115,12 +138,18 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
         ),
         SizedBox(height: 10.h),
         Text(
-          "Remaining Sessions: ${package.remainingSessions.toString().split(".").first}/${package.totalClasses.toString()}",
+          "Remaining Classes: ${package.remainingSessions.toString().split(".").first}/${package.totalClasses.toString()}",
         ),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: LinearProgressIndicator(
-            value: package.remainingSessions / package.totalClasses,
+            value: package.totalClasses > 0
+                ? (package.remainingSessions / package.totalClasses).clamp(
+                    0.0,
+                    1.0,
+                  )
+                : 0.0,
+            // package.remainingSessions / package.totalClasses,s
             minHeight: 8,
             backgroundColor: Colors.grey.shade300,
             valueColor: const AlwaysStoppedAnimation(Color(0xFFF5C542)),
@@ -139,6 +168,13 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
   }
 
   Widget _calendar(PackageProvider p) {
+    // Assuming daysInMonth is a List<DateTime> starting from the 1st
+    final firstDayOfMonth = daysInMonth.first;
+
+    // weekday returns 1 for Monday, 2 for Tuesday... 7 for Sunday.
+    // If your calendar starts on Monday, the offset is: firstDayOfMonth.weekday - 1
+    // If your calendar starts on Sunday, the offset is: firstDayOfMonth.weekday % 7
+    final int offset = firstDayOfMonth.weekday - 1;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -180,14 +216,19 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: daysInMonth.length,
+            itemCount: daysInMonth.length + offset,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               crossAxisSpacing: 6,
               mainAxisSpacing: 6,
             ),
             itemBuilder: (_, i) {
-              final date = daysInMonth[i];
+              if (i < offset) {
+                return const SizedBox.shrink();
+              }
+
+              // Adjust the index to get the correct date from your list
+              final date = daysInMonth[i - offset];
               final selected = isInRange(date, p);
               final isPast = isPastOrToday(date);
 
@@ -277,13 +318,13 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                     //                   final double baseAmount = double.parse(amount);
                     // final double vat = baseAmount * 0.05;
                     // final double total = baseAmount + vat;
-                    Text(
-                      'VAT: AED ${p.extraCharge * 0.05}',
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    // Text(
+                    //   'VAT: AED ${p.extraCharge * 0.05}',
+                    //   style: const TextStyle(
+                    //     color: Colors.red,
+                    //     fontWeight: FontWeight.bold,
+                    //   ),
+                    // ),
                     Text(
                       "Additional charge: AED ${p.extraCharge + vat}",
                       style: const TextStyle(
