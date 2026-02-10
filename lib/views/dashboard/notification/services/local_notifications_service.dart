@@ -69,47 +69,78 @@ class LocalNotificationsService {
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         // Handle notification tap in foreground
         print('Foreground notification has been tapped1: ${response.payload}');
-        print('Foreground message tap, payload1:sdasdasda');
+        print('Foreground message tap,');
         final payload = response.payload;
+        // final payload = response.payload;
+
         if (payload != null && payload.isNotEmpty) {
-          try {
-            // 1. Convert the Map-like string to a valid JSON string
-            // This replaces {id: with {"id": and handles the closing part
-            String fixedPayload = payload
-                .replaceAll('{', '{"')
-                .replaceAll(': ', '": "')
-                .replaceAll('}', '"}');
+          final match = RegExp(r'id:\s*([A-Z0-9-]+)').firstMatch(payload);
 
-            final Map<String, dynamic> data = jsonDecode(fixedPayload);
-            final String targetId = data['id'];
-
-            final provider = Provider.of<NotificationProvider>(
-              navigatorKey.currentContext!,
-              listen: false,
-            );
-
-            // 2. Use find or firstWhere instead of singleWhere to prevent crashes if ID is missing
-            final notification = provider.all.firstWhere(
-              (n) => n.notificationId == targetId,
-            );
-
-            Navigator.push(
-              navigatorKey.currentContext!,
-              MaterialPageRoute(
-                builder: (_) =>
-                    NotificationDetailScreen(notification: notification),
-              ),
-            );
-          } catch (e) {
-            print('Decoding failed. Attempting direct ID extraction...');
-            // Fallback: If JSON is too messy, just extract the ID using Regex
-            final match = RegExp(r'id:\s*([A-Z0-9-]+)').firstMatch(payload);
-            if (match != null) {
-              final String? extractedId = match.group(1);
-              // Navigate using extractedId here...
-            }
+          if (match == null) {
+            debugPrint('No ID found in payload');
+            return;
           }
+          // 1C7CE3E5-1CBC-4CC3-9ED0-9FA37B9300B0
+          final String targetId = match.group(1)!;
+
+          final provider = Provider.of<NotificationProvider>(
+            navigatorKey.currentContext!,
+            listen: false,
+          );
+
+          final notification = provider.all.firstWhere(
+            (n) => n.notificationId == targetId,
+            orElse: () => throw Exception('Notification not found'),
+          );
+
+          Navigator.push(
+            navigatorKey.currentContext!,
+            MaterialPageRoute(
+              builder: (_) =>
+                  NotificationDetailScreen(notification: notification),
+            ),
+          );
         }
+
+        // if (payload != null && payload.isNotEmpty) {
+        //   try {
+        //     // 1. Convert the Map-like string to a valid JSON string
+        //     // This replaces {id: with {"id": and handles the closing part
+        //     String fixedPayload = payload
+        //         .replaceAll('{', '{"')
+        //         .replaceAll(': ', '": "')
+        //         .replaceAll('}', '"}');
+
+        //     final Map<String, dynamic> data = jsonDecode(fixedPayload);
+        //     final String targetId = data['id'];
+
+        //     final provider = Provider.of<NotificationProvider>(
+        //       navigatorKey.currentContext!,
+        //       listen: false,
+        //     );
+
+        //     // 2. Use find or firstWhere instead of singleWhere to prevent crashes if ID is missing
+        //     final notification = provider.all.firstWhere(
+        //       (n) => n.notificationId == targetId,
+        //     );
+
+        //     Navigator.push(
+        //       navigatorKey.currentContext!,
+        //       MaterialPageRoute(
+        //         builder: (_) =>
+        //             NotificationDetailScreen(notification: notification),
+        //       ),
+        //     );
+        //   } catch (e) {
+        //     print('Decoding failed. Attempting direct ID extraction...');
+        //     // Fallback: If JSON is too messy, just extract the ID using Regex
+        //     final match = RegExp(r'id:\s*([A-Z0-9-]+)').firstMatch(payload);
+        //     if (match != null) {
+        //       final String? extractedId = match.group(1);
+        //       // Navigate using extractedId here...
+        //     }
+        //   }
+        // }
         // if (response.payload == null) {
         //   print('payload null ${response.payload}');
         //   return;

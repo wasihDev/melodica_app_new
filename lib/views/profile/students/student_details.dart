@@ -17,6 +17,7 @@ class StudentDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('student.dateOfBirth ${student.dateOfBirth}');
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -67,7 +68,7 @@ class StudentDetails extends StatelessWidget {
                   _label('Phone Number'),
                   Row(
                     children: [
-                      Expanded(child: _readOnlyBox('ARE - 971')),
+                      Expanded(child: _readOnlyBox('ARE-971')),
                       const SizedBox(width: 8),
                       Expanded(child: _readOnlyBox('54 ▼')),
                       const SizedBox(width: 8),
@@ -79,19 +80,19 @@ class StudentDetails extends StatelessWidget {
 
                   Row(
                     children: [
-                      // Expanded(
-                      //   child: Column(
-                      //     crossAxisAlignment: CrossAxisAlignment.start,
-                      //     children: [
-                      //       _label('Date of Birth'),
-                      //       _readOnlyField(
-                      //         student.dateOfBirth,
-                      //         Icons.calendar_today,
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
-                      const SizedBox(width: 0),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Date of Birth'),
+                            _readOnlyField(
+                              student.dateOfBirth,
+                              Icons.calendar_today,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

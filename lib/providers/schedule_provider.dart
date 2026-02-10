@@ -8,6 +8,8 @@ import 'package:melodica_app_new/services/api_config_service.dart';
 import 'package:melodica_app_new/services/schedule_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:nb_utils/nb_utils.dart';
+// same day only charge new selecting booking after today is green...
 
 class ScheduleProvider extends ChangeNotifier {
   CustomerController customerController;
@@ -74,7 +76,7 @@ class ScheduleProvider extends ChangeNotifier {
         reason: "", // can customize if needed
         branch: branch!,
         packageid: packageId!,
-        lateNotic: lateNotice!,
+        lateNotic: "Late",
         transactionId: transactionRef, // ✅ payment reference
       );
     } catch (e) {
@@ -129,7 +131,7 @@ class ScheduleProvider extends ChangeNotifier {
     try {
       schedules = await ScheduleService.getSchedule(context);
 
-      // print('fetchSchedule ${schedules.length}');
+      print('fetchSchedule ${schedules.length}');
     } catch (e) {
       debugPrint('Schedule error: $e');
     }
@@ -197,16 +199,46 @@ class ScheduleProvider extends ChangeNotifier {
     );
   }
 
+  // List<Map<String, dynamic>> getAffectedClasses({
+  //   required DateTime startDate,
+  //   required DateTime endDate,
+  // }) {
+  //   return schedules
+  //       .where((s) {
+  //         final dt = s.bookingDateTime;
+  //         if (dt == null) return false;
+
+  //         // Normalize to UTC for comparison
+  //         final utc = dt.toUtc();
+
+  //         return (utc.isAfter(startDate.toUtc()) ||
+  //                 utc.isAtSameMomentAs(startDate.toUtc())) &&
+  //             (utc.isBefore(endDate.toUtc()) ||
+  //                 utc.isAtSameMomentAs(endDate.toUtc()));
+  //       })
+  //       .map(
+  //         (s) => {
+  //           "bookingid": s.bookingId,
+  //           "bookingstart": s.bookingDateTime!.toUtc().toIso8601String(),
+  //         },
+  //       )
+  //       .toList();
+  // }
+
   List<Map<String, dynamic>> getAffectedClasses({
     required DateTime startDate,
     required DateTime endDate,
+    required String subject,
   }) {
     return schedules
         .where((s) {
           final dt = s.bookingDateTime;
           if (dt == null) return false;
+          print('s.subject ${s.subject}');
+          print('subject $subject');
+          // ✅ filter by subject
+          if (s.subject != subject) return false;
 
-          // Normalize to UTC for comparison
           final utc = dt.toUtc();
 
           return (utc.isAfter(startDate.toUtc()) ||
@@ -240,7 +272,11 @@ class ScheduleProvider extends ChangeNotifier {
     try {
       final response = await http.post(
         Uri.parse(ApiConfigService.endpoints.postCancellation),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
+
         body: jsonEncode({
           "firstname": "${customerController.customer!.firstName}",
           "lastname": "${customerController.customer?.lastName ?? ""}",
@@ -262,12 +298,57 @@ class ScheduleProvider extends ChangeNotifier {
         }),
       );
       print('response.body ${response.body}');
-      print('response.statusCode ${response.body}');
+      print('response.statusCode ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // OR ScaffoldMessenger (recommended)
+        // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+
         return true;
       } else {
-        // error = response.body;
+        final decoded = jsonDecode(response.body);
+
+        final bool status = decoded['response']['status'];
+        print('=statcut =====?? ${status}');
+        if (status == false) {
+          final String message = decoded['response']['message'];
+
+          // show message
+          showDialog(
+            context: navigatorKey.currentContext!,
+            barrierDismissible: true,
+            builder: (_) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 30,
+                horizontal: 24,
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(navigatorKey.currentContext!);
+                  },
+                  child: Text('Okay'),
+                ),
+              ],
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.info_rounded, size: 40),
+                  SizedBox(height: 20),
+                  Text(
+                    "$message",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          );
+          return false;
+        }
         return false;
       }
     } catch (e) {
@@ -293,8 +374,8 @@ class ScheduleProvider extends ChangeNotifier {
         if (s.bookingDateTime == null) return false;
         // if (s.bookingRoom == '') return false;
         // if (s.bookingDay == '' || s.bookingDay.isEmpty) return false;
-        if (s.day == '' || s.day == 0) return false;
-        if (s.monthShort == '' || s.monthShort.isEmpty) return false;
+        // if (s.day == '' || s.day == 0) return false;
+        // if (s.monthShort == '' || s.monthShort.isEmpty) return false;
         final bookingDate = s.bookingDateTime!;
         // ✅ upcoming date only
         if (!bookingDate.isAfter(now)) return false;
@@ -324,7 +405,7 @@ class ScheduleProvider extends ChangeNotifier {
   // }
 
   Set<DateTime> get availableDates {
-    // Extract all booking dates, normalize to midnight (Year, Month, Day only)
+    // it extract all booking dates, normalize to (Year, Month, Day only)
     return schedules
         .map((s) => s.bookingDateTime)
         .whereType<DateTime>() // Filter out any nulls

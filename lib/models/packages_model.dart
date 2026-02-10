@@ -17,6 +17,10 @@ class Package {
   final String paymentRef;
   final String branch;
   final num remainingExtension;
+  final String danceOrMusic;
+  final num packageRemainingPaidRecovery;
+  final String serviceandproduct;
+  final num packageRemainingPaidExtension;
 
   Package({
     required this.itemName,
@@ -37,6 +41,10 @@ class Package {
     required this.paymentRef,
     required this.branch,
     required this.remainingExtension,
+    required this.danceOrMusic,
+    required this.serviceandproduct,
+    required this.packageRemainingPaidExtension,
+    required this.packageRemainingPaidRecovery,
   });
 
   // Factory constructor to create a Package from the API JSON Map
@@ -54,6 +62,7 @@ class Package {
           json['Packages[Total Allowed Cancellation]'] ?? 0,
       paymentRef: json['Packages[Pmt_Ref]'] ?? "",
       branch: json['Packages[LocationName]'] ?? "",
+      serviceandproduct: json['Packages[Service/Product]'] ?? "",
       remainingCancellations: json['Packages[Remaining Cancellations]'] ?? 0,
       totalAllowedFreezings: json['Packages[Total Allowed Freezings]'] ?? 0,
       totalFreezingTaken: json['Packages[Total Freezing Taken]'] ?? 0,
@@ -61,6 +70,11 @@ class Package {
       classFrequency: json['Packages[Class Frequency]'] ?? 'N/A',
       classDuration: json['Packages[Class Duration]'] ?? 'N/A',
       resource: json['Packages[Resource]'] ?? 'N/A',
+      danceOrMusic: json['Packages[Dance/Music]'] ?? "",
+      packageRemainingPaidRecovery:
+          json['Packages[Remaining Paid Recovery]'] ?? 0.0,
+      packageRemainingPaidExtension:
+          json['Packages[Remaining Paid Extension]'] ?? 0.0,
     );
   }
 

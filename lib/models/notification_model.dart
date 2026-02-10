@@ -141,7 +141,8 @@ extension NotificationActionX on AppNotification {
       return false;
     }
 
-    print('✅ Valid: $now is within range');
+    print('✅ ValidTo: $validTo ');
+    print('✅ validFrom: $validFrom ');
     return true;
   }
 }

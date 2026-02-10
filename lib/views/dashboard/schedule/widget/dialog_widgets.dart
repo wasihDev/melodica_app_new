@@ -4,6 +4,7 @@ import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/schedule_model.dart';
 import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:provider/provider.dart' show Consumer, Provider;
 
 class EarlyNoticeDialog extends StatelessWidget {
@@ -105,8 +106,7 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
   String calculateNoticeType(String classDateTime) {
     print('classDateTime $classDateTime');
 
-    // Define the format matching your string
-    final format = DateFormat('dd/MM/yyyy hh:mm a');
+    final format = DateFormat('dd MMM yyyy hh:mm a');
     final classTime = format.parse(classDateTime);
 
     final now = DateTime.now();
@@ -118,7 +118,7 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 5.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -152,66 +152,73 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
               },
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 14.h),
           Consumer<ScheduleProvider>(
             builder: (context, provider, child) {
-              return SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _selectedReason == null
-                      ? null // Disable button if no reason is selected
-                      : () async {
-                          final classdatetime = formatToApiDate(DateTime.now());
-                          // Show final confirmation dialog
-                          final Packageprovider = Provider.of<PackageProvider>(
-                            context,
-                            listen: false,
-                          );
-                          final pro = Packageprovider.packages.firstWhere(
-                            (n) =>
-                                n.paymentRef == widget.s.PackageCode.toString(),
-                          );
-                          final noticeType = calculateNoticeType(
-                            widget.s.bookingDateStartTime,
-                          );
-                          print('notice $noticeType');
-                          await provider
-                              .submitScheduleRequest(
-                                subject: widget.s.subject,
-                                classDateTime: classdatetime,
-                                action: 'Forfeit',
-                                preferredSlot: "",
-                                reason: "$_selectedReason",
-                                branch: '${pro.branch}',
-                                packageid: '${pro.paymentRef}',
-                                lateNotic: '$noticeType', // late or early
-                              )
-                              .then((val) {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) =>
-                                      const ClassStartedDialog(),
+              return SafeArea(
+                bottom: true,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _selectedReason == null
+                        ? null // Disable button if no reason is selected
+                        : () async {
+                            final classdatetime = formatToApiDate(
+                              DateTime.now(),
+                            );
+                            // Show final confirmation dialog
+                            final Packageprovider =
+                                Provider.of<PackageProvider>(
+                                  context,
+                                  listen: false,
                                 );
-                              });
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                            final pro = Packageprovider.packages.firstWhere(
+                              (n) =>
+                                  n.paymentRef ==
+                                  widget.s.PackageCode.toString(),
+                            );
+                            final noticeType = calculateNoticeType(
+                              widget.s.bookingDateStartTime,
+                            );
+                            print('notice $noticeType');
+                            await provider
+                                .submitScheduleRequest(
+                                  subject: widget.s.subject,
+                                  classDateTime: classdatetime,
+                                  action: 'Forfeit',
+                                  preferredSlot: "",
+                                  reason: "$_selectedReason",
+                                  branch: '${pro.branch}',
+                                  packageid: '${pro.paymentRef}',
+                                  lateNotic: '$noticeType', // late or early
+                                )
+                                .then((val) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) =>
+                                        const ClassStartedDialog(),
+                                  );
+                                });
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      disabledBackgroundColor: Colors.grey[300],
                     ),
-                    disabledBackgroundColor: Colors.grey[300],
-                  ),
-                  child: provider.isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          "Cancel Class",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    child: provider.isLoading
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            "Cancel Class",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+                  ),
                 ),
               );
             },
@@ -236,6 +243,7 @@ class ClassStartedDialog extends StatelessWidget {
     return PopScope(
       canPop: false,
       child: AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15.0),
         ),
@@ -254,11 +262,14 @@ class ClassStartedDialog extends StatelessWidget {
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor: WidgetStatePropertyAll(AppColors.primary),
+            ),
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: Text('Okay'),
+            child: Text('Okay', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),

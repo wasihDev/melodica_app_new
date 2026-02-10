@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/providers/notification_provider.dart';
+import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
+import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:melodica_app_new/views/dashboard/dashboard_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/custom_student_item_widget.dart';
 import 'package:melodica_app_new/views/dashboard/notification/notification_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:badges/badges.dart' as badges;
+import 'package:showcaseview/showcaseview.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final double height;
@@ -24,6 +28,24 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
+  Future<void> _loadHomeData() async {
+    // final context = context;
+    final provider = Provider.of<UserprofileProvider>(context, listen: false);
+    final schedule = Provider.of<ScheduleProvider>(context, listen: false);
+    final cusprovider = Provider.of<CustomerController>(context, listen: false);
+    final package = Provider.of<PackageProvider>(context, listen: false);
+
+    print('cusprovider.isShowData ${cusprovider.isShowData}');
+    await package.fetchPackages(context);
+    await context.read<ServicesProvider>().fetchDancePackages();
+    await cusprovider.getDisplayDance(
+      cusprovider.selectedBranch ?? cusprovider.customer!.territoryid,
+    );
+    await provider.loadImageFromPrefs();
+    await schedule.fetchSchedule(context);
+    context.read<NotificationProvider>().fetchNotifications();
+  }
+
   Widget _studentDropdown(BuildContext context, Widget child) {
     final ctrl = context.read<CustomerController>();
     final Schedulectrl = context.read<ScheduleProvider>();
@@ -56,9 +78,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
         final student = ctrl.students.firstWhere(
           (e) => e.mbId.toString() == value,
         );
+        ctrl.selectStudent(student);
         // call here upcoming classes
         await Schedulectrl.fetchSchedule(context);
-        ctrl.selectStudent(student);
+        await _loadHomeData();
+
         setState(() {});
       },
       child: child,
@@ -68,6 +92,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      // foregroundColor: Colors.white,
       backgroundColor: AppColors.white,
       elevation: 0,
       automaticallyImplyLeading: false,
@@ -104,12 +129,18 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          student?.fullName ?? "loading..",
-                          // provider.customer!.fullName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          width: 180.w,
+                          color: Colors.transparent,
+                          child: Text(
+                            student?.fullName ?? "loading..",
+                            // provider.customer!.fullName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Icon(Icons.arrow_drop_down),
@@ -134,31 +165,42 @@ class _CustomAppBarState extends State<CustomAppBar> {
       actions: [
         Consumer<NotificationProvider>(
           builder: (context, pro, child) {
-            return InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => NotificationScreen()),
-                );
+            return Showcase(
+              key: notificationKey,
+              title: "Notifications",
+              description:
+                  "Receive academy announcements, class rescheduling, and reminders.",
+              onBarrierClick: () {
+                ShowCaseWidget.of(context).next();
               },
-              child: Container(
-                height: 35.h,
-                width: 35.w,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: badges.Badge(
-                  showBadge: pro.unread.length == 0 ? false : true,
-                  badgeContent: Text(
-                    pro.unread.length.toString(),
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  height: 35.h,
+                  width: 35.w,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.notifications,
-                    color: const Color.fromARGB(255, 255, 188, 5),
+                  child: badges.Badge(
+                    showBadge: pro.unread.length == 0 ? false : true,
+                    badgeContent: Text(
+                      pro.unread.length.toString(),
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                    child: Icon(
+                      Icons.notifications,
+                      color: const Color.fromARGB(255, 255, 188, 5),
+                    ),
                   ),
                 ),
               ),

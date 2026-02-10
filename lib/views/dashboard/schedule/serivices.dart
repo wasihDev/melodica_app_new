@@ -13,7 +13,10 @@ class RescheduleService {
   ) async {
     final response = await http.post(
       Uri.parse(ApiConfigService.endpoints.getAvailability),
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        "Content-Type": "application/json",
+        'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+      },
       body: jsonEncode({
         "Date": date.toString().split(' ').first, // YYYY-MM-DD
         "Resource": resourceId,

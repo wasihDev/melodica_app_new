@@ -61,8 +61,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // final schedules = provider.upcomingSchedules;
-    final schedules = provider.schedules;
+    final schedules = provider.upcomingSchedules;
+    // final schedules = provider.schedules;
 
     if (schedules.isEmpty) {
       return const Scaffold(body: Center(child: Text('No upcoming classes')));
@@ -86,12 +86,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       body: Column(
         children: [
           const Divider(),
-          SizedBox(height: 16.h),
+          // SizedBox(height: 5.h),
 
           /// SELECT DATE HEADER
           d.CustomWeeklyDatePicker(),
 
-          const SizedBox(height: 16),
+          // SizedBox(height: 5.h),
           // time range filter
 
           /// APPOINTMENT LIST
@@ -105,8 +105,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 }
                 return ListView(
                   controller: _scrollController,
-
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
                   children: grouped.entries.map((entry) {
                     final date = DateTime.parse(entry.key);
                     final items = entry.value;
@@ -120,12 +119,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       children: [
                         /// DATE HEADER
                         Padding(
-                          padding: const EdgeInsets.only(top: 16, bottom: 8),
+                          padding: EdgeInsets.only(top: 12.h, bottom: 0),
                           child: Text(
                             DateFormat('EEE, d MMM yyyy').format(date),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12.fSize,
+                              color: Colors.grey[700],
                             ),
                           ),
                         ),
@@ -161,18 +161,29 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   String removingTimeFromDate(String datetime) {
-    DateFormat inputFormat = DateFormat("dd MMM yyyy hh:mm a");
+    DateFormat inputFormat = DateFormat("d MMM yyyy hh:mm a");
 
     // 2. Parse the string into a DateTime object
     DateTime dateTime = inputFormat.parse("${datetime}");
 
     // 3. Format it back to just the date
-    String dateOnly = DateFormat("dd MMM yyyy").format(dateTime);
+    String dateOnly = DateFormat("d MMM yyyy").format(dateTime);
     return dateOnly;
   }
 
   void showAppointmentBottomSheet(BuildContext context, ScheduleModel s) {
-    final expiryDate = DateTime.parse(s.PackageExpiry);
+    print('s.PackageExpiry ${s.PackageExpiry}');
+    // final expiryDate = DateTime.parse(s.PackageExpiry);
+    DateTime? expiryDate;
+
+    if (s.PackageExpiry != null && s.PackageExpiry.isNotEmpty) {
+      try {
+        expiryDate = DateTime.parse(s.PackageExpiry);
+      } catch (e) {
+        expiryDate = null;
+      }
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -206,11 +217,18 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   //  'Tue, 18 Nov 2025',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 10.h),
 
                 // Info Section Card
                 Consumer<CustomerController>(
                   builder: (context, ctrl, child) {
+                    final date = DateFormat(
+                      'd MMM yyyy hh:mm a',
+                    ).parse(s.bookingDateStartTime);
+
+                    final formatted = DateFormat(
+                      'd MMM yyyy h:mm a',
+                    ).format(date);
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -220,20 +238,22 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       child: Column(
                         children: [
                           _buildInfoRow('Location', '${s.bookingLocation}'),
-                          _buildInfoRow('Time', '${s.bookingDateStartTime}'),
+                          _buildInfoRow('Time', '${formatted}'),
                           _buildInfoRow(
                             'Student',
                             '${ctrl.selectedStudent!.fullName}',
                           ),
                           _buildInfoRow('Teacher', '${s.bookingResource}'),
                           _buildInfoRow(
-                            'Cancellation',
-                            '${s.RemainingCancellations}',
+                            'Cancellation Left',
+                            s.RemainingCancellations < 0
+                                ? '0'
+                                : '${s.RemainingCancellations}',
                           ),
                           // DateFormat('dd/MM/yyyy hh:mm a').parse(PackageExpiry);
                           _buildInfoRow(
-                            'Expiry',
-                            '${DateFormat('dd MMM yyyy').format(expiryDate)}',
+                            'Package Expiry',
+                            '${DateFormat('d MMM yyyy').format(expiryDate ?? DateTime.now())}',
                           ),
                         ],
                       ),
@@ -277,12 +297,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 ),
                 const SizedBox(height: 24),
                 // Action Buttons
-                s.subject == "Ballet" ||
-                        s.subject == "Belly Dance" ||
-                        s.subject == 'Contemporary' ||
-                        s.subject == 'Hip Hop'
-                    ? SizedBox()
-                    : SizedBox(
+                s.danceOrMusic == "Music Classes"
+                    ? SizedBox(
                         width: double.infinity,
                         height: 50.h,
                         child: ElevatedButton(
@@ -311,7 +327,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                      ),
+                      )
+                    : SizedBox(),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -319,8 +336,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   child: OutlinedButton(
                     onPressed: () {
                       final DateTime bookingdata = DateFormat(
-                        'dd/MM/yyyy hh:mm a',
+                        'dd MMM yyyy hh:mm a',
                       ).parse(s.bookingDateStartTime);
+
                       // Current datetime
                       final DateTime now = DateTime.now();
                       final DateTime today = DateTime(
@@ -439,12 +457,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         PaymentType.freezingPoints,
                       );
                       final vat = 50 * 0.05;
-                      final amountWithVat = (50 + vat).toInt();
+                      final amountWithVat = (50 + vat);
 
                       final success = await servicesProvider.startCheckout(
                         context,
                         amount: amountWithVat,
-                        redirectUrl: "https://melodica-mobile.web.app",
+                        // redirectUrl: "https://melodica-mobile.web.app",
                       );
 
                       if (success && servicesProvider.paymentUrl != null) {
@@ -491,18 +509,18 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 110.w,
             child: Text(
               label,
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(color: Colors.grey, fontSize: 12.fSize),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 12.fSize,
                 color: Color(0xFF2D3436),
               ),
             ),
@@ -517,6 +535,4 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
     return DateFormat('hh:mm a').format(dt);
   }
-
-  ///
 }

@@ -1,4 +1,5 @@
 import 'package:app_links/app_links.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/dance_data_model.dart';
@@ -159,7 +160,6 @@ class ServicesProvider extends ChangeNotifier {
                 paymentMethod: 'Network International',
                 status: 'success',
                 date: DateTime.now(),
-                // package: null,
               ),
             ),
           );
@@ -172,13 +172,11 @@ class ServicesProvider extends ChangeNotifier {
         debugPrint('Installing order');
 
         try {
-          final val = await installOrder(ref: ref);
-          if (val) {
-            Navigator.push(
-              navigatorKey.currentContext!,
-              MaterialPageRoute(builder: (_) => ThankYouScreen()),
-            );
-          }
+          // final val = await installOrder(ref: ref);
+          Navigator.push(
+            navigatorKey.currentContext!,
+            MaterialPageRoute(builder: (_) => ThankYouScreen()),
+          );
         } catch (e) {
           debugPrint('Error processing order: $e');
         }
@@ -193,6 +191,7 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   void clearList() {
+    isStudentNew = false;
     _selectedPackages = [];
     notifyListeners();
   }
@@ -224,7 +223,7 @@ class ServicesProvider extends ChangeNotifier {
 
   /// Clear checkout
   void clear() {
-    String val;
+    isStudentNew = false;
     // val.split('.').last
     _selectedPackages.clear();
     notifyListeners();
@@ -243,19 +242,34 @@ class ServicesProvider extends ChangeNotifier {
     return _selectedPackages.fold(0.0, (sum, item) {
       final discountPercent = double.tryParse(item.discount ?? '0') ?? 0.0;
       final discountAmount = item.price * (discountPercent / 100);
-      return discountAmount;
+      // print('discountAmount ${discountAmount}');
+      return sum + discountAmount;
     });
   }
 
   /// VAT AMOUNT (5%)
   double get vatAmount {
-    final subtotal = totalPrice - totalDiscount;
+    double subtotal = totalPrice - totalDiscount;
+    if (_isStudentNew) {
+      subtotal += 150.0;
+    }
     return subtotal * vatRate;
   }
 
   /// FINAL AMOUNT (Including VAT)
   double get payableAmount {
     return (totalPrice - totalDiscount) + vatAmount;
+  }
+
+  bool _isStudentNew = false;
+
+  /// Getter
+  bool get isStudentNew => _isStudentNew;
+
+  /// Setter
+  set isStudentNew(bool value) {
+    _isStudentNew = value;
+    notifyListeners();
   }
 
   // music list package
@@ -271,7 +285,10 @@ class ServicesProvider extends ChangeNotifier {
         '${ApiConfigService.endpoints.getServices}${customerController.selectedBranch}',
       );
 
-      final resp = await http.get(uri);
+      final resp = await http.get(
+        uri,
+        headers: {'api-key': "60e35fdc-401d-494d-9d78-39b15e345547"},
+      );
       print('resp.statusCode ${resp.statusCode}');
       if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
       final Map<String, dynamic> body =
@@ -334,7 +351,10 @@ class ServicesProvider extends ChangeNotifier {
         //C27B1894-7C6E-EE11-9AE7-0022489F8146',
         // 'https://bf67c0337b6de47faeee4735e1fe49.46.environment.api.powerplatform.com/powerautomate/automations/direct/workflows/19d12f88493c44eca47defb553aab05e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=adzRWIXbH-lg5lnxWCNgD-w9SbvgQ0zgnqIrAWQADo8&locationid=C27B1894-7C6E-EE11-9AE7-0022489F8146',
       );
-      final resp = await http.get(uri);
+      final resp = await http.get(
+        uri,
+        headers: {'api-key': "60e35fdc-401d-494d-9d78-39b15e345547"},
+      );
       // print("resp fetchDancePackages ${resp.statusCode}");
       // print("resp fetchDancePackages ${resp.body.length}");
       if (resp.statusCode != 200) {
@@ -490,88 +510,135 @@ class ServicesProvider extends ChangeNotifier {
   String? _orderReference;
   String? get orderReference => _orderReference;
 
-  Future<String?> _getAccessToken() async {
-    try {
-      const apiKey =
-          'M2Q4M2JiOWQtNWI3Ni00OGNjLTk1NWEtZDUyYWI3M2M0ZTFhOjVmZjg5MzY0LThiMjEtNGYyYi1hY2E3LTg4ZWYzMjJjYWM4Yw==';
+  String? _orderId;
+  String? get orderId => _orderId;
 
-      final response = await http.post(
-        Uri.parse(
-          "https://api-gateway.sandbox.ngenius-payments.com/identity/auth/access-token",
-        ),
-        headers: {
-          "Content-Type": "application/vnd.ni-identity.v1+json",
-          "Authorization": "Basic $apiKey",
-        },
-      );
+  // Future<String?> _getAccessToken() async {
+  //   try {
+  //     const apiKey =
+  //         'M2Q4M2JiOWQtNWI3Ni00OGNjLTk1NWEtZDUyYWI3M2M0ZTFhOjVmZjg5MzY0LThiMjEtNGYyYi1hY2E3LTg4ZWYzMjJjYWM4Yw==';
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body)["access_token"];
-      } else {
-        throw Exception(response.body);
-      }
-    } catch (e) {
-      _error = e.toString();
-      return null;
-    }
-  }
+  //     final response = await http.post(
+  //       Uri.parse(
+  //         "https://api-gateway.sandbox.ngenius-payments.com/identity/auth/access-token",
+  //       ),
+  //       headers: {
+  //         "Content-Type": "application/vnd.ni-identity.v1+json",
+  //         "Authorization": "Basic $apiKey",
+  //       },
+  //     );
 
-  /// Converts a double amount in major units to an integer amount in minor units.
-  ///
-  /// For example, if the amount is 10.00, this function will return 1000.
-  ///
-  /// @param amount The amount in major units.
-  /// @return The amount in minor units.
-  int toMinorUnits(double amount) {
-    return (amount * 100).toInt();
-  }
+  //     if (response.statusCode == 200) {
+  //       return jsonDecode(response.body)["access_token"];
+  //     } else {
+  //       throw Exception(response.body);
+  //     }
+  //   } catch (e) {
+  //     _error = e.toString();
+  //     return null;
+  //   }
+  // }
+
+  // /// Converts a double amount in major units to an integer amount in minor units.
+  // ///
+  // /// For example, if the amount is 10.00, this function will return 1000.
+  // ///
+  // /// @param amount The amount in major units.
+  // /// @return The amount in minor units.
+  // int toMinorUnits(double amount) {
+  //   return (amount * 100).toInt();
+  // }
+
+  // Future<bool> startCheckout(
+  //   BuildContext context, {
+  //   required int amount, // e.g. 1000 = 10.00 AED
+  //   required String redirectUrl,
+  // }) async {
+  //   showLoadingDialog(context);
+  //   print('amount $amount');
+  //   print('redirectUrl $redirectUrl');
+  //   try {
+  //     final token = await _getAccessToken();
+  //     if (token == null) return false;
+
+  //     const outletId = "f05267d0-5b94-438a-a839-992702929316";
+
+  //     final response = await http.post(
+  //       Uri.parse(
+  //         "https://api-gateway.sandbox.ngenius-payments.com/transactions/outlets/$outletId/orders",
+  //       ),
+  //       headers: {
+  //         "Authorization": "Bearer $token",
+  //         "Content-Type": "application/vnd.ni-payment.v2+json",
+  //         "Accept": "application/vnd.ni-payment.v2+json",
+  //       },
+  //       body: jsonEncode({
+  //         "action": "SALE",
+  //         "amount": {
+  //           "currencyCode": "AED",
+  //           "value": toMinorUnits(amount.toDouble()),
+  //         },
+  //         "merchantAttributes": {"redirectUrl": redirectUrl},
+  //       }),
+  //     );
+  //     print('status ${response.statusCode}');
+  //     if (response.statusCode == 201) {
+  //       final data = jsonDecode(response.body);
+  //       _paymentUrl = data["_links"]["payment"]["href"];
+  //       print('_paymentUrl ${_paymentUrl}');
+
+  //       return true;
+  //     } else {
+  //       throw Exception(response.body);
+  //     }
+  //   } catch (e) {
+  //     print('error $e');
+  //     _error = e.toString();
+  //     return false;
+  //   } finally {
+  //     hideLoadingDialog(context);
+  //     _setLoading(false);
+  //   }
+
+  // }
 
   Future<bool> startCheckout(
     BuildContext context, {
-    required int amount, // e.g. 1000 = 10.00 AED
-    required String redirectUrl,
+    // required String branchId,
+    required num amount, // major units (10.0)
   }) async {
     showLoadingDialog(context);
-    print('amount $amount');
-    print('redirectUrl $redirectUrl');
+    print('amount ${customerController.selectedBranch}');
+    print('amoutn2 ${amount}');
+
     try {
-      final token = await _getAccessToken();
-      if (token == null) return false;
-
-      const outletId = "f05267d0-5b94-438a-a839-992702929316";
-
       final response = await http.post(
-        Uri.parse(
-          "https://api-gateway.sandbox.ngenius-payments.com/transactions/outlets/$outletId/orders",
-        ),
+        Uri.parse(ApiConfigService.endpoints.collectPayment),
         headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/vnd.ni-payment.v2+json",
-          "Accept": "application/vnd.ni-payment.v2+json",
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
         },
         body: jsonEncode({
-          "action": "SALE",
-          "amount": {
-            "currencyCode": "AED",
-            "value":
-                //10,
-                toMinorUnits(amount.toDouble()),
-          },
-          "merchantAttributes": {"redirectUrl": redirectUrl},
+          "branch": "${customerController.selectedBranch}",
+          "amount": amount,
         }),
       );
-      print('status ${response.statusCode}');
-      if (response.statusCode == 201) {
+      //4950 total
+      // after discount 3712.5
+      // after 4950 + 5% = 5197.5
+      if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _paymentUrl = data["_links"]["payment"]["href"];
-        print('_paymentUrl ${_paymentUrl}');
 
+        _paymentUrl = data["URL"];
+        _orderReference = data["merchantOrderReference"];
+        _orderId = data['ID'];
+        notifyListeners();
         return true;
       } else {
         throw Exception(response.body);
       }
     } catch (e) {
-      print('error $e');
+      print('paymenr error $e');
       _error = e.toString();
       return false;
     } finally {
@@ -627,53 +694,122 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
   } // post api install package
 
-  Future<bool> installOrder({required String ref}) async {
+  Future<bool> installOrder() async {
     // if (_selectedPackages.isEmpty) return false;
     _setLoading(true);
 
     showLoadingDialog(navigatorKey.currentContext!);
     generateRandom();
-
+    final signatureBase64 = base64Encode(signatureBytes!);
     try {
       final url = ApiConfigService.endpoints.installPackage;
-
+      print('_orderReference ${_orderReference}');
+      print('signatureBase64 $signatureBase64');
       final body = {
         "firstname": customerController.customer?.firstName,
         "lastname": customerController.customer?.lastName,
         "relatedcontact":
             "${customerController.students.map((e) => e.mbId).join(",")}",
         "branch": "${customerController.selectedBranch}",
-        "transactionid":
-            "$ref", // after payment is completed the refrence id should be here
-        "salesid": "$randomNumber",
+        "email": "${FirebaseAuth.instance.currentUser?.email ?? ""}",
+        "transactionid": "$_orderId", // empty
+        "salesid": "$_orderReference", //merchantOrderReference
         "paymentdate": "${DateTime.now().toIso8601String().split('T').first}",
         "paymenturl": "APP", // get this from network international
         "paymentmethod": "Network International",
         "orderdetails": _selectedPackages.map((e) {
-          final vat = (e.price * 0.05);
-          final total = e.price + vat;
+          final bool chargeAdmission =
+              _isStudentNew == true ||
+              customerController.selectedStudent?.isregistred != 'Yes';
+          print('chargeAdmission $chargeAdmission');
+          final double admissionValue = chargeAdmission ? 150.0 : 0.0;
+          final double discountPercent =
+              (double.tryParse(e.discount.toString().replaceAll('%', '')) ??
+                  0.0) /
+              100;
+
+          // 3. Calculate Subtotal and Discount Amount
+          final double baseAmount = e.price + admissionValue;
+          final double discountAmount = baseAmount * discountPercent;
+          final double discountedSubtotal = baseAmount - discountAmount;
+          print('discountedSubtotal $discountedSubtotal');
+
+          // 4. Calculate VAT (5%) on the Discounted Subtotal
+          final double vatValue = discountedSubtotal * 0.05;
+          print('vatValue $vatValue');
+          // 5. Final Total
+          final double totalValue = discountedSubtotal + vatValue;
+          print('totalValue $totalValue');
+          // print('e.priceid ${e.priceid}');
+          // print('mbid ${customerController.selectedStudent?.mbId}');
+          // print('fisrt ${customerController.selectedStudent?.lastName}');
+          // print('e.packageName ${e.packageName}');
+          // print('e.discount ${e.discount}');
+          // print('e.price.toStringAsFixed(2) ${e.price.toStringAsFixed(2)}');
+          // print('randomNumber $randomNumber');
 
           return {
             "priceid": "${e.priceid}",
-            "type": "${_tab}", // Music or Dance
-            "studentid": "${customerController.selectedStudent?.mbId}",
-            "studentname": customerController.selectedStudent?.firstName,
-            "studentlastname": customerController.selectedStudent?.lastName,
-            "details": e.packageName,
+            "type": "${_tab}", // Ensure this is "Dance" or "Music"
+            "studentid": chargeAdmission
+                ? ""
+                : "${customerController.selectedStudent?.mbId}",
+            "studentname": chargeAdmission
+                ? "${customerController.firstNameCtrl.text}"
+                : customerController.selectedStudent?.firstName,
+            "studentlastname": chargeAdmission
+                ? "${customerController.lastNameCtrl.text}"
+                : customerController.selectedStudent?.lastName,
+            "details": "${e.packageName}",
             "coupon": "",
-            "admission": "", //leave it blank if already registered
+            "admission": chargeAdmission ? "150" : "",
             "discount": "${e.discount}",
             "amount": "${e.price.toStringAsFixed(2)}",
-            "vat": "${vat.toStringAsFixed(2)}",
-            "total": "${total.toStringAsFixed(2)}",
+            "vat": "${vatValue.toStringAsFixed(2)}",
+            "total": "${totalValue}",
           };
         }).toList(),
-        "orderpdf": ref,
+        // "orderdetails": _selectedPackages.map((e) {
+        //   final vat = (e.price * 0.05);
+        //   // print('object')
+        //   final total = e.price + vat;
+        //   print('total $total');
+        //   return {
+        //     "priceid": "${e.priceid}",
+        //     "type": "${_tab}", // Music or Dance
+        //     "studentid": _isStudentNew == true
+        //         ? ""
+        //         : "${customerController.selectedStudent?.mbId}",
+        //     "studentname": _isStudentNew == true
+        //         ? "${customerController.firstNameCtrl.text}"
+        //         : customerController.selectedStudent?.firstName,
+        //     "studentlastname": isStudentNew == true
+        //         ? "${customerController.lastNameCtrl.text}"
+        //         : customerController.selectedStudent?.lastName,
+        //     "details": "${e.packageName}",
+        //     "coupon": "",
+        //     "admission": _isStudentNew == true
+        //         ? "AED 150"
+        //         : "", //leave it blank if already registered
+        //     "discount": "${e.discount}",
+        //     "amount": "${e.price.toStringAsFixed(2)}",
+        //     "vat": "${vat.toStringAsFixed(2)}",
+        //     "total": _isStudentNew == true
+        //         ? "${(total + 150).toStringAsFixed(2)}"
+        //         : "${total.toStringAsFixed(2)}",
+        //   };
+        // }).toList(),
+        "checkoutscreen": "",
+        "signature": "$signatureBase64",
       };
 
       final response = await http.post(
         Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
+
         body: jsonEncode(body),
       );
       print('response ===>> ${response.statusCode}');

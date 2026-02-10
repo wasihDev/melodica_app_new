@@ -6,15 +6,14 @@ import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
-import 'package:melodica_app_new/utils/date_format.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/utils/whatsapp_link.dart';
+import 'package:melodica_app_new/views/dashboard/dashboard_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/custom_widget.dart';
 import 'package:melodica_app_new/widgets/summary_row.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -109,11 +108,18 @@ class ReceiptScreen extends StatelessWidget {
               context,
               listen: false,
             );
+            final custo = Provider.of<CustomerController>(
+              context,
+              listen: false,
+            );
+            provider.clear();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => DashboardScreen()),
+            );
 
-            Navigator.pop(context);
-            Navigator.pop(context);
-            Navigator.pop(context);
             provider.clearList();
+            custo.clearStudentForm();
           },
         ),
         title: const Text(
@@ -126,234 +132,272 @@ class ReceiptScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: Consumer<ServicesProvider>(
-        builder: (context, ctrl, child) {
-          return Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // --- Header ---
-                      Text(
-                        'Order Number #${ctrl.randomNumber}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: AppColors.darkText,
+      body: SafeArea(
+        bottom: true,
+        child: Consumer<ServicesProvider>(
+          builder: (context, ctrl, child) {
+            return Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // --- Header ---
+                        Text(
+                          'Order Number #${ctrl.randomNumber}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: AppColors.darkText,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        formattedDate,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.secondaryText,
+                        const SizedBox(height: 4),
+                        Text(
+                          formattedDate,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.secondaryText,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 15.h),
-                      // --- Products ---
-                      // _buildSectionTitle('Products'),
-                      const Text(
-                        'Orders',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.secondaryText,
+                        SizedBox(height: 15.h),
+                        // --- Products ---
+                        // _buildSectionTitle('Products'),
+                        const Text(
+                          'Orders',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.secondaryText,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      ListView.separated(
-                        padding: EdgeInsets.zero, // ✅ IMPORTANT
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: ctrl.selectedPackages.length,
-                        shrinkWrap: true,
-                        separatorBuilder: (context, index) =>
-                            SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          return _buildProductDetail(
-                            '${ctrl.selectedPackages[index].service}',
-                            '${ctrl.selectedPackages[index].sessionstext} - ${ctrl.selectedPackages[index].durationtext}',
-                            "${ctrl.selectedPackages[index].price}",
-                          );
-                        },
-                      ),
-                      // _buildProductDetail(
-                      //   'Dimension 1 (Dance Classes)',
-                      //   '₫ 1620',
-                      // ),
-                      SizedBox(height: 15.h),
-                      // --- Enrollment Details ---
-                      _buildSectionTitle('Enrollment Details'),
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 8),
+                        ListView.separated(
+                          padding: EdgeInsets.zero, // ✅ IMPORTANT
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: ctrl.selectedPackages.length,
+                          shrinkWrap: true,
+                          separatorBuilder: (context, index) =>
+                              SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            return _buildProductDetail(
+                              '${ctrl.selectedPackages[index].service}',
+                              '${ctrl.selectedPackages[index].sessionstext} -  ${ctrl.selectedPackages[index].service == "Dance Membership" ? "" : ctrl.selectedPackages[index].durationtext}',
+                              "${ctrl.selectedPackages[index].price}",
+                            );
+                          },
                         ),
-                        child: Column(
-                          children: [
-                            SummaryRow(
-                              label: 'Student',
-                              value: ctrl
-                                  .customerController
-                                  .selectedStudent!
-                                  .fullName,
-                              valueColor: AppColors.secondaryText,
-                            ),
-                            // SummaryRow(
-                            //   label: 'Start Date',
-                            //   value: formatCreatedOn(
-                            //     ctrl
-                            //         .customerController
-                            //         .selectedStudent!
-                            //         .overriddenCreatedOn,
-                            //   ),
-                            //   valueColor: AppColors.secondaryText,
-                            // ),
-                            // const SummaryRow(
-                            //   label: 'Scheduled Date',
-                            //   value: 'Flexible',
-                            //   valueColor: AppColors.secondaryText,
-                            // ),
-                            Consumer<CustomerController>(
-                              builder: (context, ctrl, child) {
-                                return SummaryRow(
-                                  label: 'Branch',
-                                  value: '${ctrl.selectedBranch}',
-                                  valueColor: AppColors.secondaryText,
-                                );
-                              },
-                            ),
-                          ],
+                        // _buildProductDetail(
+                        //   'Dimension 1 (Dance Classes)',
+                        //   '₫ 1620',
+                        // ),
+                        SizedBox(height: 15.h),
+                        // --- Enrollment Details ---
+                        _buildSectionTitle('Enrollment Details'),
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              SummaryRow1(
+                                label: 'Student',
+                                value: ctrl.isStudentNew == true
+                                    ? "${ctrl.customerController.firstNameCtrl.text} ${ctrl.customerController.lastNameCtrl.text}"
+                                    : ctrl
+                                          .customerController
+                                          .selectedStudent!
+                                          .fullName,
+                                valueColor: AppColors.secondaryText,
+                              ),
+                              // SummaryRow(
+                              //   label: 'Start Date',
+                              //   value: formatCreatedOn(
+                              //     ctrl
+                              //         .customerController
+                              //         .selectedStudent!
+                              //         .overriddenCreatedOn,
+                              //   ),
+                              //   valueColor: AppColors.secondaryText,
+                              // ),
+                              // const SummaryRow(
+                              //   label: 'Scheduled Date',
+                              //   value: 'Flexible',
+                              //   valueColor: AppColors.secondaryText,
+                              // ),
+                              Consumer<CustomerController>(
+                                builder: (context, ctrl, child) {
+                                  return SummaryRow1(
+                                    label: 'Branch',
+                                    value: '${ctrl.selectedBranch}',
+                                    valueColor: AppColors.secondaryText,
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      //  SummaryRow(
-                      //   label: 'Student Type',
-                      //   value: ctrl.customerController.selectedStudent!.fullName,
-                      //   valueColor: AppColors.secondaryText,
-                      // ),
-                      SizedBox(height: 15.h),
-                      // --- Payment Summary ---
-                      _buildSectionTitle('Payment Summary'),
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
+                        //  SummaryRow(
+                        //   label: 'Student Type',
+                        //   value: ctrl.customerController.selectedStudent!.fullName,
+                        //   valueColor: AppColors.secondaryText,
+                        // ),
+                        SizedBox(height: 15.h),
+                        // --- Payment Summary ---
+                        _buildSectionTitle('Payment Summary'),
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              SummaryRow(
+                                label: 'Course Fee',
+                                value: ' ${ctrl.totalPrice}',
+                                valueColor: AppColors.darkText,
+                              ),
+                              ctrl.isStudentNew == true
+                                  ? SummaryRow(
+                                      label: 'Registration Fees',
+                                      value: ' 150',
+                                      valueColor: Colors.green,
+                                    )
+                                  : SizedBox.shrink(),
+                              SummaryRow(
+                                label: 'Discount',
+                                value: ' ${ctrl.totalDiscount}',
+                                valueColor: AppColors.redError,
+                              ),
+                              SummaryRow(
+                                label: 'VAT',
+                                value: ' ${ctrl.vatAmount}',
+                                valueColor: Colors.green,
+                              ),
+                              SummaryRow(
+                                label: 'Total',
+                                value: ctrl.isStudentNew == true
+                                    ? ' ${ctrl.payableAmount + 150}'
+                                    : ' ${ctrl.payableAmount}',
+                                valueColor: AppColors.darkText,
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Column(
-                          children: [
-                            SummaryRow(
-                              label: 'Course Fee',
-                              value: 'AED ${ctrl.totalPrice}',
-                              valueColor: AppColors.darkText,
-                            ),
-                            // SummaryRow(
-                            //   label: 'Registration Fees',
-                            //   value: 'AED 0',
-                            //   valueColor: AppColors.darkText,
-                            // ),
-                            SummaryRow(
-                              label: 'Discount',
-                              value: '-AED ${ctrl.totalDiscount}',
-                              valueColor: AppColors.redError,
-                            ),
-                            SummaryRow(
-                              label: 'VAT',
-                              value: 'AED ${ctrl.vatAmount}',
-                              valueColor: Colors.green,
-                            ),
-                            SummaryRow(
-                              label: 'Total',
-                              value: 'AED ${ctrl.payableAmount}',
-                              valueColor: AppColors.darkText,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Consumer<ServicesProvider>(
-                builder: (context, ctrl, _) {
-                  return Container(
-                    width: double.infinity,
-                    margin: EdgeInsets.symmetric(horizontal: 20),
-                    height: 52,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        int totalClasses = 0;
-                        ctrl.selectedPackages.map((e) {
-                          // print('procdcut ${e.sessionstext}');
-                          final text = e.sessionstext; // e.g. "20 Classes"
-                          final count =
-                              int.tryParse(text.split(' ').first) ?? 0;
-                          totalClasses += count;
-                        }).toList();
-                        // print('Total Classes: $totalClasses');
-                        openWhatsApp("${totalClasses} Classes");
-                      },
-                      icon: const Icon(
-                        Icons.check_circle_outline,
-                        color: Colors.green,
-                      ),
-                      label: const Text(
-                        "Schedule Now",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                // Container(
+                //   width: double.infinity,
+                //   margin: EdgeInsets.symmetric(horizontal: 20),
+                //   height: 52,
+                //   child: OutlinedButton.icon(
+                //     onPressed: () {},
+                //     icon: const Icon(
+                //       Icons.check_circle_outline,
+                //       color: Colors.green,
+                //     ),
+                //     label: const Text(
+                //       "Done",
+                //       style: TextStyle(
+                //         fontSize: 16,
+                //         fontWeight: FontWeight.w600,
+                //         color: Colors.black87,
+                //       ),
+                //     ),
+                //     style: OutlinedButton.styleFrom(
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(28),
+                //       ),
+                //       side: const BorderSide(color: Colors.black),
+                //     ),
+                //   ),
+                // ),
+                Consumer<ServicesProvider>(
+                  builder: (context, ctrl, _) {
+                    return Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.symmetric(horizontal: 20),
+                      height: 52,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          int totalClasses = 0;
+                          ctrl.selectedPackages.map((e) {
+                            // print('procdcut ${e.sessionstext}');
+                            final text = e.sessionstext; // e.g. "20 Classes"
+                            final count =
+                                int.tryParse(text.split(' ').first) ?? 0;
+                            totalClasses += count;
+                          }).toList();
+                          // print('Total Classes: $totalClasses');
+                          openWhatsApp("${totalClasses} Classes");
+                        },
+                        icon: const Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.green,
+                        ),
+                        label: const Text(
+                          "Schedule Now",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                          side: const BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        side: const BorderSide(color: Colors.black),
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              // --- Fixed Bottom Button ---
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  bottom: 24,
-                  top: 12,
-                ),
-                child: PrimaryButton(
-                  text: 'Download PDF',
-                  onPressed: () async {
-                    final file = await generateStudentPdf(ctrl);
-
-                    // Open / Download / Share
-                    await Printing.layoutPdf(
-                      onLayout: (format) async => file.readAsBytes(),
                     );
-                    // PdfService.generateReceiptPdf(signature: _signatureBytes).then((
-                    //   va,
-                    // ) {
-                    //   Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(builder: (context) => ThankYouScreen()),
-                    //   );
-                    // });
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(builder: (context) => ThankYouScreen()),
-                    // );
                   },
                 ),
-              ),
-            ],
-          );
-        },
+
+                // --- Fixed Bottom Button ---
+                SafeArea(
+                  bottom: true,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      bottom: 10.h,
+                      top: 12,
+                    ),
+                    child: PrimaryButton(
+                      text: 'Download PDF',
+                      onPressed: () async {
+                        final file = await generateStudentPdf(ctrl);
+
+                        // Open / Download / Share
+                        await Printing.layoutPdf(
+                          onLayout: (format) async => file.readAsBytes(),
+                        );
+                        // PdfService.generateReceiptPdf(signature: _signatureBytes).then((
+                        //   va,
+                        // ) {
+                        //   Navigator.push(
+                        //     context,
+                        //     MaterialPageRoute(builder: (context) => ThankYouScreen()),
+                        //   );
+                        // });
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(builder: (context) => ThankYouScreen()),
+                        // );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -388,8 +432,11 @@ class ReceiptScreen extends StatelessWidget {
               pw.SizedBox(height: 20),
 
               /// Student Info
+              /// TODO:: Student
               pw.Text(
-                'Student Name: ${provider.customerController.selectedStudent!.fullName}',
+                provider.isStudentNew == true
+                    ? "Student Name: ${provider.customerController.firstNameCtrl.text} ${provider.customerController.lastNameCtrl.text}"
+                    : 'Student Name: ${provider.customerController.selectedStudent!.fullName}',
                 style: pw.TextStyle(fontSize: 14),
               ),
 
@@ -428,7 +475,7 @@ class ReceiptScreen extends StatelessWidget {
                                       pw.CrossAxisAlignment.start,
                                   children: [
                                     pw.Text('${pkg.service}'),
-                                    pw.Text('${pkg.durationtext}'),
+                                    pw.Text('${pkg.sessionstext}'),
                                   ],
                                 ),
                                 pw.Text("${pkg.price}"),
@@ -459,23 +506,30 @@ class ReceiptScreen extends StatelessWidget {
                 ],
               ),
               pw.SizedBox(height: 10),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    'Registration Fees',
-                    style: pw.TextStyle(
-                      fontSize: 16,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.Text(
-                    "0",
-                    textAlign: pw.TextAlign.right,
-                    style: pw.TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
+              provider.isStudentNew == true
+                  ? pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(
+                          'Admission Fees',
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+
+                        pw.Row(
+                          children: [
+                            pw.Text(
+                              "AED 150",
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : pw.SizedBox(),
               pw.SizedBox(height: 10),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -488,7 +542,7 @@ class ReceiptScreen extends StatelessWidget {
                     ),
                   ),
                   pw.Text(
-                    "-AED ${provider.totalDiscount}",
+                    "AED ${provider.totalDiscount}",
                     textAlign: pw.TextAlign.right,
                     style: pw.TextStyle(fontSize: 14),
                   ),
@@ -506,7 +560,9 @@ class ReceiptScreen extends StatelessWidget {
                     ),
                   ),
                   pw.Text(
-                    "AED ${provider.payableAmount}",
+                    provider.isStudentNew == true
+                        ? 'AED ${provider.payableAmount + 150}'
+                        : "AED ${provider.payableAmount}",
                     textAlign: pw.TextAlign.right,
                     style: pw.TextStyle(fontSize: 14),
                   ),

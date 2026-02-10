@@ -8,6 +8,7 @@ import 'package:melodica_app_new/providers/appstate_provider.dart';
 import 'package:melodica_app_new/providers/auth_provider.dart';
 import 'package:melodica_app_new/utils/common.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/utils/validator.dart';
 import 'package:melodica_app_new/widgets/common_textfield.dart';
 import 'package:melodica_app_new/widgets/custom_button.dart';
@@ -217,6 +218,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   isLoading: provider.isLoading,
                                   onTap: () async {
                                     if (_form.currentState!.validate()) {
+                                      if (_agree == false) {
+                                        SnackbarUtils.showInfo(
+                                          context,
+                                          "Please accept our terms.",
+                                        );
+                                      }
                                       await provider.registrationFunc(
                                         context,
                                         email: _emailCtrl.text.trim(),
@@ -236,7 +243,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     }
                                   },
                                   widget: provider.isLoading
-                                      ? CircularProgressIndicator()
+                                      ? CircularProgressIndicator(
+                                          color: Colors.black,
+                                        )
                                       : Text(
                                           "Sign up",
                                           style: TextStyle(

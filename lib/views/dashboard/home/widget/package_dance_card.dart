@@ -154,7 +154,7 @@ class PackageWidgetCard extends StatelessWidget {
                           children: [
                             SvgPicture.asset('assets/svg/dirham.svg'),
                             Text(
-                              '${package.price}', // Using the currency symbol from the image
+                              ' ${package.price}', // Using the currency symbol from the image
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,

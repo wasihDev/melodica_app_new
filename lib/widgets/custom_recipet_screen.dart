@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
-import 'package:melodica_app_new/models/packages_model.dart';
 import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:provider/provider.dart';
 
 class CustomRecipetScreen extends StatelessWidget {
@@ -70,8 +71,8 @@ class CustomRecipetScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               _buildRow('Order ID', orderId),
-              _buildRow('Vat', "AED ${vat}"),
-              _buildRow('Amount', "AED ${total}"),
+              _buildRow1('Vat', " ${vat}"),
+              _buildRow1('Amount', " ${total}"),
               _buildRow('Payment Method', paymentMethod),
               _buildRow(
                 'Date',
@@ -105,6 +106,7 @@ class CustomRecipetScreen extends StatelessWidget {
                           context,
                           AppRoutes.dashboard,
                         );
+                        // baseAmount = 0.0;
                         // await provider
                         //     .callFreezingApi(context, '', package, ref: orderId)
                         //     .then((val) {
@@ -126,6 +128,36 @@ class CustomRecipetScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRow1(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 15, color: Colors.grey)),
+          Row(
+            children: [
+              SvgPicture.asset(
+                'assets/svg/dirham.svg',
+                color: Colors.black,
+                height: 12.h,
+                width: 12.w,
+              ),
+              SizedBox(width: 5.w),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

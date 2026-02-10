@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 
 class ScheduleModel {
   final String bookingId;
+  final String ClientID;
   final String subject;
   final String bookingDateStartTime;
   final String bookingDay;
@@ -16,13 +17,14 @@ class ScheduleModel {
   final int RemainingCancellations;
   final double BookingDuration;
   final String PackageCode;
-
+  final String danceOrMusic;
   // "PackageExpiry": "2026-04-20T00:00:00",
   //   "RemainingCancellations": 1
 
   ScheduleModel({
     required this.bookingId,
     required this.subject,
+    required this.ClientID,
     required this.bookingDateStartTime,
     required this.bookingDay,
     required this.bookingRoom,
@@ -36,14 +38,17 @@ class ScheduleModel {
     required this.PackageExpiry,
     required this.RemainingCancellations,
     required this.BookingDuration,
+    required this.danceOrMusic,
   });
 
   factory ScheduleModel.fromJson(Map<String, dynamic> json) {
+    // print('json --->>>>  $json');
     return ScheduleModel(
       bookingId: json['BookingID'] ?? '',
       subject: json['SubjectUpdated'] ?? json['Subject'] ?? '',
       bookingDateStartTime: json['BookingDateStartTime'] ?? '',
       bookingDay: json['BookingDay'] ?? '',
+      ClientID: json['ClientID'] ?? "",
       bookingRoom: json['BookingRoom'] ?? '',
       bookingLocation: json['BookingLocation'] ?? '',
       bookingResource: json['BookingResource'] ?? '',
@@ -55,6 +60,7 @@ class ScheduleModel {
       PackageExpiry: json['PackageExpiry'] ?? "",
       BookingDuration: (json['BookingDuration'] as num?)?.toDouble() ?? 0.0,
       RemainingCancellations: json['RemainingCancellations'] ?? 0,
+      danceOrMusic: json['DanceOrMusic'] ?? "",
     );
   }
 
@@ -63,8 +69,9 @@ class ScheduleModel {
     if (bookingDateStartTime.isEmpty) return null;
 
     try {
-      return DateFormat('dd/MM/yyyy hh:mm a').parse(bookingDateStartTime);
-    } catch (_) {
+      return DateFormat('d MMM yyyy h:mm a').parseLoose(bookingDateStartTime);
+    } catch (e) {
+      print('bookingDate error $e');
       return null;
     }
   }
@@ -77,7 +84,7 @@ class ScheduleModel {
     if (PackageExpiry.isEmpty) return null;
 
     try {
-      return DateFormat('dd/MM/yyyy hh:mm a').parse(PackageExpiry);
+      return DateFormat('d MMM yyyy hh:mm a').parse(PackageExpiry);
     } catch (e) {
       print('error $e');
       return null;
@@ -95,13 +102,13 @@ class ScheduleModel {
   String get day {
     final dt = bookingDateTime;
     if (dt == null) return '--';
-    return DateFormat('dd').format(dt);
+    return DateFormat('d').format(dt);
   }
 
   /// ✅ "03:30 PM"
   String get time {
     final dt = bookingDateTime;
     if (dt == null) return '--';
-    return DateFormat('hh:mm a').format(dt);
+    return DateFormat('h:mm a').format(dt);
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/providers/appstate_provider.dart';
 import 'package:melodica_app_new/providers/auth_provider.dart';
@@ -14,9 +12,10 @@ import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:melodica_app_new/utils/upgrade_custom_dialog.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
-import 'package:upgrader/upgrader.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -26,6 +25,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    UpdateService.checkVersion(context);
+    super.initState();
+  }
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -34,7 +39,7 @@ class _MyAppState extends State<MyApp> {
         Provider<CountryCodeProvider>(
           create: (_) => CountryCodeProvider()..fetch(),
         ),
-        Provider<CustomerController>(
+        ChangeNotifierProvider<CustomerController>(
           create: (_) {
             final provider = CustomerController();
             provider.fetchCustomerData();
@@ -61,7 +66,7 @@ class _MyAppState extends State<MyApp> {
         ),
         Provider<OnboardingProvider>(create: (_) => OnboardingProvider()),
         Provider<AppstateProvider>(create: (_) => AppstateProvider()),
-        Provider<AuthProviders>(create: (_) => AuthProviders()),
+        ChangeNotifierProvider<AuthProviders>(create: (_) => AuthProviders()),
         Provider<BottomNavProvider>(create: (_) => BottomNavProvider()),
 
         ChangeNotifierProvider<NotificationProvider>(
@@ -70,23 +75,27 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
 
-        Provider<UserprofileProvider>(create: (_) => UserprofileProvider()),
+        ChangeNotifierProvider<UserprofileProvider>(
+          create: (_) => UserprofileProvider(),
+        ),
       ],
       child: Sizer(
         builder: (context, orientation, deviceType) {
-          return MaterialApp(
-            title: 'Melodica App',
-            debugShowCheckedModeBanner: false,
-            navigatorKey: navigatorKey,
-            // routerConfig: router,
-            theme: ThemeData(
-              useMaterial3: true,
-              // primaryColor: Colors.white,
-              scaffoldBackgroundColor: Colors.white,
+          return ShowCaseWidget(
+            builder: (context) => MaterialApp(
+              title: 'Melodica App',
+              debugShowCheckedModeBanner: false,
+              navigatorKey: navigatorKey,
+              // routerConfig: router,
+              theme: ThemeData(
+                useMaterial3: true,
+                // primaryColor: Colors.white,
+                scaffoldBackgroundColor: Colors.white,
+              ),
+              // routes
+              initialRoute: AppRoutes.splash,
+              routes: AppRoutes.routes,
             ),
-            // routes
-            initialRoute: AppRoutes.splash,
-            routes: AppRoutes.routes,
           );
 
           // return upgradeAlert;

@@ -57,7 +57,10 @@ class NotificationProvider extends ChangeNotifier {
         "${ApiConfigService.endpoints.getNotifications}${customerController.customer!.mbId}",
       );
 
-      final response = await http.get(uri);
+      final response = await http.get(
+        uri,
+        headers: {'api-key': "60e35fdc-401d-494d-9d78-39b15e345547"},
+      );
 
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);

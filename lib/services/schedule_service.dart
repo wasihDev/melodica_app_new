@@ -18,7 +18,7 @@ class ScheduleService {
       ),
       headers: {
         'Content-Type': 'application/json',
-        // Add token if required
+        'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
       },
     );
     print('getSchedule response ${response.statusCode}');

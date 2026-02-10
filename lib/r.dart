@@ -19,15 +19,20 @@ class AssetSvg {
 	static const String dirham = 'assets/svg/dirham.svg';
 	static const String exit = 'assets/svg/exit.svg';
 	static const String facebook = 'assets/svg/facebook.svg';
+	static const String freez = 'assets/svg/freez.svg';
 	static const String google = 'assets/svg/google.svg';
 	static const String home = 'assets/svg/home.svg';
+	static const String location = 'assets/svg/location.svg';
 	static const String musicClass = 'assets/svg/music_class.svg';
 	static const String onlineStore = 'assets/svg/online_store.svg';
 	static const String packages = 'assets/svg/packages.svg';
 	static const String practice = 'assets/svg/practice.svg';
 	static const String profile = 'assets/svg/profile.svg';
 	static const String progress = 'assets/svg/progress.svg';
+	static const String remaining = 'assets/svg/remaining.svg';
 	static const String schedule = 'assets/svg/schedule.svg';
 	static const String splashIcon = 'assets/svg/splash_icon.svg';
+	static const String teacher = 'assets/svg/teacher.svg';
+	static const String unscheduled = 'assets/svg/unscheduled.svg';
 }
 

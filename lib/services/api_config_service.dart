@@ -17,7 +17,10 @@ class ApiConfigService {
       'https://prod-199.westeurope.logic.azure.com/workflows/47e602f17da746cc9ed04392d4f3db70/triggers/manual/paths/invoke?api-version=2016-06-01&sp=/triggers/manual/run&sv=1.0&sig=60drjf5Fiu7VHXH3KFPbXjV9y9CTuyAgiHXkzDlkqgU',
     );
 
-    final response = await http.get(uri);
+    final response = await http.get(
+      uri,
+      headers: {'api-key': "60e35fdc-401d-494d-9d78-39b15e345547"},
+    );
     if (response.statusCode != 200) {
       throw Exception('Failed to load API config');
     }

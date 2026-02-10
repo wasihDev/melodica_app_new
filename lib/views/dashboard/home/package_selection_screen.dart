@@ -23,10 +23,6 @@ class PackageSelectionScreen extends StatefulWidget {
 }
 
 class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
-  // String _selectedCategory = 'Music'; // 'Music' or 'Dance'
-  // String _selectedCourse = 'Piano';
-  // String _selectedDuration = '30 Min';
-  // String? _selectedPackageId;
   @override
   void initState() {
     super.initState();
@@ -65,14 +61,6 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // final ctrl = Provider.of<ServicesProvider>(context, listen: false);
-    // final ctrl = context.watch<ServicesProvider>();
-    // if (ctrl.loading == false) {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (_) => CheckoutScreen()),
-    //   );
-    // }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Package Selection'),
@@ -95,7 +83,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
                     children: [
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 0),
                       // Tabs (Music / Dance)
                       Row(
                         children: [
@@ -184,7 +172,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 20),
+                      SizedBox(height: 10.h),
 
                       widget.isShowdanceTab == false
                           ? Expanded(
@@ -246,6 +234,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                   ),
 
                                   const SizedBox(height: 12),
+
                                   // DropdownButtonFormField<ServiceModel>(
                                   //   value:
                                   //       ctrl.selectedFrequency ??
@@ -283,7 +272,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                   //   ),
                                   // ),
                                   SizedBox(
-                                    height: 48,
+                                    height: 44.h,
                                     child: ListView(
                                       scrollDirection: Axis.horizontal,
                                       children:
@@ -308,9 +297,9 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                                   },
                                                   child: Container(
                                                     padding:
-                                                        const EdgeInsets.symmetric(
+                                                        EdgeInsets.symmetric(
                                                           horizontal: 20,
-                                                          vertical: 12,
+                                                          vertical: 10,
                                                         ),
                                                     decoration: BoxDecoration(
                                                       color: selected
@@ -344,7 +333,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                             }).toList(),
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
+                                  SizedBox(height: 8.h),
                                   DropdownButtonFormField<String>(
                                     dropdownColor: Colors.white,
                                     value: ctrl.selectedFrequency,
@@ -376,7 +365,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                   ),
 
                                   // Duration chips (30/45/60 based on available durations)
-                                  const SizedBox(height: 18),
+                                  SizedBox(height: 15.h),
 
                                   // Packages list
                                   Expanded(
@@ -386,8 +375,8 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                           )
                                         : ListView.builder(
                                             itemCount: ctrl.filteredList.length,
-                                            padding: const EdgeInsets.only(
-                                              bottom: 16,
+                                            padding: EdgeInsets.only(
+                                              bottom: 10.h,
                                             ),
                                             itemBuilder: (context, idx) {
                                               final s = ctrl.filteredList[idx];
@@ -434,7 +423,10 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (_) =>
-                                                        CheckoutScreen(),
+                                                        CheckoutScreen(
+                                                          iscomingFromNewStudent:
+                                                              true,
+                                                        ),
                                                   ),
                                                 );
                                               }
@@ -447,13 +439,6 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                                   //   selectedPackage[],
                                                   // );
                                                   showStudentPicker(context);
-                                                  // Navigator.push(
-                                                  //   context,
-                                                  //   MaterialPageRoute(
-                                                  //     builder: (_) =>
-                                                  //         CheckoutScreen(),
-                                                  //   ),
-                                                  // );
                                                 }
                                               },
                                         style: ElevatedButton.styleFrom(
@@ -574,6 +559,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                     builder: (context, provider, child) {
                                       return SafeArea(
                                         top: false,
+                                        bottom: true,
                                         child: SizedBox(
                                           width: double.infinity,
                                           child: ElevatedButton(
@@ -585,7 +571,10 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (_) =>
-                                                            CheckoutScreen(),
+                                                            CheckoutScreen(
+                                                              iscomingFromNewStudent:
+                                                                  true,
+                                                            ),
                                                       ),
                                                     );
                                                   }
@@ -616,16 +605,6 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                                         context,
                                                       );
                                                     }
-
-                                                    // ScaffoldMessenger.of(
-                                                    //   context,
-                                                    // ).showSnackBar(
-                                                    //   SnackBar(
-                                                    //     content: Text(
-                                                    //       'Selected: ${selected.packageName} ${selected.sessionstext} — ৳ ${selected.price}',
-                                                    //     ),
-                                                    //   ),
-                                                    // );
                                                   },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(
@@ -695,7 +674,10 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => CheckoutScreen()),
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                CheckoutScreen(iscomingFromNewStudent: false),
+                          ),
                         );
                       },
                     );

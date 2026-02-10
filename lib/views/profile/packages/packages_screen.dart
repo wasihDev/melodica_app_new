@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/packages_model.dart';
@@ -63,7 +64,7 @@ class _PackageListScreenState extends State<PackageListScreen>
           padding: const EdgeInsets.only(top: 20.0),
           child: Consumer<PackageProvider>(
             builder: (context, provider, _) {
-              if (provider.isLoading) {
+              if (provider.isloading) {
                 return const Center(child: CircularProgressIndicator());
               }
 
@@ -84,10 +85,18 @@ class _PackageListScreenState extends State<PackageListScreen>
               // }
 
               final activePackages = provider.packages
-                  .where((p) => p.packageStatus != 'Completed')
+                  .where(
+                    (p) =>
+                        p.packageStatus == 'Active' ||
+                        p.packageStatus == "On Going",
+                  )
                   .toList();
               final completedPackages = provider.packages
-                  .where((p) => p.packageStatus == 'Completed')
+                  .where(
+                    (p) =>
+                        p.packageStatus != 'Active' &&
+                        p.packageStatus != "On Going",
+                  )
                   .toList();
               print('provider ${provider.servicesProvider.currentPaymentType}');
               return TabBarView(
@@ -133,6 +142,7 @@ class _PackageListView extends StatelessWidget {
       separatorBuilder: (context, index) => SizedBox(height: 15),
       itemBuilder: (context, index) {
         final package = packages[index];
+        print('package.subject ${package.subject}');
         final remainingFreezes =
             package.totalAllowedFreezings - package.totalFreezingTaken;
         // print('package.packageExpiry ${package.packageExpiry}');
@@ -146,12 +156,12 @@ class _PackageListView extends StatelessWidget {
             );
           },
           child: Container(
-            height: 285.h,
+            height: 380.h,
             width: double.infinity,
             padding: EdgeInsets.all(12),
             margin: EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Color(0xffF7F7F7),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey[300]!),
             ),
@@ -159,14 +169,14 @@ class _PackageListView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ListTile(
-                  tileColor: Colors.grey[300],
-
-                  title: Text('${package.itemName}'),
+                  tileColor: Colors.grey[100],
+                  contentPadding: EdgeInsets.all(0),
+                  title: Text('${package.serviceandproduct}'),
                   subtitle: Text(package.locationName),
-                  trailing: Text(
-                    '${package.remainingSessions.toString().split('.').first}/${package.totalClasses}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  // trailing: Text(
+                  //   '${package.remainingSessions.toString().split('.').first}/${package.totalClasses}',
+                  //   style: const TextStyle(fontWeight: FontWeight.bold),
+                  // ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -247,10 +257,47 @@ class _PackageListView extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
 
+                Row(
+                  children: [
+                    Row(
+                      children: [
+                        // SvgPicture.asset('assets/svg/freez.svg'),
+                        // SvgPicture.asset('assets/svg/teacher.svg'),
+                        // SvgPicture.asset('assets/svg/location.svg'),
+                        // SvgPicture.asset('assets/svg/remaining.svg'),
+                        // SvgPicture.asset('assets/svg/unscheduled.svg'),
+                      ],
+                    ),
+                  ],
+                ),
                 SizedBox(height: 10),
-                Text('Remaining Freezing : ${remainingFreezes} Week'),
+                Text('Remaining Freezing : ${remainingFreezes} Weeks'),
+                const Spacer(), // Pushes the link to the bottom
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    child: Container(
+                      height: 45.h,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12.adaptSize),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'View Package Details',
+                        style: TextStyle(
+                          color: AppColors.black,
+                          fontSize: 14.fSize,
+                          fontWeight: FontWeight.w600,
+                          decorationColor: AppColors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //
   Provider.debugCheckInvalidValueType = null;
   // WidgetsFlutterBinding.ensureInitialized();
   await ApiConfigService.load();
@@ -31,7 +30,9 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
   // frances.a@melodica.ae
   // Melodica2020
+
   runApp(MyApp());
 }

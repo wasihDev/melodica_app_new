@@ -42,6 +42,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   final n = list[i];
                   return GestureDetector(
                     onTap: () {
+                      print('n ${n.notificationId}');
                       Navigator.push(
                         context,
                         MaterialPageRoute(

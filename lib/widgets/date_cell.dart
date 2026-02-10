@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:provider/provider.dart';
 
 class CustomWeeklyDatePicker extends StatefulWidget {
@@ -30,9 +31,9 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 5),
           _buildMonthNavigation(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 5),
           _buildWeeklyCalendar(),
         ],
       ),
@@ -46,7 +47,7 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
         Text(
           'Select Date',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 15.fSize,
             fontWeight: FontWeight.bold,
             color: _textColor,
           ),
@@ -65,8 +66,8 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
           onPressed: () => _changeWeek(-1),
         ),
         Text(
-          DateFormat('EEE, d MMM, yyyy').format(_focusedDate),
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          DateFormat('EEE, d MMM, yyyy').format(_selectedDate),
+          style: TextStyle(fontSize: 14.fSize, color: Colors.grey[600]),
         ),
         IconButton(
           icon: Icon(Icons.arrow_forward, color: _textColor),

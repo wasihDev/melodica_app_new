@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/models/packages_model.dart';
@@ -87,12 +89,13 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
             leading: const BackButton(),
           ),
           body: SafeArea(
-            bottom: true,
+            bottom: Platform.isIOS ? false : true,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    SizedBox(height: 5.h),
                     _header(widget.package, p),
                     SizedBox(height: 10.h),
                     _calendar(p),
@@ -100,13 +103,21 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                     _freezingInfo(p),
                     SizedBox(height: 10.h),
                     _reasonDropdown(),
-                    // const Spacer(),
+                    SizedBox(height: 10.h),
+                    SafeArea(
+                      bottom: Platform.isIOS ? false : true,
+                      child: _submitButton(p),
+                    ),
+                    SizedBox(height: 10.h),
                   ],
                 ),
               ),
             ),
           ),
-          bottomNavigationBar: SafeArea(bottom: true, child: _submitButton(p)),
+          // bottomNavigationBar: SafeArea(
+          //   bottom: Platform.isIOS ? false : true,
+          //   child:
+          // ),
         );
       },
     );
@@ -117,44 +128,46 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Select Date",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          "Select start and end dates of your freezing",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 6),
         Row(
           children: [
             Chip(
               backgroundColor: Colors.white,
-              label: Text(
-                "${DateFormat('EEE, d MMM, y').format(DateTime.now())}",
-              ),
+              label: Text("${DateFormat('d MMM yyyy').format(DateTime.now())}"),
             ),
-            SizedBox(width: 8),
-            Chip(
-              backgroundColor: Colors.white,
-              label: Text("${package.classDuration} "),
-            ),
+            // SizedBox(width: 8),
+            // Chip(
+            //   backgroundColor: Colors.white,
+            //   label: Text("${package.classDuration} "),
+            // ),
           ],
         ),
-        SizedBox(height: 10.h),
-        Text(
-          "Remaining Classes: ${package.remainingSessions.toString().split(".").first}/${package.totalClasses.toString()}",
-        ),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: package.totalClasses > 0
-                ? (package.remainingSessions / package.totalClasses).clamp(
-                    0.0,
-                    1.0,
-                  )
-                : 0.0,
-            // package.remainingSessions / package.totalClasses,s
-            minHeight: 8,
-            backgroundColor: Colors.grey.shade300,
-            valueColor: const AlwaysStoppedAnimation(Color(0xFFF5C542)),
-          ),
-        ),
+        package.subject == "Dance Classes"
+            ? SizedBox()
+            : SizedBox(height: 10.h),
+        package.subject == "Dance Classes"
+            ? SizedBox()
+            : Text(
+                "Remaining Classes: ${package.remainingSessions.toString().split(".").first}/${package.totalClasses.toString()}",
+              ),
+        package.subject == "Dance Classes"
+            ? SizedBox()
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: package.totalClasses > 0
+                      ? (package.remainingSessions / package.totalClasses)
+                            .clamp(0.0, 1.0)
+                      : 0.0,
+                  // package.remainingSessions / package.totalClasses,s
+                  minHeight: 8,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFFF5C542)),
+                ),
+              ),
       ],
     );
   }
@@ -301,10 +314,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
               builder: (_, p, __) {
                 final vat = p.extraCharge * 0.05;
                 if (p.extraCharge == 0) {
-                  return Text(
-                    "Freezing covered by your allowance",
-                    style: TextStyle(color: Colors.green),
-                  );
+                  return Text("", style: TextStyle(color: Colors.green));
                 }
 
                 return Column(
@@ -364,7 +374,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
 
   Widget _submitButton(PackageProvider p) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -376,10 +386,10 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            onPressed: p.startDate != null && p.endDate != null && !p.isLoading
+            onPressed: p.startDate != null && p.endDate != null && !p.isloading
                 ? () => p.submitFreeze(context, reason, widget.package)
                 : null,
-            child: p.isLoading
+            child: p.isloading
                 ? const CircularProgressIndicator(color: Colors.white)
                 : const Text("Submit", style: TextStyle(color: Colors.black)),
           ),

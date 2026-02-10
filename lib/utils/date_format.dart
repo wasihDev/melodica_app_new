@@ -5,8 +5,8 @@ String formatCreatedOn(String rawDate) {
   if (rawDate.isEmpty) return "";
 
   try {
-    final date = DateFormat('dd/MM/yyyy hh:mm a').parse(rawDate);
-    return DateFormat('EEE, dd MMM yyyy').format(date);
+    final date = DateFormat('d MMM yyyy hh:mm a').parse(rawDate);
+    return DateFormat('d MMM yyyy').format(date);
   } catch (e) {
     debugPrint('Date parse error: $rawDate');
     return "";

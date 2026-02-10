@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/packages_model.dart';
@@ -9,6 +11,7 @@ import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/services/api_config_service.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:melodica_app_new/views/dashboard/home/faq/help_center.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,7 +27,8 @@ class PackageProvider extends ChangeNotifier {
     required this.scheduleProvider,
   });
 
-  bool isLoading = false;
+  bool _isLoading = false;
+  bool get isloading => _isLoading;
   String? error;
 
   List<Package> _packages = [];
@@ -166,13 +170,18 @@ class PackageProvider extends ChangeNotifier {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Center(
-                          child: Text(
-                            "AED 50",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 12.fSize,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset('assets/svg/dirham.svg'),
+                              Text(
+                                " 50",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12.fSize,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -279,6 +288,12 @@ class PackageProvider extends ChangeNotifier {
     );
   }
 
+  // Future<bool> _isSameClass(String selectedClassId) async {
+  //   return freezingRequests.any((r) => r.classId == selectedClassId);
+  // }
+
+  // List<FreezingRequest> freezingRequests = [];
+
   Future<void> submitFreeze(
     BuildContext context,
     String reason,
@@ -288,14 +303,23 @@ class PackageProvider extends ChangeNotifier {
     selectedReason = reason;
     if (startDate == null || endDate == null) return;
     final bool isFourClassPackage = package.totalClasses == 4;
+    // final isSameClass = await _isSameClass(selectedClassId);
 
     if (isFourClassPackage) {
       // Show the specific alert: 'You do not have freezing allowance...'
       _showRestrictedFreezingPopup(context);
       return; // Stop the process here
     }
+    final isDuplicate = await _isSameClassAndSameDates(
+      startDate!,
+      endDate!,
+      package.danceOrMusic,
+    );
+
+    //
     // // 1️⃣ Local validation
-    if (await _isExactMatch(startDate!, endDate!)) {
+    // if (await _isExactMatch(startDate!, endDate!) ) {
+    if (isDuplicate) {
       _showErrorPopup(
         context,
         "You have submitted this freezing request before.",
@@ -303,26 +327,27 @@ class PackageProvider extends ChangeNotifier {
       return;
     }
 
-    if (await _isOverlapping(startDate!, endDate!)) {
-      _showErrorPopup(
-        context,
-        "You already submitted a freezing request for this class date, adjust your date range if you want to submit another one.",
-      );
-      return;
-    }
+    // if (await _isOverlapping(startDate!, endDate!)) {
+    //   _showErrorPopup(
+    //     context,
+    //     "You already submitted a freezing request for this class date, adjust your date range if you want to submit another one.",
+    //   );
+    //   return;
+    // }
     if (!hasEnoughFreezing) {
       _showNotEnoughFreezingPopup(
         context,
+        // pay here
         ontap: () async {
           servicesProvider.setPaymentType(PaymentType.freezingPoints);
 
           final vat = extraCharge * 0.05;
-          final amountWithVat = (extraCharge + vat).toInt();
+          final amountWithVat = (extraCharge + vat);
 
           final success = await servicesProvider.startCheckout(
             context,
             amount: amountWithVat,
-            redirectUrl: "https://melodica-mobile.web.app",
+            // redirectUrl: "https://melodica-mobile.web.app",
           );
 
           if (success && servicesProvider.paymentUrl != null) {
@@ -347,13 +372,18 @@ class PackageProvider extends ChangeNotifier {
   }
 
   // Save a freezing request locally
-  Future<void> _saveFreezingRequest(DateTime start, DateTime end) async {
+  Future<void> _saveFreezingRequest(
+    DateTime start,
+    DateTime end,
+    String className,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final existing = prefs.getStringList('freezingRequests') ?? [];
 
     final newRequest = jsonEncode({
       "start": start.toIso8601String(),
       "end": end.toIso8601String(),
+      "class": className,
     });
 
     existing.add(newRequest);
@@ -361,17 +391,33 @@ class PackageProvider extends ChangeNotifier {
   }
 
   // Fetch previous freezing requests
-  Future<List<Map<String, DateTime>>> _getPreviousRequests() async {
+  Future<List<Map<String, dynamic>>> _getPreviousRequests() async {
     final prefs = await SharedPreferences.getInstance();
     final existing = prefs.getStringList('freezingRequests') ?? [];
+    return existing.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
+    // return existing.map((e) {
+    //   final data = jsonDecode(e);
+    //   return {
+    //     "start": DateTime.parse(data["start"]),
+    //     "end": DateTime.parse(data["end"]),
+    //     // "class": data[],
+    //   };
+    // }).toList();
+  }
 
-    return existing.map((e) {
-      final data = jsonDecode(e);
-      return {
-        "start": DateTime.parse(data["start"]),
-        "end": DateTime.parse(data["end"]),
-      };
-    }).toList();
+  Future<bool> _isSameClassAndSameDates(
+    DateTime start,
+    DateTime end,
+    String className,
+  ) async {
+    final previous = await _getPreviousRequests();
+
+    return previous.any(
+      (f) =>
+          f["start"] == start.toIso8601String() &&
+          f["end"] == end.toIso8601String() &&
+          f["class"] == className,
+    );
   }
 
   // Check if exact same request exists
@@ -445,23 +491,27 @@ class PackageProvider extends ChangeNotifier {
     Package package, {
     String? ref,
   }) async {
-    isLoading = true;
+    _isLoading = true;
     notifyListeners();
+    final bool isMusic = package.danceOrMusic.contains("Music Classes");
+    print('isMusic $isMusic');
 
+    print('package.subject ${package.branch}');
     final affectedClasses = scheduleProvider.getAffectedClasses(
       startDate: startDate!,
       endDate: endDate!,
+      subject: package.subject,
     );
+
     if (affectedClasses.isEmpty) {
       _showErrorPopup(context, "No classes found in selected date range");
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
       return;
     }
 
     print('affectedClasses${affectedClasses}');
-
-    print('affectedClasses ${affectedClasses}');
+    //
     print('reason ${reason}');
     final body = {
       "firstname": "${customerController.customer!.firstName}",
@@ -481,6 +531,7 @@ class PackageProvider extends ChangeNotifier {
       "freezestart": "${startDate!.toUtc().toIso8601String()}",
       "freezeend": "${endDate!.toUtc().toIso8601String()}",
       "affectedclasses": affectedClasses,
+      // isMusic ? affectedClasses : [],
       // [
       //   {
       //     "bookingid": "10010340088375110",
@@ -492,28 +543,89 @@ class PackageProvider extends ChangeNotifier {
       //   // },
       // ],
       "reason": "${reason}",
+      "packageid": "${package.paymentRef}",
+      // "checkoutscreen": "",
     };
 
     try {
       final response = await http.post(
         Uri.parse(ApiConfigService.endpoints.freezingRequest),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
         body: jsonEncode(body),
       );
       print('response ${response.statusCode}');
       print('response freezing api ${response.body}');
       if (response.statusCode == 200) {
         _showSuccessPopup(context);
-        await _saveFreezingRequest(startDate!, endDate!);
+        await _saveFreezingRequest(startDate!, endDate!, package.danceOrMusic);
       } else {
         _showErrorPopup(context, "Something went wrong");
       }
     } catch (e) {
       _showErrorPopup(context, e.toString());
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void showNotCustomerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              "Welcome to Melodica 🎵",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              "It looks like you don’t have an active Melodica account yet.\n\n"
+              "This app is currently available for Melodica students only. "
+              "If you believe this is a mistake, please contact your branch.",
+            ),
+            actions: [
+              ElevatedButton(
+                style: ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll(AppColors.primary),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HelpCenter()),
+                  );
+                  // Navigator.pop(context);
+                },
+                child: const Text(
+                  "Help Center",
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                    (_) => false,
+                  );
+                },
+                child: const Text(
+                  "Logout",
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showErrorPopup(BuildContext context, String message) {
@@ -554,21 +666,29 @@ class PackageProvider extends ChangeNotifier {
   }
 
   Future<void> fetchPackages(BuildContext context) async {
-    isLoading = true;
+    _isLoading = true;
     error = null;
     notifyListeners();
     final ctrl = Provider.of<CustomerController>(context, listen: false);
     final student = ctrl.selectedStudent;
     try {
-      print('student!.mbId ${student?.mbId}');
       final response = await http.get(
         Uri.parse("${ApiConfigService.endpoints.getPackages}${student?.mbId}"),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
       );
+      print('fetchPackages.statusCode ${response.statusCode}');
+      // print('fetchPackages.body ${response.body}');
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
         _packages = data.map((e) => Package.fromJson(e)).toList();
-        print('_packages =====>>m $_packages');
+        // print('_packages =====>>m $_packages');
+        if (_packages.length == 0) {
+          _isLoading = false;
+          notifyListeners();
+        }
 
         /// 🔑 Extract unique branches
         final branches = _packages.map((e) => e.branch).toSet().toList();
@@ -577,6 +697,12 @@ class PackageProvider extends ChangeNotifier {
           /// ✅ Single branch → auto select
           ctrl.setSelectedBranch(branches.first);
         } else if (branches.length == 0 && branches.isEmpty) {
+          if (!customerController.isCustomerRegistered) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              showNotCustomerDialog(navigatorKey.currentContext!);
+            });
+          }
+          print('branches.length == 0 && branches.isEmpty');
           return;
         } else {
           /// ❌ Multiple branches → ask user
@@ -586,11 +712,12 @@ class PackageProvider extends ChangeNotifier {
         error = 'Failed to load packages';
       }
     } catch (e) {
+      _isLoading = false;
       print('error fetchPackages $e');
       error = e.toString();
     }
 
-    isLoading = false;
+    _isLoading = false;
     notifyListeners();
   }
 

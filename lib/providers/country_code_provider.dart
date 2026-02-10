@@ -33,7 +33,10 @@ class CountryCodeProvider extends ChangeNotifier {
         "${ApiConfigService.endpoints.getCountryCodes}",
         //'https://bf67c0337b6de47faeee4735e1fe49.46.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/8ee946d1c431472b9c2a1113779d78f1/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ioiQ0gmozlMobMHg2BAdP-sObkewvfRCdAykliq0LJE',
       );
-      final resp = await http.get(uri);
+      final resp = await http.get(
+        uri,
+        headers: {'api-key': "60e35fdc-401d-494d-9d78-39b15e345547"},
+      );
       if (resp.statusCode != 200) {
         throw Exception('HTTP ${resp.statusCode}');
       }

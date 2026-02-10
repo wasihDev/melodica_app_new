@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/country_codes.dart';
 import 'package:melodica_app_new/models/student_models.dart';
@@ -35,6 +36,79 @@ class CustomerController extends ChangeNotifier {
   bool get display => _display;
   List<String> _isShowData = [];
   List<String> get isShowData => _isShowData;
+  // ================= TEXT CONTROLLERS =================
+  final TextEditingController firstNameCtrl = TextEditingController();
+  final TextEditingController lastNameCtrl = TextEditingController();
+  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController phoneCtrl = TextEditingController();
+
+  // ================= FORM STATE =================
+  String _selectedGender = '';
+  String _selectedRelation = '';
+  String _selectedLevel = '';
+  bool? _isMelodicaStudent = true;
+
+  // ================= GETTERS =================
+  String get selectedGender => _selectedGender;
+  String get selectedRelation => _selectedRelation;
+  String get selectedLevel => _selectedLevel;
+  bool? get isMelodicaStudent => _isMelodicaStudent;
+
+  // ================= SETTERS =================
+  void setGender(String value) {
+    _selectedGender = value;
+    notifyListeners();
+  }
+
+  void setRelation(String value) {
+    _selectedRelation = value;
+    notifyListeners();
+  }
+
+  void setLevel(String value) {
+    _selectedLevel = value;
+    notifyListeners();
+  }
+
+  void setIsMelodicaStudent(bool value) {
+    _isMelodicaStudent = value;
+    notifyListeners();
+  }
+
+  // ================= VALIDATION =================
+  bool get isStudentFormValid {
+    return firstNameCtrl.text.isNotEmpty &&
+        lastNameCtrl.text.isNotEmpty &&
+        emailCtrl.text.isNotEmpty &&
+        phoneCtrl.text.isNotEmpty &&
+        _selectedGender.isNotEmpty &&
+        _selectedRelation.isNotEmpty &&
+        _selectedLevel.isNotEmpty;
+  }
+
+  // ================= RESET =================
+  void clearStudentForm() {
+    firstNameCtrl.clear();
+    lastNameCtrl.clear();
+    emailCtrl.clear();
+    phoneCtrl.clear();
+    _selectedGender = '';
+    _selectedRelation = '';
+    _selectedLevel = '';
+    _isMelodicaStudent = true;
+    print('-----------------Clear Student form--------------');
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    firstNameCtrl.dispose();
+    lastNameCtrl.dispose();
+    emailCtrl.dispose();
+    phoneCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> getDisplayDance(String territoryid) async {
     _loading = true;
     notifyListeners();
@@ -44,10 +118,14 @@ class CustomerController extends ChangeNotifier {
         ApiConfigService.endpoints.displayDance,
         // 'https://bf67c0337b6de47faeee4735e1fe49.46.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c6a709829bfc45b6...',
       );
-      print("territoryid in funtion ${territoryid}");
+      print("territoryid in funtion ${customer!.territoryid}");
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
+
         body: jsonEncode({'locationid': "$territoryid"}),
         // customer?.territoryid}),
       );
@@ -56,19 +134,19 @@ class CustomerController extends ChangeNotifier {
         final data = jsonDecode(response.body);
         print("get disaplay data ${data} ");
 
-        _display = data['display'] ?? false;
-        // _message = data['message'] ?? '';
-        // } else {
-        //   print('get dance ${response.statusCode}');
-        //   // _message = 'Something went wrong';
+        _display = data['display'] == true;
+        print('display $_display');
+      } else {
+        _display = false;
       }
+      notifyListeners();
     } catch (e) {
       print('errror getDisPlay $e');
-      // _message = e.toString();
+      _display = false;
+    } finally {
+      _loading = false;
+      notifyListeners(); // 🔥 ONLY ONE notify
     }
-
-    _loading = false;
-    notifyListeners();
   }
 
   void selectStudent(Student student) {
@@ -161,10 +239,19 @@ class CustomerController extends ChangeNotifier {
         "${ApiConfigService.endpoints.getProfile}${auth?.email}",
       );
 
-      final response = await http.get(uri);
+      final response = await http.get(
+        uri,
+        headers: {'api-key': "60e35fdc-401d-494d-9d78-39b15e345547"},
+      );
       print('fetch customer data ===>>> ${response.statusCode}');
       // print('fetch customer data Body ===>>> ${response.statusCode}');
       if (response.statusCode != 200) {
+        /// 🚨 BLOCK APP IF NOT REGISTERED
+        // if (auth != null && !isCustomerRegistered) {
+        //   WidgetsBinding.instance.addPostFrameCallback((_) {
+        //     showNotCustomerDialog(navigatorKey.currentContext!);
+        //   });
+        // }
         throw Exception('HTTP ${response.statusCode}');
       }
 
@@ -178,13 +265,8 @@ class CustomerController extends ChangeNotifier {
       if (_students.isNotEmpty) {
         _selectedStudent ??= _students.first;
       }
-
-      /// 🚨 BLOCK APP IF NOT REGISTERED
-      if (auth != null && !isCustomerRegistered) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          showNotCustomerDialog(navigatorKey.currentContext!);
-        });
-      }
+      print('isCustomerRegistered $isCustomerRegistered');
+      print('auth $auth');
     } catch (e) {
       print('errro fetch cusomter $e');
       _error = 'Failed to fetch: $e';
@@ -234,7 +316,11 @@ class CustomerController extends ChangeNotifier {
     try {
       final response = await http.post(
         Uri.parse(ApiConfigService.endpoints.upsertCustomer),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
+
         body: jsonEncode(body),
       );
       print('upsertCustomer response==== ${response.statusCode}');
@@ -249,6 +335,18 @@ class CustomerController extends ChangeNotifier {
     }
   }
 
+  String? toApiDob(String? uiDate) {
+    if (uiDate == null || uiDate.isEmpty) return null;
+
+    try {
+      final parsed = DateFormat('d MMM yyyy').parse(uiDate);
+      return parsed.toUtc().toIso8601String();
+    } catch (e) {
+      debugPrint('DOB parse error: $uiDate');
+      return null;
+    }
+  }
+
   /// upsert student
   Future<bool> upsertStudentProfile(
     BuildContext context, {
@@ -259,11 +357,11 @@ class CustomerController extends ChangeNotifier {
     required String countryCode,
     required String areaCode,
     String? clientId,
-    String? dateOfBirth,
     String? gender,
     String? relationship,
     required String level, // Beginner | Intermediate | Experienced
     required bool existing,
+    String? dateofbirth,
     String? type,
     String? reason,
     String? note,
@@ -271,7 +369,9 @@ class CustomerController extends ChangeNotifier {
     _loading = true;
     _error = null;
     notifyListeners();
-
+    print('dateofbirth ${dateofbirth}');
+    final dob = toApiDob(dateofbirth);
+    print('dob ${dob}');
     try {
       final uri = Uri.parse(ApiConfigService.endpoints.upsertProfile);
       final body = {
@@ -284,13 +384,13 @@ class CustomerController extends ChangeNotifier {
         "countrycode": "${selectedCountry?.name}",
         "areacode": "${selectedArea?.value}",
         "phone": phone,
-        "dateofbirth": "2021-11-10T00:00:00Z" ?? "",
+        "dateofbirth": "$dob",
         "gender": gender ?? "",
         "relationship": relationship ?? "",
         "level": level,
         "existing": existing,
         "type": type ?? "",
-        //"Update", // New, Update, Delete
+        // "Update", "",// New, Update, Delete
         "reason": reason ?? "",
         // "Privacy Concerns",
         "note": note ?? "",
@@ -299,10 +399,14 @@ class CustomerController extends ChangeNotifier {
       print("body $body");
       final response = await http.post(
         uri,
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
+
         body: jsonEncode(body),
       );
-      print("response ${response.statusCode}");
+      print("upsertporfile ${response.statusCode}");
       if (response.statusCode == 200) {
         // throw Exception(response.body);
         return true;
@@ -376,7 +480,10 @@ class CustomerController extends ChangeNotifier {
       print("body $body");
       final response = await http.post(
         uri,
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
         body: jsonEncode(body),
       );
       print("response ${response.statusCode}");
@@ -463,7 +570,10 @@ class CustomerController extends ChangeNotifier {
     try {
       final response = await http.get(
         uri,
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
       );
 
       if (response.statusCode == 200) {

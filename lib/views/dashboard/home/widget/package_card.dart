@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/services_model.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 
 class PackageCard extends StatelessWidget {
   final ServiceModel package;
@@ -28,9 +29,6 @@ class PackageCard extends StatelessWidget {
     final double discountedPrice = double.parse(package.discount.toString());
     final double sessions = package.sessions.toDouble();
     final discountedAmount = package.price * (discountedPrice / 100);
-    // print('package.price ${package.price}');
-    // print('discountedAmount ${discountedAmount}');
-    // print("package.sessions ${package.sessions}");
     final String perClassCost = ((package.price - discountedAmount) / sessions)
         .toStringAsFixed(2);
 
@@ -39,7 +37,7 @@ class PackageCard extends StatelessWidget {
 
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.fromLTRB(16, 0, 0, 16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 0, 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -73,12 +71,18 @@ class PackageCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    "Cancellations: ${package.cancellations.toString()} Times",
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]!),
+                    "Class Cancellations : ${package.cancellations.toString()}",
+                    style: TextStyle(
+                      fontSize: 12.fSize,
+                      color: Colors.grey[600]!,
+                    ),
                   ),
                   Text(
-                    "Freezing: ${package.freezings}",
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]!),
+                    "Freezing Weeks: ${package.freezings}",
+                    style: TextStyle(
+                      fontSize: 12.fSize,
+                      color: Colors.grey[600]!,
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -179,7 +183,7 @@ class PackageCard extends StatelessWidget {
                           children: [
                             SvgPicture.asset('assets/svg/dirham.svg'),
                             Text(
-                              '${package.price}', // Using the currency symbol from the image
+                              ' ${package.price}', // Using the currency symbol from the image
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -187,7 +191,7 @@ class PackageCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: 5),
                         Text(
                           '$perClassCost per Class',
                           style: TextStyle(

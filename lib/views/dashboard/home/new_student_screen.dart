@@ -2,9 +2,11 @@ import 'package:drop_down_list/drop_down_list.dart';
 import 'package:drop_down_list/model/selected_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/country_codes.dart';
 import 'package:melodica_app_new/models/student_models.dart';
+import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
@@ -24,17 +26,17 @@ class NewStudentScreen extends StatefulWidget {
 }
 
 class _NewStudentScreenState extends State<NewStudentScreen> {
-  String _selectedGender = '';
-  String _selectedRelation = '';
-  String _selectedLevel = '';
-  bool? _isMelodicaStudent = true;
+  // String _selectedGender = '';
+  // String _selectedRelation = '';
+  // String _selectedLevel = '';
+  // bool? _isMelodicaStudent = true;
 
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _firstNameCtrl = TextEditingController();
-  final TextEditingController _lastNameCtrl = TextEditingController();
-  final TextEditingController _email = TextEditingController();
-  final TextEditingController _number = TextEditingController();
+  // final TextEditingController firstNameCtrl = TextEditingController();
+  // final TextEditingController lastNameCtrl = TextEditingController();
+  // final TextEditingController email = TextEditingController();
+  // final TextEditingController number = TextEditingController();
 
   @override
   void initState() {
@@ -54,6 +56,41 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
     //   _selectedLevel = "";
     //   _isMelodicaStudent = s.isregistred == 'Yes';
     // }
+  }
+
+  DateTime? _selectedDate;
+  final TextEditingController _dobController = TextEditingController();
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate:
+          _selectedDate ?? DateTime(2000), // Default to a sensible adult age
+      firstDate: DateTime(1920), // Earliest possible birth year
+      lastDate: DateTime.now(), // Cannot be born in the future
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(
+                0xFFFFD152,
+              ), // Matches your app's yellow/primary color
+              onPrimary: Colors.black,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        // Formatting the date to show in the text field
+        _dobController.text = DateFormat('dd MMM yyyy').format(picked);
+      });
+    }
   }
 
   @override
@@ -79,398 +116,405 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(15),
           child: Form(
             key: _formKey,
-            child: Column(
-              children: [
-                CustomTextField(
-                  labelText: 'First Name',
-                  controller: _firstNameCtrl,
-                  suffixIcon: const Icon(
-                    Icons.person_outline,
-                    color: AppColors.secondaryText,
-                  ),
-                ),
-                const SizedBox(height: 20),
+            child: Consumer<CustomerController>(
+              builder: (context, ctrl, child) {
+                return Column(
+                  children: [
+                    CustomTextField(
+                      labelText: 'First Name',
+                      controller: ctrl.firstNameCtrl,
+                      suffixIcon: const Icon(
+                        Icons.person_outline,
+                        color: AppColors.secondaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
 
-                CustomTextField(
-                  labelText: 'Last Name',
-                  controller: _lastNameCtrl,
-                  suffixIcon: const Icon(
-                    Icons.person_outline,
-                    color: AppColors.secondaryText,
-                  ),
-                ),
-                const SizedBox(height: 20),
+                    CustomTextField(
+                      labelText: 'Last Name',
+                      controller: ctrl.lastNameCtrl,
+                      suffixIcon: const Icon(
+                        Icons.person_outline,
+                        color: AppColors.secondaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
 
-                CustomTextField(
-                  labelText: 'Email',
-                  controller: _email,
-                  suffixIcon: const Icon(
-                    Icons.email,
-                    color: AppColors.secondaryText,
-                  ),
-                ),
-                const SizedBox(height: 20),
+                    CustomTextField(
+                      labelText: 'Email',
+                      controller: ctrl.emailCtrl,
+                      suffixIcon: const Icon(
+                        Icons.email,
+                        color: AppColors.secondaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
 
-                CustomDropdownField<String>(
-                  labelText: 'Gender',
-                  value: _selectedGender,
-                  items: const ['', 'Male', 'Female', 'Other'],
-                  itemToString: (item) => item,
-                  onChanged: (v) => setState(() => _selectedGender = v ?? ''),
-                ),
-                const SizedBox(height: 15),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4.0, bottom: 14.0),
-                  child: Row(
-                    children: [
-                      Text(
-                        "Number",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.secondaryText,
+                    CustomDropdownField<String>(
+                      labelText: 'Gender',
+                      value: ctrl.selectedGender.isEmpty
+                          ? null
+                          : ctrl.selectedGender,
+                      items: const ['Male', 'Female', 'Other'],
+                      itemToString: (item) => item,
+                      onChanged: (v) {
+                        if (v == null) return;
+                        ctrl.setGender(v);
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4.0, bottom: 5.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            "Date of Time",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.secondaryText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextFormField(
+                      controller: _dobController,
+                      readOnly: true, // Prevents the keyboard from appearing
+                      onTap: () => _selectDate(context),
+                      decoration: InputDecoration(
+                        hintText: "Select your birth date",
+                        prefixIcon: const Icon(
+                          Icons.calendar_today,
+                          color: Colors.grey,
+                        ),
+                        suffixIcon: const Icon(Icons.arrow_drop_down),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                Consumer<CustomerController>(
-                  builder: (context, ctrl, child) {
-                    // Convert to string to count digits
-                    final int totalDigits =
-                        ctrl.selectedCountry?.maxnumber ?? 0;
+                    ),
+                    const SizedBox(height: 15),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4.0, bottom: 14.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            "Number",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.secondaryText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Consumer<CustomerController>(
+                      builder: (context, ctrl, child) {
+                        // Convert to string to count digits
+                        final int totalDigits =
+                            ctrl.selectedCountry?.maxnumber ?? 0;
 
-                    final int countryCodeDigits =
-                        ctrl.selectedCountry?.callingCode.toString().length ??
-                        0;
+                        final int countryCodeDigits =
+                            ctrl.selectedCountry?.callingCode
+                                .toString()
+                                .length ??
+                            0;
 
-                    final int areaCodeDigits =
-                        ctrl.selectedArea?.value.length ?? 0;
-                    int phoneDigits =
-                        totalDigits - countryCodeDigits - areaCodeDigits;
+                        final int areaCodeDigits =
+                            ctrl.selectedArea?.value.length ?? 0;
+                        int phoneDigits =
+                            totalDigits - countryCodeDigits - areaCodeDigits;
 
-                    // 🛡 Safety guard
-                    if (phoneDigits <= 0) {
-                      phoneDigits = 1;
-                    }
+                        // 🛡 Safety guard
+                        if (phoneDigits <= 0) {
+                          phoneDigits = 1;
+                        }
 
-                    List<SelectedListItem<CountryCodeModel>> countryCodeItems =
-                        ctrl.countryCodes.map((country) {
+                        List<SelectedListItem<CountryCodeModel>>
+                        countryCodeItems = ctrl.countryCodes.map((country) {
                           return SelectedListItem<CountryCodeModel>(
                             data: country, // keep the full model
                           );
                         }).toList();
 
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Country Dropdown
-                        Expanded(
-                          flex: 4,
-                          child: GestureDetector(
-                            onTap: () {
-                              DropDownState<CountryCodeModel>(
-                                dropDown: DropDown<CountryCodeModel>(
-                                  listItemBuilder: (context, dataItem) {
-                                    return ListTile(
-                                      leading: Text(
-                                        dataItem.data.name,
-                                        style: const TextStyle(fontSize: 18),
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Country Dropdown
+                            Expanded(
+                              flex: 4,
+                              child: GestureDetector(
+                                onTap: () {
+                                  DropDownState<CountryCodeModel>(
+                                    dropDown: DropDown<CountryCodeModel>(
+                                      listItemBuilder: (context, dataItem) {
+                                        return ListTile(
+                                          leading: Text(
+                                            dataItem.data.name,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                          // title: Text(dataItem.data.name),
+                                        );
+                                      },
+                                      data: countryCodeItems,
+                                      // countryCodeItems,
+                                      /// Search by country name
+                                      searchDelegate: (query, dataItems) {
+                                        return dataItems
+                                            .where(
+                                              (item) => item.data.name
+                                                  .toLowerCase()
+                                                  .contains(
+                                                    query.toLowerCase(),
+                                                  ),
+                                            )
+                                            .toList();
+                                      },
+
+                                      /// title of the bottom sheet
+                                      bottomSheetTitle: const Text(
+                                        "Select Country Code",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
                                       ),
-                                      // title: Text(dataItem.data.name),
+
+                                      /// show search by default
+                                      isSearchVisible: true,
+                                      searchHintText: "Search Country",
+
+                                      /// single selection
+                                      enableMultipleSelection: false,
+
+                                      onSelected: (List<dynamic> selectedList) {
+                                        if (selectedList.isNotEmpty) {
+                                          final selectedItem =
+                                              selectedList.first
+                                                  as SelectedListItem<
+                                                    CountryCodeModel
+                                                  >;
+                                          ctrl.selectedCountry = selectedItem
+                                              .data; // ✅ this is CountryCodeModel
+                                          ctrl.notifyListeners();
+                                          setState(() {});
+                                        }
+                                      },
+                                    ),
+                                  ).showModal(context);
+                                },
+                                child: InputDecorator(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Country Code',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 14,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          ctrl.selectedCountry != null
+                                              ? '${ctrl.selectedCountry!.name} '
+                                              : 'Country Codes',
+                                          style: const TextStyle(fontSize: 16),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const Icon(Icons.arrow_drop_down),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 8),
+                            //
+                            // Area Code Dropdown
+                            // if country code has some selected
+                            Visibility(
+                              visible:
+                                  ctrl.selectedCountry?.requiresAreaCode ??
+                                  false,
+                              child: Expanded(
+                                flex: 2,
+                                child: DropdownButtonFormField<AreaCodeModel>(
+                                  value: ctrl.selectedArea,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Code',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 0,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  items: ctrl.areaCodes.map((a) {
+                                    return DropdownMenuItem(
+                                      value: a,
+                                      child: Text(a.value),
                                     );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    ctrl.selectedArea = val;
+                                    ctrl.notifyListeners();
                                   },
-                                  data: countryCodeItems,
-                                  // countryCodeItems,
-                                  /// Search by country name
-                                  searchDelegate: (query, dataItems) {
-                                    return dataItems
-                                        .where(
-                                          (item) => item.data.name
-                                              .toLowerCase()
-                                              .contains(query.toLowerCase()),
-                                        )
-                                        .toList();
-                                  },
-
-                                  /// title of the bottom sheet
-                                  bottomSheetTitle: const Text(
-                                    "Select Country Code",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-
-                                  /// show search by default
-                                  isSearchVisible: true,
-                                  searchHintText: "Search Country",
-
-                                  /// single selection
-                                  enableMultipleSelection: false,
-
-                                  onSelected: (List<dynamic> selectedList) {
-                                    if (selectedList.isNotEmpty) {
-                                      final selectedItem =
-                                          selectedList.first
-                                              as SelectedListItem<
-                                                CountryCodeModel
-                                              >;
-                                      ctrl.selectedCountry = selectedItem
-                                          .data; // ✅ this is CountryCodeModel
-                                      ctrl.notifyListeners();
-                                      setState(() {});
-                                    }
-                                  },
-                                ),
-                              ).showModal(context);
-                            },
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Country Code',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 14,
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      ctrl.selectedCountry != null
-                                          ? '${ctrl.selectedCountry!.name} '
-                                          : 'Country Codes',
-                                      style: const TextStyle(fontSize: 16),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const Icon(Icons.arrow_drop_down),
+                            ),
+                            const SizedBox(width: 8),
+
+                            // Phone Number TextField
+                            // Max lenght mc_length from api
+                            Expanded(
+                              flex: 4,
+                              child: TextFormField(
+                                controller: ctrl.phoneCtrl,
+                                // maxLength: ctrl.selectedCountry?.maxnumber,
+                                inputFormatters: [
+                                  LengthLimitingTextInputFormatter(phoneDigits),
+                                  FilteringTextInputFormatter.digitsOnly,
                                 ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 8),
-                        //
-                        // Area Code Dropdown
-                        // if country code has some selected
-                        Visibility(
-                          visible:
-                              ctrl.selectedCountry?.requiresAreaCode ?? false,
-                          child: Expanded(
-                            flex: 2,
-                            child: DropdownButtonFormField<AreaCodeModel>(
-                              value: ctrl.selectedArea,
-                              decoration: const InputDecoration(
-                                labelText: 'Code',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 0,
-                                  vertical: 12,
+                                decoration: const InputDecoration(
+                                  labelText: 'Phone Number',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 12,
+                                  ),
                                 ),
+                                validator: (value) {
+                                  if (value == null) return 'Invalid number';
+
+                                  final totalDigits =
+                                      ctrl.selectedCountry!.maxnumber;
+
+                                  // Convert to string to count digits
+                                  final countryCodeDigits = ctrl
+                                      .selectedCountry!
+                                      .callingCode
+                                      .toString()
+                                      .length;
+
+                                  final areaCodeDigits = ctrl.allCountryCodes
+                                      .toString()
+                                      .length;
+                                  print('areaCodeDigits $areaCodeDigits');
+                                  final phoneDigits =
+                                      totalDigits -
+                                      countryCodeDigits -
+                                      areaCodeDigits;
+
+                                  print('phoneDigits = $phoneDigits');
+
+                                  if (value.length != phoneDigits) {
+                                    return 'Enter a valid $phoneDigits digit number';
+                                  }
+
+                                  return null;
+                                },
+
+                                keyboardType: TextInputType.phone,
                               ),
-                              items: ctrl.areaCodes.map((a) {
-                                return DropdownMenuItem(
-                                  value: a,
-                                  child: Text(a.value),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                ctrl.selectedArea = val;
-                                ctrl.notifyListeners();
-                              },
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-
-                        // Phone Number TextField
-                        // Max lenght mc_length from api
-                        Expanded(
-                          flex: 5,
-                          child: TextFormField(
-                            controller: _number,
-                            // maxLength: ctrl.selectedCountry?.maxnumber,
-                            inputFormatters: [
-                              LengthLimitingTextInputFormatter(phoneDigits),
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: const InputDecoration(
-                              labelText: 'Phone Number',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 12,
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null) return 'Invalid number';
-
-                              final totalDigits =
-                                  ctrl.selectedCountry!.maxnumber;
-
-                              // Convert to string to count digits
-                              final countryCodeDigits = ctrl
-                                  .selectedCountry!
-                                  .callingCode
-                                  .toString()
-                                  .length;
-
-                              final areaCodeDigits = ctrl.allCountryCodes
-                                  .toString()
-                                  .length;
-                              print('areaCodeDigits $areaCodeDigits');
-                              final phoneDigits =
-                                  totalDigits -
-                                  countryCodeDigits -
-                                  areaCodeDigits;
-
-                              print('phoneDigits = $phoneDigits');
-
-                              if (value.length != phoneDigits) {
-                                return 'Enter a valid $phoneDigits digit number';
-                              }
-
-                              return null;
-                            },
-
-                            keyboardType: TextInputType.phone,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: CustomDropdownField<String>(
-                        labelText: 'Relation',
-                        value: _selectedRelation,
-                        items: const ['', 'Mother', 'Father', 'Guardian'],
-                        itemToString: (item) => item,
-                        onChanged: (v) =>
-                            setState(() => _selectedRelation = v ?? ''),
-                      ),
+                          ],
+                        );
+                      },
                     ),
-                    const SizedBox(width: 16),
-                    // Expanded(
-                    //   child: CustomDropdownField<String>(
-                    //     labelText: 'Level',
-                    //     value: _selectedLevel,
-                    //     items: const ['', 'Beginner', 'Intermediate', 'Advanced'],
-                    //     itemToString: (item) => item,
-                    //     onChanged: (v) =>
-                    //         setState(() => _selectedLevel = v ?? ''),
-                    //   ),
-                    // ),
-                  ],
-                ),
-                const SizedBox(height: 20),
 
-                // Consumer<CustomerController>(
-                //   builder: (context, ctrl, child) {
-                //     return DropdownButtonFormField<CountryCodeModel>(
-                //       value: ctrl.selectedCountry,
-                //       decoration: const InputDecoration(
-                //         labelText: 'AREA',
-                //         border: OutlineInputBorder(),
-                //       ),
-                //       items: ctrl.countryCodes.map((c) {
-                //         return DropdownMenuItem(
-                //           value: c,
-                //           child: Row(
-                //             children: [
-                //               Text(c.name.toString()),
-                //               Text(c.callingCode.toString()),
-                //             ],
-                //           ),
-                //         );
-                //       }).toList(),
-                //       onChanged: (val) {
-                //         ctrl.selectedCountry = val;
-                //         ctrl.notifyListeners();
-                //       },
-                //     );
-                //   },
-                // ),
-                // Consumer<CustomerController>(
-                //   builder: (context, ctrl, child) {
-                //     return DropdownButtonFormField<AreaCodeModel>(
-                //       value: ctrl.selectedArea,
-                //       decoration: const InputDecoration(
-                //         labelText: 'Code',
-                //         border: OutlineInputBorder(),
-                //       ),
-                //       items: ctrl.areaCodes.map((a) {
-                //         return DropdownMenuItem(value: a, child: Text(a.value));
-                //       }).toList(),
-                //       onChanged: (val) {
-                //         ctrl.selectedArea = val;
-                //         ctrl.notifyListeners();
-                //       },
-                //     );
-                //   },
-                // ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Have you been a Melodica student before?',
-                      style: TextStyle(color: AppColors.secondaryText),
-                    ),
+                    const SizedBox(height: 20),
+
                     Row(
                       children: [
-                        Radio<bool>(
-                          value: true,
-                          groupValue: _isMelodicaStudent,
-                          onChanged: (v) =>
-                              setState(() => _isMelodicaStudent = v),
-                          activeColor: AppColors.primary,
-                        ),
-                        const Text('Yes I am'),
-                        const SizedBox(width: 20),
-                        Radio<bool>(
-                          value: false,
-                          groupValue: _isMelodicaStudent,
-                          onChanged: (v) =>
-                              setState(() => _isMelodicaStudent = v),
-                          activeColor: AppColors.primary,
-                        ),
-                        const Text('No I am new'),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-
-                /// 👇 SAME BUTTON FOR BOTH
-                PrimaryButton(
-                  child: _isLoading
-                      ? CircularProgressIndicator(color: AppColors.black)
-                      : Text(
-                          'Next',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors
-                                .darkText, // Text color is dark on yellow
+                        Expanded(
+                          child: CustomDropdownField<String>(
+                            labelText: 'Relation',
+                            value: ctrl.selectedRelation,
+                            items: const ['', 'Mother', 'Father', 'Guardian'],
+                            itemToString: (item) => item,
+                            onChanged: (v) =>
+                                setState(() => ctrl.setRelation(v!)),
                           ),
                         ),
-                  text: '',
-                  onPressed: _submitNew,
-                ),
-              ],
+                        const SizedBox(width: 16),
+                        // Expanded(
+                        //   child: CustomDropdownField<String>(
+                        //     labelText: 'Level',
+                        //     value: _selectedLevel,
+                        //     items: const ['', 'Beginner', 'Intermediate', 'Advanced'],
+                        //     itemToString: (item) => item,
+                        //     onChanged: (v) =>
+                        //         setState(() => _selectedLevel = v ?? ''),
+                        //   ),
+                        // ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Have you been a Melodica student before?',
+                          style: TextStyle(color: AppColors.secondaryText),
+                        ),
+                        Row(
+                          children: [
+                            Radio<bool>(
+                              value: true,
+                              groupValue: ctrl.isMelodicaStudent,
+                              onChanged: (v) => ctrl.setIsMelodicaStudent(v!),
+                            ),
+                            const Text('Yes I am'),
+                            const SizedBox(width: 20),
+                            Radio<bool>(
+                              value: false,
+                              groupValue: ctrl.isMelodicaStudent,
+                              onChanged: (v) => ctrl.setIsMelodicaStudent(v!),
+                            ),
+                            const Text('No I am new'),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+
+                    /// 👇 SAME BUTTON FOR BOTH
+                    PrimaryButton(
+                      child: _isLoading
+                          ? CircularProgressIndicator(color: AppColors.black)
+                          : Text(
+                              'Next',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors
+                                    .darkText, // Text color is dark on yellow
+                              ),
+                            ),
+                      text: '',
+                      onPressed: () => _submitNew(ctrl),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -479,9 +523,9 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
   }
 
   bool _isLoading = false;
-  Future<void> _submitNew() async {
+  Future<void> _submitNew(CustomerController ctrls) async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedGender.isEmpty || _selectedRelation.isEmpty) {
+    if (ctrls.selectedGender.isEmpty || ctrls.selectedRelation.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please complete all required fields')),
       );
@@ -490,27 +534,31 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
     setState(() {
       _isLoading = true;
     });
-    final ctrl = context.read<CustomerController>();
-    await ctrl
+    // final ctrl = context.read<CustomerController>();
+    final serviceCtrl = context.read<ServicesProvider>();
+    await ctrls
         .upsertStudentProfile(
           context,
-          firstname: _firstNameCtrl.text,
-          lastname: _lastNameCtrl.text,
-          email: _email.text,
-          phone: _number.text,
-          countryCode: "32",
-          areaCode: "01",
-          level: _selectedLevel,
-          gender: _selectedGender,
+          firstname: ctrls.firstNameCtrl.text,
+          lastname: ctrls.lastNameCtrl.text,
+          email: ctrls.emailCtrl.text,
+          phone: ctrls.phoneCtrl.text,
+          countryCode: " ${ctrls.selectedArea}",
+          areaCode: "${ctrls.areaCodes}",
+          level: ctrls.selectedLevel,
+          gender: ctrls.selectedGender,
           type: "New",
-          existing: _isMelodicaStudent!, // 👈 NEW STUDENT
-          clientId: ctrl.selectedStudent!.mbId.toString(),
+          dateofbirth: _dobController.text,
+          existing: ctrls.isMelodicaStudent!, // 👈 NEW STUDENT
+          clientId: "",
+          // ctrls.selectedStudent!.mbId.toString(),
         )
         .then((val) {
           if (val) {
             setState(() {
               _isLoading = false;
             });
+            serviceCtrl.isStudentNew = true;
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -530,54 +578,54 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
         });
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+  // Future<void> _submit() async {
+  //   if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedGender.isEmpty ||
-        _selectedRelation.isEmpty ||
-        _selectedLevel.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all required fields')),
-      );
-      return;
-    }
-    print('_isMelodicaStudent ${_isMelodicaStudent}');
-    setState(() {
-      _isLoading = true;
-    });
-    final ctrl = context.read<CustomerController>();
-    await ctrl
-        .upsertStudentProfile(
-          context,
-          firstname: _firstNameCtrl.text,
-          lastname: _lastNameCtrl.text,
-          email: _email.text,
-          phone: _number.text,
-          countryCode: "971",
-          areaCode: "52",
-          level: _selectedLevel,
-          existing: _isMelodicaStudent!,
-          type: "Update",
-          gender: _selectedGender,
-          relationship: _selectedRelation,
-          clientId: ctrl.selectedStudent!.mbId.toString(), // CREATE
-        )
-        .then((val) {
-          if (val) {
-            setState(() {
-              _isLoading = false;
-            });
-            showSuccessDialog(context);
-          } else {
-            setState(() {
-              _isLoading = false;
-            });
-            SnackbarUtils.showError(context, "Error!");
-          }
-        });
+  //   if (_selectedGender.isEmpty ||
+  //       _selectedRelation.isEmpty ||
+  //       _selectedLevel.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Please complete all required fields')),
+  //     );
+  //     return;
+  //   }
+  //   print('_isMelodicaStudent ${_isMelodicaStudent}');
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
+  //   final ctrl = context.read<CustomerController>();
+  //   await ctrl
+  //       .upsertStudentProfile(
+  //         context,
+  //         firstname: _firstNameCtrl.text,
+  //         lastname: _lastNameCtrl.text,
+  //         email: _email.text,
+  //         phone: _number.text,
+  //         countryCode: "971",
+  //         areaCode: "52",
+  //         level: _selectedLevel,
+  //         existing: _isMelodicaStudent!,
+  //         type: "Update",
+  //         gender: _selectedGender,
+  //         relationship: _selectedRelation,
+  //         clientId: ctrl.selectedStudent!.mbId.toString(), // CREATE
+  //       )
+  //       .then((val) {
+  //         if (val) {
+  //           setState(() {
+  //             _isLoading = false;
+  //           });
+  //           showSuccessDialog(context);
+  //         } else {
+  //           setState(() {
+  //             _isLoading = false;
+  //           });
+  //           SnackbarUtils.showError(context, "Error!");
+  //         }
+  //       });
 
-    // if (widget.isEdit)
-  }
+  //   // if (widget.isEdit)
+  // }
 }
 
 void showSuccessDialog(BuildContext context) {

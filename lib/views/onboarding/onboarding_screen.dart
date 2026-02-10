@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/providers/appstate_provider.dart';
@@ -17,47 +19,70 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   PageController pageController = PageController();
   int _currentIndex = 0;
 
-  final List<Map<String, String>> _pages = [
-    {
-      'title': "Welcome to Melodica\nMusic Academy",
-      'image': 'assets/images/ob1.png',
-    },
-    {'title': "Music & Dance Academy", 'image': 'assets/images/ob2.png'},
-    {
-      'title': "Largest music instrument\nprovider in the UAE",
-      'image': 'assets/images/ob3.png',
-    },
-  ];
   bool isShowLogin = false;
   // Developer requested the uploaded image path be used as-is. That path is:
   @override
   Widget build(BuildContext context) {
+    final List<Map<String, String>> _pages = [
+      {
+        'title': "Welcome Melodica\nMusic & Dance Academy",
+        'image': 'assets/images/ob1.png',
+      },
+      {
+        'title': "Learn Music.\nLearn Dance. Be Inspired.",
+        'image': 'assets/images/ob3.png',
+      },
+      {
+        'title':
+            "Where students discover\nconfidence, passion, and\nperformance.",
+        'image': 'assets/images/ob2.png',
+      },
+    ];
     // final provider = Provider.of<OnboardingProvider>(context, listen: false);
     return Scaffold(
       backgroundColor: const Color(0xFF333333), // dark frame like the design
       body: SafeArea(
         top: false,
+        bottom: Platform.isIOS ? false : true,
         child: Stack(
+          alignment: Alignment.topCenter,
           children: [
-            PageView.builder(
-              physics: NeverScrollableScrollPhysics(),
-              pageSnapping: true,
-              controller: pageController,
-              onPageChanged: (index) => setState(() => _currentIndex = index),
-              itemBuilder: (context, index) {
-                final item = _pages[index];
-                // print('index $index');
-                return isShowLogin
-                    ? _buildFinalPage(
-                        context,
-                        imagePath: 'assets/images/ob4.png',
-                      )
-                    : _buildOnboardPage(
-                        context,
-                        imagePath: item['image']!,
-                        // title: item['title']!,
-                      );
-              },
+            Align(
+              alignment: Alignment.topCenter,
+              child: PageView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                pageSnapping: true,
+                controller: pageController,
+                onPageChanged: (index) => setState(() => _currentIndex = index),
+                itemBuilder: (context, index) {
+                  final item = _pages[index];
+                  // print('index $index');
+                  return isShowLogin
+                      ? _buildFinalPage(
+                          context,
+                          imagePath: 'assets/images/ob4.png',
+                        )
+                      : Container(
+                          // height: 50.h,
+                          // width: 50.w,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              alignment: Alignment.topCenter,
+                              image: AssetImage(item['image']!),
+                            ),
+                          ),
+                          // child: Image.asset(
+                          //   // fit: BoxFit.cover,
+                          //   errorBuilder: (c, e, s) => Container(
+                          //     color: Colors.grey.shade200,
+                          //     child: Center(
+                          //       child: Image.asset('assets/placeholder_bg.jpg'),
+                          //     ),
+                          //   ),
+                          // ),
+                        );
+                },
+              ),
             ),
 
             isShowLogin
@@ -83,7 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               const Text(
-                                'Get Started',
+                                'Book. Track. Learn.\nAll in One Place',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
@@ -144,7 +169,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 : Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
-                      height: MediaQuery.of(context).size.height * 0.25,
+                      height: MediaQuery.of(context).size.height * 0.34,
                       decoration: const BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.only(
@@ -162,18 +187,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         children: [
                           Text(
                             _currentIndex == 0
-                                ? "Welcome to Melodica\nMusic Academy"
+                                ? "Welcome\nMelodica Music & Dance\nAcademy"
                                 : _currentIndex == 1
-                                ? "Music & Dance Academy"
-                                : "Largest music instrument\nprovider in the UAE",
+                                ? "Learn Music.\nLearn Dance. Be Inspired."
+                                : "Where students discover\nconfidence, passion, and\nperformance.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w800,
                               fontSize: 20.fSize,
                               color: Colors.black87,
                             ),
                           ),
-                          // SizedBox(height: 20.h),
+                          SizedBox(height: 20.h),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -205,7 +230,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               );
                             }),
                           ),
-                          // SizedBox(height: 20.h),
+                          SizedBox(height: 18.h),
                           // _NextButton(),
                           InkWell(
                             onTap: () {
@@ -256,30 +281,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildOnboardPage(BuildContext context, {required String imagePath}) {
-    return Stack(
-      children: [
-        // background image - using Image.file to load local file if available
-        Positioned.fill(
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.cover,
-            errorBuilder: (c, e, s) => Container(
-              color: Colors.grey.shade200,
-              child: Center(child: Image.asset('assets/placeholder_bg.jpg')),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildFinalPage(BuildContext context, {required String imagePath}) {
     return Stack(
       children: [
         Positioned.fill(
           child: Image.asset(
-            'assets/images/ob1.png',
+            'assets/images/ob4.png',
             fit: BoxFit.cover,
             errorBuilder: (c, e, s) => Container(color: Colors.grey.shade200),
           ),

@@ -3,23 +3,22 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/schedule_model.dart';
-import 'package:melodica_app_new/providers/notification_provider.dart';
-import 'package:melodica_app_new/providers/pacakge_provider.dart';
+
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
-import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/utils/date_format.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/utils/snacbar_utils.dart';
+import 'package:melodica_app_new/views/dashboard/dashboard_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/package_selection_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/webview_online_store.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/reschedule_screen.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_widgets.dart';
 import 'package:melodica_app_new/views/profile/packages/packages_screen.dart';
 import 'package:melodica_app_new/widgets/custom_app_bar.dart';
-import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,54 +30,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   @override
-  void initState() {
-    super.initState();
-    print('calling init');
-    WidgetsBinding.instance.addPostFrameCallback((val) async {
-      if (mounted) {
-        await _loadHomeData();
-      } else {
-        await _loadHomeData();
-      }
-      setState(() {});
-    });
-  }
-
-  Future<void> _loadHomeData() async {
-    final context = navigatorKey.currentContext!;
-    final provider = Provider.of<UserprofileProvider>(context, listen: false);
-    final schedule = Provider.of<ScheduleProvider>(context, listen: false);
-    final cusprovider = Provider.of<CustomerController>(context, listen: false);
-    final package = Provider.of<PackageProvider>(context, listen: false);
-
-    print('cusprovider.isShowData ${cusprovider.isShowData}');
-    if (cusprovider.isShowData.isEmpty) {
-      await provider.fetchUserData();
-      await cusprovider.fetchCustomerData();
-      await cusprovider.upsertCustomer();
-      await package.fetchPackages(context);
-      // if two pacakges packages using same bracnh .. if two pacakges different bracnh.
-      // same i did for selecting students..
-      await context.read<ServicesProvider>().fetchDancePackages();
-      await cusprovider.getDisplayDance(cusprovider.selectedBranch!);
-      await provider.loadImageFromPrefs();
-      await schedule.fetchSchedule(context);
-      await cusprovider.fetchPhoneMeta();
-
-      context.read<NotificationProvider>().fetchNotifications();
-    } else {
-      context.read<NotificationProvider>().fetchNotifications();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       child: Scaffold(
         appBar: CustomAppBar(),
         body: SafeArea(
-          bottom: false,
+          bottom: true,
           child: Stack(
             children: [
               // Main Content
@@ -153,35 +111,46 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildCategoryCard(
-                          'assets/svg/music_class.svg',
-                          'Add Music',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PackageSelectionScreen(
-                                  isShowdanceTab: false,
-                                ),
-                              ),
-                            );
+                        Showcase(
+                          key: bookClassKey,
+                          title: "Book Classes",
+                          description: "Easily book music and dance classes.",
+
+                          onBarrierClick: () {
+                            ShowCaseWidget.of(context).next();
                           },
+                          child: _buildCategoryCard(
+                            'assets/svg/music_class.svg',
+                            'Add Music',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PackageSelectionScreen(
+                                    isShowdanceTab: false,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                         const SizedBox(width: 16),
 
-                        Consumer<CustomerController>(
-                          builder: (context, crtl, child) {
+                        Selector<CustomerController, bool>(
+                          selector: (_, ctrl) => ctrl.display,
+                          builder: (context, display, child) {
+                            print('UI display rebuilt: $display');
                             return Expanded(
                               child: Column(
                                 children: [
                                   InkWell(
                                     borderRadius: BorderRadius.circular(18),
-                                    onTap: crtl.display
+                                    onTap: display
                                         ? () {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) =>
+                                                builder: (_) =>
                                                     PackageSelectionScreen(
                                                       isShowdanceTab: true,
                                                     ),
@@ -191,22 +160,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                         : () {
                                             SnackbarUtils.showInfo(
                                               context,
-                                              "There are currently no dance packages available for this branch.Feel free to enquire about packages at our other branches.",
+                                              "There are currently no dance packages available for this branch. "
+                                              "Feel free to enquire about packages at our other branches.",
                                             );
                                           },
                                     child: SvgPicture.asset(
                                       'assets/svg/dance_class.svg',
-                                      color: crtl.display
-                                          ? null
-                                          : Colors.grey[500],
+                                      color: display ? null : Colors.grey[500],
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  Text(
+                                  const Text(
                                     'Add Dance',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: 11.fSize,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.black87,
                                     ),
@@ -216,34 +184,54 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                         ),
+
                         const SizedBox(width: 16),
-                        _buildCategoryCard(
-                          'assets/svg/packages.svg',
-                          'My Packages',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PackageListScreen(),
-                              ),
-                            );
+                        Showcase(
+                          key: packageKey,
+                          title: "My Packages",
+
+                          description:
+                              "Explore your packages, track usage, or freeze a package",
+                          onBarrierClick: () {
+                            ShowCaseWidget.of(context).next();
                           },
+                          child: _buildCategoryCard(
+                            'assets/svg/packages.svg',
+                            'My Packages',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PackageListScreen(),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                         const SizedBox(width: 16),
-                        _buildCategoryCard(
-                          'assets/svg/online_store.svg',
-                          'Online Store',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const WebViewPage(
-                                  url: 'https://melodicamusicstore.com/',
-                                  title: 'Online Store',
-                                ),
-                              ),
-                            );
+                        Showcase(
+                          key: onlinestore,
+                          title: "Online Store",
+                          description:
+                              "Find and buy your favorite instruments from our online store.",
+                          onBarrierClick: () {
+                            ShowCaseWidget.of(context).next();
                           },
+                          child: _buildCategoryCard(
+                            'assets/svg/online_store.svg',
+                            'Online Store',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const WebViewPage(
+                                    url: 'https://melodicamusicstore.com/',
+                                    title: 'Online Store',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                         // _buildCategoryCard(
                         //   'assets/svg/online_store.svg',
@@ -325,14 +313,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                 height: 320.h,
                                 color: Colors.transparent,
                                 child: ListView.separated(
-                                  itemCount: provider.schedules.length,
+                                  padding: EdgeInsets.all(0),
+                                  itemCount: provider.upcomingSchedules.length,
+                                  // provider.upcomingSchedules.length,
                                   shrinkWrap: true,
                                   separatorBuilder: (context, index) =>
                                       SizedBox(height: 8.h),
                                   itemBuilder: (context, index) {
-                                    final item = provider.schedules[index];
+                                    // if (provider.upcomingSchedules.isEmpty) {
+                                    //   return Text("No class found");
+                                    // }
+                                    final item =
+                                        provider.upcomingSchedules[index];
                                     return Container(
                                       margin: EdgeInsets.only(right: 12),
+                                      padding: EdgeInsets.all(0),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(12),
@@ -341,6 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                       child: ListTile(
+                                        minVerticalPadding: 0,
                                         onTap: () {
                                           showAppointmentBottomSheet(
                                             context,
@@ -348,11 +344,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                           );
                                         },
                                         contentPadding: EdgeInsets.symmetric(
-                                          vertical: 2,
+                                          vertical: 0,
                                           horizontal: 12,
                                         ),
                                         visualDensity: VisualDensity(
-                                          vertical: 2,
+                                          vertical: 0,
                                         ),
                                         tileColor: Colors.white,
                                         leading: Column(
@@ -362,18 +358,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                               '${item.bookingDay.isEmpty ? '' : item.bookingDay.substring(0, 3)}',
                                             ),
                                             Container(
-                                              height: 30,
-                                              width: 30,
+                                              height: 20.h,
+                                              width: 20.w,
                                               decoration: BoxDecoration(
                                                 borderRadius:
-                                                    BorderRadius.circular(8),
+                                                    BorderRadius.circular(5),
                                                 color: AppColors.primary,
                                               ),
                                               child: Center(
                                                 child: Text(
                                                   item.day.toString(),
                                                   style: TextStyle(
-                                                    fontSize: 14.fSize,
+                                                    fontSize: 12.fSize,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
@@ -386,10 +382,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                           item.subject,
                                           style: TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            fontSize: 16.fSize,
+                                            fontSize: 14.fSize,
                                           ),
                                         ),
-                                        subtitle: Text(item.bookingRoom),
+                                        subtitle: Text(item.bookingResource),
                                         trailing: Text(
                                           item.time.startsWith('0')
                                               ? item.time.substring(1)
@@ -421,13 +417,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String removingTimeFromDate(String datetime) {
-    DateFormat inputFormat = DateFormat("dd MMM yyyy hh:mm a");
+    DateFormat inputFormat = DateFormat("d MMM yyyy hh:mm a");
 
     // 2. Parse the string into a DateTime object
     DateTime dateTime = inputFormat.parse("${datetime}");
 
     // 3. Format it back to just the date
-    String dateOnly = DateFormat("dd MMM yyyy").format(dateTime);
+    String dateOnly = DateFormat("d MMM yyyy").format(dateTime);
     return dateOnly;
   }
 
@@ -470,7 +466,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Info Section Card
                 Consumer<CustomerController>(
                   builder: (context, ctrl, child) {
-                    final expiryDate = DateTime.parse(s.PackageExpiry);
+                    // final expiryDate = DateTime.parse(s.PackageExpiry);
+                    DateTime? expiryDate;
+
+                    if (s.PackageExpiry != null && s.PackageExpiry.isNotEmpty) {
+                      try {
+                        expiryDate = DateTime.parse(s.PackageExpiry);
+                      } catch (e) {
+                        expiryDate = null;
+                      }
+                    }
+                    print('s.bookingDateStartTime ${s.bookingDateStartTime}');
+                    final date = DateFormat(
+                      'd MMM yyyy h:mm a',
+                    ).parse(s.bookingDateStartTime);
+
+                    final formatted = DateFormat(
+                      'd MMM yyyy, h:mm a',
+                    ).format(date);
 
                     return Container(
                       padding: const EdgeInsets.all(16),
@@ -481,19 +494,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         children: [
                           _buildInfoRow('Location', '${s.bookingLocation}'),
-                          _buildInfoRow('Time', '${s.bookingDateStartTime}'),
+                          _buildInfoRow('Time', '${formatted}'),
                           _buildInfoRow(
                             'Student',
                             '${ctrl.selectedStudent!.fullName}',
                           ),
                           _buildInfoRow('Teacher', '${s.bookingResource}'),
                           _buildInfoRow(
-                            'Cancellation',
-                            '${s.RemainingCancellations}',
+                            'Cancellations Left',
+                            s.RemainingCancellations <= 0
+                                ? "0"
+                                : '${s.RemainingCancellations}',
                           ),
                           _buildInfoRow(
-                            'Expiry',
-                            '${DateFormat('dd MMM yyyy').format(expiryDate)}',
+                            'Package Expiry',
+                            '${DateFormat('d MMM yyyy').format(expiryDate ?? DateTime.now())}  ',
+                            //'${DateFormat('dd MMM yyyy').format(expiryDate)}',
                           ),
                         ],
                       ),
@@ -539,34 +555,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 24),
 
                 // Action Buttons
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      ///call get availablity api
+                s.danceOrMusic == "Music Classes"
+                    ? SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            ///call get availablity api
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => RescheduleScreen(s: s),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RescheduleScreen(s: s),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(
+                              0xFFFFD152,
+                            ), // Yellow button
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Reschedule',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFD152), // Yellow button
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Reschedule',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
+                      )
+                    : SizedBox(),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -574,8 +594,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: OutlinedButton(
                     onPressed: () {
                       final DateTime bookingdata = DateFormat(
-                        'dd/MM/yyyy hh:mm a',
+                        'dd MMM yyyy hh:mm a',
                       ).parse(s.bookingDateStartTime);
+
                       // Current datetime
                       final DateTime now = DateTime.now();
                       final DateTime today = DateTime(
@@ -631,19 +652,19 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
+          Container(
+            width: 115.w,
             child: Text(
               label,
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(color: Colors.grey, fontSize: 12.fSize),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 12.fSize,
                 color: Color(0xFF2D3436),
               ),
             ),
@@ -673,13 +694,18 @@ class _HomeScreenState extends State<HomeScreen> {
             child: SvgPicture.asset(emoji),
           ),
           const SizedBox(height: 8),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11.fSize,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
+          Container(
+            width: 120.w,
+            color: Colors.transparent,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10.fSize,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -755,12 +781,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         PaymentType.freezingPoints,
                       );
                       final vat = 50 * 0.05;
-                      final amountWithVat = (50 + vat).toInt();
+                      final amountWithVat = (50 + vat);
 
                       final success = await servicesProvider.startCheckout(
                         context,
                         amount: amountWithVat,
-                        redirectUrl: "https://melodica-mobile.web.app",
+                        // redirectUrl: "https://melodica-mobile.web.app",
                       );
 
                       if (success && servicesProvider.paymentUrl != null) {
@@ -782,12 +808,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      "AED ${50}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+                    child: Row(
+                      children: [
+                        SvgPicture.asset('assets/svg/dirham.svg'),
+                        const Text(
+                          " ${50}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
