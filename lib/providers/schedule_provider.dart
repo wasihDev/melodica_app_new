@@ -57,18 +57,18 @@ class ScheduleProvider extends ChangeNotifier {
     this.packageId = packageId;
   }
 
-  Future<void> submitScheduleRequestAfterPayment(String transactionRef) async {
+  Future<bool> submitScheduleRequestAfterPayment(String transactionRef) async {
     if (subject == null ||
         classDateTime == null ||
         action == null ||
         preferredSlot == null)
-      return;
+      return false;
 
     _isLoading = true;
     notifyListeners();
 
     try {
-      await submitScheduleRequest(
+      final scheduleRequest = await submitScheduleRequest(
         subject: subject!,
         classDateTime: classDateTime!,
         action: action!,
@@ -76,11 +76,13 @@ class ScheduleProvider extends ChangeNotifier {
         reason: "", // can customize if needed
         branch: branch!,
         packageid: packageId!,
-        lateNotic: "Late",
+        lateNotic: "Early",
         transactionId: transactionRef, // ✅ payment reference
       );
+      return scheduleRequest;
     } catch (e) {
       debugPrint("Error submitting schedule request: $e");
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -225,6 +227,35 @@ class ScheduleProvider extends ChangeNotifier {
   //       .toList();
   // }
 
+  // List<Map<String, dynamic>> getAffectedClasses({
+  //   required DateTime startDate,
+  //   required DateTime endDate,
+  //   required String subject,
+  // }) {
+  //   return schedules
+  //       .where((s) {
+  //         final dt = s.bookingDateTime;
+  //         if (dt == null) return false;
+  //         print('s.subject ${s.subject}');
+  //         print('subject $subject');
+  //         // ✅ filter by subject
+  //         if (s.subject != subject) return false;
+
+  //         final utc = dt.toUtc();
+
+  //         return (utc.isAfter(startDate.toUtc()) ||
+  //                 utc.isAtSameMomentAs(startDate.toUtc())) &&
+  //             (utc.isBefore(endDate.toUtc()) ||
+  //                 utc.isAtSameMomentAs(endDate.toUtc()));
+  //       })
+  //       .map(
+  //         (s) => {
+  //           "bookingid": s.bookingId,
+  //           "bookingstart": s.bookingDateTime!.toUtc().toIso8601String(),
+  //         },
+  //       )
+  //       .toList();
+  // }
   List<Map<String, dynamic>> getAffectedClasses({
     required DateTime startDate,
     required DateTime endDate,
@@ -234,22 +265,19 @@ class ScheduleProvider extends ChangeNotifier {
         .where((s) {
           final dt = s.bookingDateTime;
           if (dt == null) return false;
-          print('s.subject ${s.subject}');
-          print('subject $subject');
-          // ✅ filter by subject
+          print('s.bookingDateTime; ${s.bookingDateTime}');
+          // ✅ Filter by subject
           if (s.subject != subject) return false;
 
-          final utc = dt.toUtc();
-
-          return (utc.isAfter(startDate.toUtc()) ||
-                  utc.isAtSameMomentAs(startDate.toUtc())) &&
-              (utc.isBefore(endDate.toUtc()) ||
-                  utc.isAtSameMomentAs(endDate.toUtc()));
+          // ✅ Direct comparison using the provided timezone/context
+          return (dt.isAfter(startDate) || dt.isAtSameMomentAs(startDate)) &&
+              (dt.isBefore(endDate) || dt.isAtSameMomentAs(endDate));
         })
         .map(
           (s) => {
             "bookingid": s.bookingId,
-            "bookingstart": s.bookingDateTime!.toUtc().toIso8601String(),
+            // ✅ Standard ISO8601 string without forcing UTC
+            "bookingstart": s.bookingDateTime!.toIso8601String(),
           },
         )
         .toList();
@@ -266,7 +294,7 @@ class ScheduleProvider extends ChangeNotifier {
     required String lateNotic,
     String? transactionId,
   }) async {
-    _isLoading = true;
+    showLoadingDialog(navigatorKey.currentContext!);
     notifyListeners();
 
     try {
@@ -303,7 +331,7 @@ class ScheduleProvider extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         // OR ScaffoldMessenger (recommended)
         // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-
+        hideLoadingDialog(navigatorKey.currentContext!);
         return true;
       } else {
         final decoded = jsonDecode(response.body);
@@ -312,12 +340,12 @@ class ScheduleProvider extends ChangeNotifier {
         print('=statcut =====?? ${status}');
         if (status == false) {
           final String message = decoded['response']['message'];
-
-          // show message
+          hideLoadingDialog(navigatorKey.currentContext!); // show message
           showDialog(
             context: navigatorKey.currentContext!,
             barrierDismissible: true,
             builder: (_) => AlertDialog(
+              backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
@@ -341,7 +369,7 @@ class ScheduleProvider extends ChangeNotifier {
                   Text(
                     "$message",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 14.fSize),
                   ),
                 ],
               ),
@@ -426,4 +454,6 @@ class ScheduleProvider extends ChangeNotifier {
     endTime = end;
     notifyListeners();
   }
+
+  // loading
 }

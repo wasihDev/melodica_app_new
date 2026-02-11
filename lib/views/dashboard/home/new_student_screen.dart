@@ -274,15 +274,26 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
                                       // countryCodeItems,
                                       /// Search by country name
                                       searchDelegate: (query, dataItems) {
-                                        return dataItems
-                                            .where(
-                                              (item) => item.data.name
-                                                  .toLowerCase()
-                                                  .contains(
-                                                    query.toLowerCase(),
-                                                  ),
-                                            )
-                                            .toList();
+                                        final lowercaseQuery = query
+                                            .toLowerCase();
+
+                                        return dataItems.where((item) {
+                                          // Search in the full Country Name (e.g., Afghanistan)
+                                          final matchesCountry = item
+                                              .data
+                                              .countryName
+                                              .toLowerCase()
+                                              .contains(lowercaseQuery);
+
+                                          final matchesShortName = item
+                                              .data
+                                              .name
+                                              .toLowerCase()
+                                              .contains(lowercaseQuery);
+
+                                          return matchesCountry ||
+                                              matchesShortName;
+                                        }).toList();
                                       },
 
                                       /// title of the bottom sheet
@@ -319,11 +330,11 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
                                 },
                                 child: InputDecorator(
                                   decoration: const InputDecoration(
-                                    labelText: 'Country Code',
+                                    labelText: 'Country Codes',
                                     border: OutlineInputBorder(),
                                     contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 14,
+                                      horizontal: 8,
+                                      vertical: 10,
                                     ),
                                   ),
                                   child: Row(
@@ -335,7 +346,7 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
                                           ctrl.selectedCountry != null
                                               ? '${ctrl.selectedCountry!.name} '
                                               : 'Country Codes',
-                                          style: const TextStyle(fontSize: 16),
+                                          style: TextStyle(fontSize: 12.fSize),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
@@ -355,9 +366,12 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
                                   ctrl.selectedCountry?.requiresAreaCode ??
                                   false,
                               child: Expanded(
-                                flex: 2,
+                                flex: 4,
                                 child: DropdownButtonFormField<AreaCodeModel>(
-                                  value: ctrl.selectedArea,
+                                  value:
+                                      ctrl.areaCodes.contains(ctrl.selectedArea)
+                                      ? ctrl.selectedArea
+                                      : null,
                                   decoration: const InputDecoration(
                                     labelText: 'Code',
                                     border: OutlineInputBorder(),
@@ -369,7 +383,10 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
                                   items: ctrl.areaCodes.map((a) {
                                     return DropdownMenuItem(
                                       value: a,
-                                      child: Text(a.value),
+                                      child: Text(
+                                        a.value,
+                                        style: TextStyle(fontSize: 12.fSize),
+                                      ),
                                     );
                                   }).toList(),
                                   onChanged: (val) {
@@ -384,7 +401,7 @@ class _NewStudentScreenState extends State<NewStudentScreen> {
                             // Phone Number TextField
                             // Max lenght mc_length from api
                             Expanded(
-                              flex: 4,
+                              flex: 5,
                               child: TextFormField(
                                 controller: ctrl.phoneCtrl,
                                 // maxLength: ctrl.selectedCountry?.maxnumber,

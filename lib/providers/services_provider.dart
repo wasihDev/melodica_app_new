@@ -148,22 +148,19 @@ class ServicesProvider extends ChangeNotifier {
           navigatorKey.currentContext!,
           listen: false,
         );
-        await Packageprovider.submitScheduleRequestAfterPayment(ref).then((
-          val,
-        ) {
-          Navigator.push(
-            navigatorKey.currentContext!,
-            MaterialPageRoute(
-              builder: (_) => CustomRecipetScreen(
-                orderId: ref,
-                amount: "${50 * 1.05}",
-                paymentMethod: 'Network International',
-                status: 'success',
-                date: DateTime.now(),
-              ),
+        Navigator.push(
+          navigatorKey.currentContext!,
+          MaterialPageRoute(
+            builder: (_) => CustomRecipetScreen(
+              orderId: ref,
+              // TODO:: sometime it will added 100 for weeks of extension
+              amount: "50",
+              paymentMethod: 'Network International',
+              status: 'success',
+              date: DateTime.now(),
             ),
-          );
-        });
+          ),
+        );
 
         // navigate to schedule receipt if needed
         break;
@@ -694,7 +691,7 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
   } // post api install package
 
-  Future<bool> installOrder() async {
+  Future<bool> installOrder({required String checkOutScreenBase64}) async {
     // if (_selectedPackages.isEmpty) return false;
     _setLoading(true);
 
@@ -705,6 +702,8 @@ class ServicesProvider extends ChangeNotifier {
       final url = ApiConfigService.endpoints.installPackage;
       print('_orderReference ${_orderReference}');
       print('signatureBase64 $signatureBase64');
+      var isAdmissionAdded = false;
+
       final body = {
         "firstname": customerController.customer?.firstName,
         "lastname": customerController.customer?.lastName,
@@ -717,10 +716,17 @@ class ServicesProvider extends ChangeNotifier {
         "paymentdate": "${DateTime.now().toIso8601String().split('T').first}",
         "paymenturl": "APP", // get this from network international
         "paymentmethod": "Network International",
-        "orderdetails": _selectedPackages.map((e) {
+        "orderdetails": _selectedPackages.asMap().entries.map((entry) {
+          int index = entry.key; // Get the current index
+          var e = entry.value; // Get the package data
+          final bool isFirstItem = index == 0;
           final bool chargeAdmission =
-              _isStudentNew == true ||
-              customerController.selectedStudent?.isregistred != 'Yes';
+              isFirstItem &&
+              (_isStudentNew == true ||
+                  customerController.selectedStudent?.isregistred != 'Yes');
+          final bool displayNewDetails =
+              (_isStudentNew == true ||
+              customerController.selectedStudent?.isregistred != 'Yes');
           print('chargeAdmission $chargeAdmission');
           final double admissionValue = chargeAdmission ? 150.0 : 0.0;
           final double discountPercent =
@@ -728,36 +734,27 @@ class ServicesProvider extends ChangeNotifier {
                   0.0) /
               100;
 
-          // 3. Calculate Subtotal and Discount Amount
+          // Calculate Subtotal and Discount Amount
           final double baseAmount = e.price + admissionValue;
           final double discountAmount = baseAmount * discountPercent;
           final double discountedSubtotal = baseAmount - discountAmount;
           print('discountedSubtotal $discountedSubtotal');
-
           // 4. Calculate VAT (5%) on the Discounted Subtotal
           final double vatValue = discountedSubtotal * 0.05;
           print('vatValue $vatValue');
-          // 5. Final Total
           final double totalValue = discountedSubtotal + vatValue;
           print('totalValue $totalValue');
-          // print('e.priceid ${e.priceid}');
-          // print('mbid ${customerController.selectedStudent?.mbId}');
-          // print('fisrt ${customerController.selectedStudent?.lastName}');
-          // print('e.packageName ${e.packageName}');
-          // print('e.discount ${e.discount}');
-          // print('e.price.toStringAsFixed(2) ${e.price.toStringAsFixed(2)}');
-          // print('randomNumber $randomNumber');
 
           return {
             "priceid": "${e.priceid}",
             "type": "${_tab}", // Ensure this is "Dance" or "Music"
-            "studentid": chargeAdmission
+            "studentid": displayNewDetails
                 ? ""
                 : "${customerController.selectedStudent?.mbId}",
-            "studentname": chargeAdmission
+            "studentname": displayNewDetails
                 ? "${customerController.firstNameCtrl.text}"
                 : customerController.selectedStudent?.firstName,
-            "studentlastname": chargeAdmission
+            "studentlastname": displayNewDetails
                 ? "${customerController.lastNameCtrl.text}"
                 : customerController.selectedStudent?.lastName,
             "details": "${e.packageName}",
@@ -769,37 +766,7 @@ class ServicesProvider extends ChangeNotifier {
             "total": "${totalValue}",
           };
         }).toList(),
-        // "orderdetails": _selectedPackages.map((e) {
-        //   final vat = (e.price * 0.05);
-        //   // print('object')
-        //   final total = e.price + vat;
-        //   print('total $total');
-        //   return {
-        //     "priceid": "${e.priceid}",
-        //     "type": "${_tab}", // Music or Dance
-        //     "studentid": _isStudentNew == true
-        //         ? ""
-        //         : "${customerController.selectedStudent?.mbId}",
-        //     "studentname": _isStudentNew == true
-        //         ? "${customerController.firstNameCtrl.text}"
-        //         : customerController.selectedStudent?.firstName,
-        //     "studentlastname": isStudentNew == true
-        //         ? "${customerController.lastNameCtrl.text}"
-        //         : customerController.selectedStudent?.lastName,
-        //     "details": "${e.packageName}",
-        //     "coupon": "",
-        //     "admission": _isStudentNew == true
-        //         ? "AED 150"
-        //         : "", //leave it blank if already registered
-        //     "discount": "${e.discount}",
-        //     "amount": "${e.price.toStringAsFixed(2)}",
-        //     "vat": "${vat.toStringAsFixed(2)}",
-        //     "total": _isStudentNew == true
-        //         ? "${(total + 150).toStringAsFixed(2)}"
-        //         : "${total.toStringAsFixed(2)}",
-        //   };
-        // }).toList(),
-        "checkoutscreen": "",
+        "checkoutscreen": "$checkOutScreenBase64",
         "signature": "$signatureBase64",
       };
 

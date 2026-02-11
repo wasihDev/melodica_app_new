@@ -152,7 +152,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
         },
         widget: Text(
           'Add new Students',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );

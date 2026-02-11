@@ -25,13 +25,12 @@ class UpdateService {
         latestVersion = await _getIOSVersion(iOSAppId);
       }
       print('latestVersion $latestVersion');
-
-      /// it should lower
       print('currentVersion $currentVersion');
 
       // 2. Compare versions
+      // TODO:: fix the verison
       if (latestVersion.isNotEmpty &&
-          _isUpdateAvailable(currentVersion, latestVersion)) {
+          _isUpdateAvailable("1.1.1", latestVersion)) {
         _showUpdateDialog(context, latestVersion);
       }
     } catch (e) {
@@ -139,22 +138,6 @@ class UpdateService {
                 // --- ACTIONS ---
                 Row(
                   children: [
-                    Expanded(
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text(
-                          "Later",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(

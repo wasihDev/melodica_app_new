@@ -104,20 +104,18 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                     SizedBox(height: 10.h),
                     _reasonDropdown(),
                     SizedBox(height: 10.h),
-                    SafeArea(
-                      bottom: Platform.isIOS ? false : true,
-                      child: _submitButton(p),
-                    ),
-                    SizedBox(height: 10.h),
                   ],
                 ),
               ),
             ),
           ),
-          // bottomNavigationBar: SafeArea(
-          //   bottom: Platform.isIOS ? false : true,
-          //   child:
-          // ),
+          bottomNavigationBar: SafeArea(
+            bottom: Platform.isIOS ? false : true,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: _submitButton(p),
+            ),
+          ),
         );
       },
     );
@@ -223,10 +221,11 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 4.h),
           _weekDays(),
-          const SizedBox(height: 8),
+          SizedBox(height: 4.h),
           GridView.builder(
+            padding: EdgeInsets.all(0),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: daysInMonth.length + offset,
@@ -234,6 +233,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
               crossAxisCount: 7,
               crossAxisSpacing: 6,
               mainAxisSpacing: 6,
+              childAspectRatio: 2 / 1.6,
             ),
             itemBuilder: (_, i) {
               if (i < offset) {
@@ -265,6 +265,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                     date.day.toString(),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
+                      fontSize: 12.fSize,
                       color: isPast ? Colors.grey : Colors.black,
                     ),
                   ),

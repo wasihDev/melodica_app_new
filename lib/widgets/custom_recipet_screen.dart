@@ -147,7 +147,7 @@ class CustomRecipetScreen extends StatelessWidget {
                 height: 12.h,
                 width: 12.w,
               ),
-              SizedBox(width: 5.w),
+              SizedBox(width: 2.w),
               Text(
                 value,
                 style: const TextStyle(
@@ -171,7 +171,7 @@ class CustomRecipetScreen extends StatelessWidget {
           Text(title, style: const TextStyle(fontSize: 15, color: Colors.grey)),
           Text(
             value,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),

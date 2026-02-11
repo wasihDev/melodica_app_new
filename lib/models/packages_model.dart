@@ -57,7 +57,7 @@ class Package {
       remainingSessions: json['Packages[Remaining Sessions]'] ?? 0,
       totalBooked: json['Packages[Total Booked]'] ?? 0,
       subject: json['Packages[Subject]'] ?? "",
-      remainingExtension: json["Packages[Remaining Cancellations]"] ?? 0,
+      remainingExtension: json["Packages[Remaining Extension]"] ?? 0,
       totalAllowedCancellation:
           json['Packages[Total Allowed Cancellation]'] ?? 0,
       paymentRef: json['Packages[Pmt_Ref]'] ?? "",

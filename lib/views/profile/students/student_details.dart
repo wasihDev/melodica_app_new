@@ -5,6 +5,7 @@ import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 class StudentDetails extends StatelessWidget {
   Student student;
@@ -15,9 +16,24 @@ class StudentDetails extends StatelessWidget {
     required this.isShowNextbtn,
   });
 
+  String formatMyDate(String rawDate) {
+    try {
+      // 1. Logic for cleaning/fixing invalid data if necessary
+      // If the API literally sends '32', we should cap it at the last day of the month
+      // For now, let's assume it's a valid string like '1992-01-31'
+
+      // 2. Parse the input (yyyy-M-d handles single digits like '1' automatically)
+      DateTime parsedDate = DateFormat("yyyy-M-d").parse(rawDate);
+
+      // 3. Format to the desired output: 31-Jan-1992
+      return DateFormat("d MMM yyyy").format(parsedDate);
+    } catch (e) {
+      return "Invalid Date";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    print('student.dateOfBirth ${student.dateOfBirth}');
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -64,18 +80,18 @@ class StudentDetails extends StatelessWidget {
                     Icons.email_outlined,
                     filled: true,
                   ),
-                  SizedBox(height: 10.h),
-                  _label('Phone Number'),
-                  Row(
-                    children: [
-                      Expanded(child: _readOnlyBox('ARE-971')),
-                      const SizedBox(width: 8),
-                      Expanded(child: _readOnlyBox('54 ▼')),
-                      const SizedBox(width: 8),
-                      Expanded(flex: 2, child: _readOnlyBox('')),
-                    ],
-                  ),
 
+                  // SizedBox(height: 10.h),
+                  // _label('Phone Number'),
+                  // Row(
+                  //   children: [
+                  //     Expanded(child: _readOnlyBox('ARE-971')),
+                  //     const SizedBox(width: 8),
+                  //     Expanded(child: _readOnlyBox('54 ▼')),
+                  //     const SizedBox(width: 8),
+                  //     Expanded(flex: 2, child: _readOnlyBox('')),
+                  //   ],
+                  // ),
                   const SizedBox(height: 16),
 
                   Row(
@@ -86,7 +102,7 @@ class StudentDetails extends StatelessWidget {
                           children: [
                             _label('Date of Birth'),
                             _readOnlyField(
-                              student.dateOfBirth,
+                              formatMyDate(student.dateOfBirth),
                               Icons.calendar_today,
                             ),
                           ],
@@ -219,6 +235,7 @@ class StudentDetails extends StatelessWidget {
       enabled: false,
       decoration: InputDecoration(
         hintText: value,
+        hintStyle: TextStyle(fontSize: 14.fSize),
         suffixIcon: Icon(icon),
         filled: filled,
         fillColor: Colors.grey.shade100,
@@ -247,7 +264,10 @@ class StudentDetails extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(value), const Icon(Icons.keyboard_arrow_down)],
+        children: [
+          Text(value, style: TextStyle(color: Colors.grey[500])),
+          const Icon(Icons.keyboard_arrow_down),
+        ],
       ),
     );
   }
@@ -259,7 +279,7 @@ class StudentDetails extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Text(value),
+      child: Text(value, style: TextStyle(fontSize: 12.fSize)),
     );
   }
 }

@@ -2,6 +2,7 @@ class AssetIcons {
 }
 
 class AssetImages {
+	static const String check = 'assets/images/check.png';
 	static const String imageUpload = 'assets/images/image_upload.png';
 	static const String ob1 = 'assets/images/ob1.png';
 	static const String ob2 = 'assets/images/ob2.png';
@@ -15,6 +16,7 @@ class AssetLottie {
 
 class AssetSvg {
 	static const String apple = 'assets/svg/apple.svg';
+	static const String check = 'assets/svg/check.svg';
 	static const String danceClass = 'assets/svg/dance_class.svg';
 	static const String dirham = 'assets/svg/dirham.svg';
 	static const String exit = 'assets/svg/exit.svg';

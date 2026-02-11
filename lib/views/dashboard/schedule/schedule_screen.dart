@@ -192,6 +192,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
       backgroundColor: Colors.white,
       builder: (context) {
+        final DateTime now = DateTime.now();
+        final DateTime bookingDate = DateFormat(
+          'dd MMM yyyy hh:mm a',
+        ).parse(s.bookingDateStartTime);
+        final DateTime today = DateTime(now.year, now.month, now.day);
+        final DateTime scheduledDay = DateTime(
+          bookingDate.year,
+          bookingDate.month,
+          bookingDate.day,
+        );
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -283,10 +293,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ),
                       SizedBox(height: 8),
 
-                      // DateFormat('dd/MM/yyyy hh:mm a').parse(PackageExpiry);
                       Text(
-                        "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
-                        // 'Reschedule before the ${DateFormat('dd MMM yyyy').format(expiryDate)} to avoid using your cancellation.',
+                        today == scheduledDay
+                            ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
+                            : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 13,

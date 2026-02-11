@@ -100,13 +100,26 @@ class AppointmentCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      courseName,
-                      style: TextStyle(
-                        fontSize: 14.fSize,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.darkText,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          courseName,
+                          style: TextStyle(
+                            fontSize: 14.fSize,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.darkText,
+                          ),
+                        ),
+                        Text(
+                          time,
+                          style: TextStyle(
+                            fontSize: 12.fSize,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       teacher,
@@ -118,15 +131,8 @@ class AppointmentCard extends StatelessWidget {
                   ],
                 ),
               ),
+
               // Time
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 12.fSize,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.darkText,
-                ),
-              ),
             ],
           ),
         ),

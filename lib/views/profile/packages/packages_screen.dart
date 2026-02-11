@@ -248,11 +248,70 @@ class _PackageListView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Remaining Cancellation: ${package.remainingCancellations}X',
+                    Row(
+                      children: [
+                        SvgPicture.asset('assets/svg/teacher.svg'),
+                        SizedBox(width: 5),
+                        Text('Remaining Cancellation: '),
+                      ],
                     ),
+                    Text('${package.remainingCancellations}X'),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        SvgPicture.asset('assets/svg/location.svg'),
+                        SizedBox(width: 5),
+                        Text('Remaining Cancellation: '),
+                      ],
+                    ),
+                    Text('${package.remainingCancellations}X'),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        SvgPicture.asset('assets/svg/remaining.svg'),
+                        SizedBox(width: 5),
+                        Text('Remaining Cancellation: '),
+                      ],
+                    ),
+                    Text('${package.remainingCancellations}X'),
+                  ],
+                ),
+                Row(
+                  children: [
+                    SvgPicture.asset('assets/svg/freez.svg'),
+                    SizedBox(width: 5),
                     Text(
-                      'Expiry: ${formatCreatedOss(package.packageExpiry)}',
+                      "Freezing Remaining (Weeks)",
+                      style: TextStyle(color: Colors.red, fontSize: 12.fSize),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        SvgPicture.asset('assets/svg/unscheduled.svg'),
+                        SizedBox(width: 5),
+                        Text('Remaining Cancellation: '),
+                      ],
+                    ),
+                    Text('${package.remainingCancellations}X'),
+                  ],
+                ),
+
+                Row(
+                  children: [
+                    Text(
+                      "${remainingFreezes} Weeks",
                       style: TextStyle(color: Colors.red, fontSize: 12.fSize),
                     ),
                   ],
@@ -262,17 +321,17 @@ class _PackageListView extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        // SvgPicture.asset('assets/svg/freez.svg'),
+                        //
                         // SvgPicture.asset('assets/svg/teacher.svg'),
                         // SvgPicture.asset('assets/svg/location.svg'),
-                        // SvgPicture.asset('assets/svg/remaining.svg'),
+                        //
                         // SvgPicture.asset('assets/svg/unscheduled.svg'),
                       ],
                     ),
                   ],
                 ),
                 SizedBox(height: 10),
-                Text('Remaining Freezing : ${remainingFreezes} Weeks'),
+                Text('Remaining Freezing : '),
                 const Spacer(), // Pushes the link to the bottom
                 Align(
                   alignment: Alignment.centerRight,

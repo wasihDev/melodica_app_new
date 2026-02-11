@@ -3,12 +3,14 @@ class CountryCodeModel {
   final int callingCode;
   final bool requiresAreaCode;
   final int maxnumber;
+  final String countryName;
 
   CountryCodeModel({
     required this.name,
     required this.callingCode,
     required this.requiresAreaCode,
     required this.maxnumber,
+    required this.countryName,
   });
 
   factory CountryCodeModel.fromJson(Map<String, dynamic> json) {
@@ -16,6 +18,7 @@ class CountryCodeModel {
       name: json['mc_name'] ?? '',
       maxnumber: json['mc_length'] ?? 0,
       callingCode: json['mc_callingcode'] ?? 0,
+      countryName: json['mc_Country']?['mc_name'] ?? '',
       requiresAreaCode: json['mc_requiresareacode'] ?? false,
     );
   }

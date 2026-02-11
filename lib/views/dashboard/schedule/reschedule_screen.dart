@@ -10,7 +10,10 @@ import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/serivices.dart';
+import 'package:melodica_app_new/views/dashboard/schedule/widget/custom_weekly_date_picker.dart';
+import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_service.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -148,14 +151,14 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
         selectedDate.isBefore(packageExpiryDate)) {
       // Between original class date and package expiry
       if (hasCancellations) {
-        return "Note:\nMoving this booking past its original booking date will consume one of your cancellations, consider taking it earlier if possible.";
+        return "Note:\nMoving this booking past its original booking date will consume one of your cancellations, consider taking it earlier if possible.\n";
       } else {
-        return "Note:\nRescheduling this class to a later date will use one cancellation from your package. To avoid using a cancellation, you can choose an earlier date instead";
+        return "Note:\nRescheduling this class to a later date will use one cancellation from your package. To avoid using a cancellation, you can choose an earlier date instead\n";
       }
     } else if (selectedDate.isAfter(packageExpiryDate) &&
         selectedDate.isBefore(packageExpiryDate.add(Duration(days: 7)))) {
       // Between package expiry and 1 week after expiry
-      return "Note:\nThis is past your package expiry, booking these timings may result in using your extension or paying for an extension.";
+      return "Note:\nThis is past your package expiry, booking these timings may result in using your extension or paying for an extension.\n";
     } else {
       return "";
     }
@@ -190,7 +193,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
         )
         .then((val) {
           if (val == true) {
-            showSuccessDialog(context);
+            DialogService.showSuccessDialog(context);
           }
         });
   }
@@ -300,7 +303,9 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
             // 1. Weekly Date Picker (As per design)
             CustomWeeklyDatePicker(
               initialDate: _selectedDate,
+              expiryDate: packageExpiryDate,
               onDateSelected: (date) {
+                print("packageExpiryDate ${packageExpiryDate}");
                 setState(() {
                   _selectedDate = date;
                   _showAllTeachers = false;
@@ -311,7 +316,8 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
             ),
 
             // 2. Warning Note
-            if (warningNote.isNotEmpty)
+            if (warningNote.isNotEmpty ||
+                _slots.isNotEmpty && _slots.first.slots.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Container(
@@ -321,239 +327,17 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    warningNote,
-                    //  "This is past your package expiry, booking these timings may result in using your extension or paying for an extension",
+                    '''$warningNote'''
+                    '''${_slots.isNotEmpty && _slots.first.slots.isEmpty ? "Note:\nYour teacher is unavailable on this date. Available times with other teachers are listed below" : ""}''',
                     style: TextStyle(color: Colors.orange[800], fontSize: 13),
                   ),
                 ),
               ),
-            SizedBox(height: 10.h),
-            // Text('_slots.length ${_slots.length}'),
-            // 3. Slots Grid
-            // Expanded(
-            //   child: _isLoading
-            //       ? Center(child: CircularProgressIndicator())
-            //       : ListView.builder(
-            //           padding: EdgeInsets.symmetric(horizontal: 16),
-            //           shrinkWrap: true,
-            //           itemCount: _slots.length,
-            //           itemBuilder: (context, index) {
-            //             final teacher = _slots[index];
-
-            //             return Container(
-            //               alignment: Alignment.centerLeft,
-            //               margin: EdgeInsets.only(bottom: 10),
-            //               padding: EdgeInsets.all(10),
-
-            //               decoration: BoxDecoration(
-            //                 border: Border.all(color: Colors.grey[300]!),
-            //                 borderRadius: BorderRadius.circular(8),
-            //                 color: Colors.white,
-            //               ),
-            //               child: Column(
-            //                 crossAxisAlignment: CrossAxisAlignment.start,
-            //                 mainAxisAlignment: MainAxisAlignment.start,
-            //                 children: [
-            //                   Text(
-            //                     '${teacher.fullname}',
-            //                     style: TextStyle(fontWeight: FontWeight.bold),
-            //                   ),
-            //                   SizedBox(height: 8),
-
-            //                   /// Wrap of slots
-            //                   Wrap(
-            //                     spacing: 4,
-            //                     children: teacher.slots.map((slotTime) {
-            //                       final isSelected =
-            //                           _selectedTeacherId == teacher.id &&
-            //                           _selectedSlotTime == slotTime;
-
-            //                       return GestureDetector(
-            //                         onTap: () {
-            //                           // print(
-            //                           //   '  ${}',
-            //                           // );
-            //                           final lastname =
-            //                               teacher.lastName
-            //                                   .split('(')
-            //                                   .last
-            //                                   .isEmpty
-            //                               ? teacher.lastName
-            //                               : teacher.lastName
-            //                                     .split('(')
-            //                                     .last
-            //                                     .split(')')
-            //                                     .first;
-            //                           // print(' teacher ${teacher.lastName.}');
-            //                           // print(' teacher ${teacher}');
-            //                           setState(() {
-            //                             _selectedTeacherId = teacher.id;
-            //                             _selectedTeacher =
-            //                                 "${teacher.firstName} ${lastname}";
-            //                             _selectedSlotTime = slotTime;
-            //                           });
-            //                         },
-            //                         child: Chip(
-            //                           label: Text(slotTime),
-            //                           padding: EdgeInsets.all(0),
-            //                           backgroundColor: isSelected
-            //                               ? Colors.orange[100]
-            //                               : Colors.grey[100],
-            //                         ),
-            //                       );
-            //                     }).toList(),
-            //                   ),
-            //                 ],
-            //               ),
-            //             );
-            //           },
-            //         ),
-            // ),
-            Expanded(
-              child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : ListView(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      children: [
-                        // --- 1. THE "PLEASE NOTE" LOGIC ---
-                        if (_slots.isNotEmpty && _slots.first.slots.isEmpty)
-                          Container(
-                            margin: EdgeInsets.only(bottom: 15),
-                            padding: EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.amber[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.amber[200]!),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // This represents your existing note (if any)
-                                Text(
-                                  "Please Note:",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.amber[900],
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  "Your teacher doesn’t have any available times on this date.\nYou’ll find other available teacher times listed below.",
-                                  style: TextStyle(color: Colors.amber[900]),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                        // --- 2. LIST OF TEACHERS ---
-                        ..._slots.asMap().entries.map((entry) {
-                          int index = entry.key;
-                          final teacher = entry.value;
-
-                          // Logic: Show the first teacher OR show everyone if the button was clicked
-                          if (index > 0 && !_showAllTeachers) {
-                            return SizedBox.shrink();
-                          }
-
-                          return Column(
-                            children: [
-                              Container(
-                                alignment: Alignment.centerLeft,
-                                margin: EdgeInsets.only(bottom: 10),
-                                padding: EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey[300]!),
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: Colors.white,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${teacher.fullname}',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 8),
-                                    if (teacher.slots.isEmpty)
-                                      Text(
-                                        "No slots available",
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 12,
-                                        ),
-                                      )
-                                    else
-                                      Wrap(
-                                        spacing: 5,
-                                        children: teacher.slots.map((slotTime) {
-                                          final isSelected =
-                                              _selectedTeacherId ==
-                                                  teacher.id &&
-                                              _selectedSlotTime == slotTime;
-                                          return GestureDetector(
-                                            onTap: () {
-                                              final lastname = teacher.lastName
-                                                  .split('(')
-                                                  .last
-                                                  .replaceAll(')', '');
-                                              setState(() {
-                                                _selectedTeacherId = teacher.id;
-                                                _selectedTeacher =
-                                                    "${teacher.firstName} $lastname";
-                                                _selectedSlotTime = slotTime;
-                                              });
-                                            },
-                                            child: Chip(
-                                              padding: EdgeInsets.all(0),
-                                              label: Text(slotTime),
-                                              backgroundColor: isSelected
-                                                  ? Colors.orange[100]
-                                                  : Colors.grey[100],
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                  ],
-                                ),
-                              ),
-
-                              // --- 3. THE "SHOW OTHER TEACHERS" BUTTON ---
-                              // Show this only after the first teacher and only if there's more than one teacher
-                              if (index == 0 &&
-                                  _slots.length > 1 &&
-                                  !_showAllTeachers)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8.0,
-                                  ),
-                                  child: Center(
-                                    child: ElevatedButton(
-                                      style: ButtonStyle(
-                                        backgroundColor: WidgetStatePropertyAll(
-                                          AppColors.primary,
-                                        ),
-                                      ),
-                                      onPressed: () => setState(
-                                        () => _showAllTeachers = true,
-                                      ),
-                                      child: Text(
-                                        "Show Other Teachers",
-                                        style: TextStyle(color: Colors.black),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        }).toList(),
-                      ],
-                    ),
-            ),
+            SizedBox(height: 10),
+            selectedTimeDataWidget(),
             // 4. Action Buttons (Footer)
             Consumer2<ScheduleProvider, ServicesProvider>(
-              builder: (context, provider, checkout, child) {
+              builder: (context, scheduleProvider, servicesProvider, child) {
                 return Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -565,7 +349,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _selectedSlotTime == null
                                 ? Colors.grey[200]
-                                : Color(0xFFFFD152),
+                                : AppColors.primary,
                           ),
                           onPressed: _selectedSlotTime == null
                               ? () {
@@ -574,18 +358,6 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                               : () async {
                                   final packageProvider =
                                       Provider.of<PackageProvider>(
-                                        context,
-                                        listen: false,
-                                      );
-
-                                  final servicesProvider =
-                                      Provider.of<ServicesProvider>(
-                                        context,
-                                        listen: false,
-                                      );
-
-                                  final scheduleProvider =
-                                      Provider.of<ScheduleProvider>(
                                         context,
                                         listen: false,
                                       );
@@ -642,43 +414,55 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                             n.paymentRef ==
                                             widget.s.PackageCode.toString(),
                                       );
+
                                   // Current datetime
                                   final DateTime now = DateTime.now();
                                   final DateTime today = DateTime(
-                                    // 2026,
-                                    // 2,
-                                    // 3,
                                     now.year,
                                     now.month,
                                     now.day,
                                   );
                                   final DateTime scheduledDay = DateTime(
-                                    // 2026,
-                                    // 2,
-                                    // 3,
                                     bookingDate.year,
                                     bookingDate.month,
                                     bookingDate.day,
                                   );
 
                                   // if (today == scheduledDay &&
-                                  //     selectedDate > today) {
+                                  //     selectedDate. > today) {
                                   //   showLateNoticeDialog(context);
                                   //   return;
                                   // }
-
-                                  if (widget.s.RemainingCancellations != 0) {
-                                    // if (today.isAtSameMomentAs(scheduledDay) &&
-                                    //     selectedDate.isAfter(today)) {
-
+                                  // if (today == scheduledDay) {
+                                  //   showLateNoticeDialog(context);
+                                  //   return;
+                                  // }
+                                  // final remainingExtension = 0;
+                                  print(
+                                    'pro.remainingExtension ${pro.remainingExtension}',
+                                  );
+                                  if (today.isAtSameMomentAs(scheduledDay) &&
+                                      selectedDate.isAfter(today) &&
+                                      ((selectedDate.isAfter(expiryDay) &&
+                                              pro.remainingExtension > 0) ||
+                                          selectedDate.isBefore(expiryDay))) {
+                                    DialogService.showLateNoticeDialog(context);
+                                    return;
+                                  }
+                                  // print(
+                                  //   'object ${widget.s.RemainingCancellations != 0 && selectedDate.isAfter(scheduledDay)}',
+                                  // );
+                                  // Remainiign cancellation
+                                  if (widget.s.RemainingCancellations != 0 &&
+                                      selectedDate.isAfter(scheduledDay)) {
                                     if (selectedDate.isAfter(scheduledDay) &&
                                         !selectedDate.isAfter(expiryDay)) {
-                                      _showConsumeCancellationDialog(
+                                      DialogService.showConsumeCancellationDialog(
                                         context,
                                         onConfirm: () async {
                                           await _executeScheduleRequest(
                                             context,
-                                            provider,
+                                            scheduleProvider,
                                             action: "Rebook",
                                             lateNotic: noticeType,
                                             preferredSlot:
@@ -689,13 +473,10 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                       return;
                                     }
 
-                                    // =========================
-                                    // 🚨 CASE 1: LATE + SAME DAY → NO CHARGE
-                                    // =========================
                                     if (noticeType == "Late" && !chargeUser) {
                                       await _executeScheduleRequest(
                                         context,
-                                        provider,
+                                        scheduleProvider,
                                         action: "Reschedule",
                                         lateNotic: noticeType,
                                         preferredSlot: combinedPreferredSlot,
@@ -703,11 +484,6 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                       return;
                                     }
 
-                                    // =========================
-                                    // 💰 CASE 2: LATE + DIFFERENT DAY → CHARGE
-                                    // =========================
-                                    print('noticeType $noticeType');
-                                    print('chargeUser $chargeUser');
                                     print(
                                       'pro.remainingExtension ${pro.remainingExtension}',
                                     );
@@ -716,12 +492,13 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                         ) ||
                                         selectedDate.isAfter(expiryDay)) {
                                       if (pro.remainingExtension > 0) {
-                                        _showConsumePopup(
+                                        print('remainingExtension > 0');
+                                        DialogService.showConsumePopup(
                                           context,
                                           onConfirm: () async {
                                             await _executeScheduleRequest(
                                               context,
-                                              provider,
+                                              scheduleProvider,
                                               action: "Rebook",
                                               lateNotic: 'Late',
                                               preferredSlot:
@@ -730,8 +507,9 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                           },
                                         );
                                         return;
-                                      } else {
-                                        _showNotEnoughExtensionPopup(
+                                      } else if (widget.s.LastClass == "TRUE") {
+                                        print('widget.s.LastClass');
+                                        DialogService.showNotEnoughExtensionPopup(
                                           context,
                                           ontap: () async {
                                             servicesProvider.setPaymentType(
@@ -754,407 +532,45 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                             final vat = 50 * 0.05;
                                             final amountWithVat = (50 + vat);
 
-                                            final success = await servicesProvider
-                                                .startCheckout(
-                                                  context,
-                                                  amount: amountWithVat,
-                                                  // redirectUrl:
-                                                  //     "https://melodica-mobile.web.app",
-                                                );
+                                            final success =
+                                                await servicesProvider
+                                                    .startCheckout(
+                                                      context,
+                                                      amount: amountWithVat,
+                                                    );
 
                                             if (success &&
                                                 servicesProvider.paymentUrl !=
                                                     null) {
-                                              if (Navigator.canPop(context)) {
-                                                Navigator.pop(context);
+                                              final requestReturn =
+                                                  await scheduleProvider
+                                                      .submitScheduleRequestAfterPayment(
+                                                        servicesProvider
+                                                            .orderReference!,
+                                                      );
+                                              if (requestReturn) {
+                                                if (Navigator.canPop(context)) {
+                                                  Navigator.pop(context);
+                                                }
+                                                await launchUrl(
+                                                  Uri.parse(
+                                                    servicesProvider
+                                                        .paymentUrl!,
+                                                  ),
+                                                  mode: LaunchMode
+                                                      .externalApplication,
+                                                );
                                               }
-                                              await launchUrl(
-                                                Uri.parse(
-                                                  servicesProvider.paymentUrl!,
-                                                ),
-                                                mode: LaunchMode
-                                                    .externalApplication,
-                                              );
                                             }
                                           },
+                                          title:
+                                              'No Extension!\nConsider paying for an extension to move it here?',
+                                          payment: '50',
                                         );
                                         return;
-                                      }
-                                    }
-                                  } else {
-                                    // =========================
-                                    // 🟢 CASE 4: No Cancelation available
-                                    // =========================
-                                    /// if User has no cancellation
-                                    _showNotEnoughCancellationPopup(
-                                      context,
-                                      ontap: () async {
-                                        servicesProvider.setPaymentType(
-                                          PaymentType.schedulePoints,
-                                        );
-
-                                        scheduleProvider.setScheduleRequests(
-                                          subject: widget.s.subject,
-                                          classDateTime: classDateTime,
-                                          action: "Rebook",
-                                          preferredSlot: combinedPreferredSlot,
-                                          lateNotice: noticeType,
-                                          branch: "${pro.branch}",
-                                          packageId: '${pro.paymentRef}',
-                                        );
-
-                                        final vat = 50 * 0.05;
-                                        final amountWithVat = (50 + vat);
-
-                                        final success = await servicesProvider
-                                            .startCheckout(
-                                              context,
-                                              amount: amountWithVat,
-                                              // redirectUrl:
-                                              //     "https://melodica-mobile.web.app",
-                                            );
-
-                                        if (success &&
-                                            servicesProvider.paymentUrl !=
-                                                null) {
-                                          if (Navigator.canPop(context)) {
-                                            Navigator.pop(context);
-                                          }
-                                          await launchUrl(
-                                            Uri.parse(
-                                              servicesProvider.paymentUrl!,
-                                            ),
-                                            mode:
-                                                LaunchMode.externalApplication,
-                                          );
-                                        }
-                                        return;
-                                      },
-                                    );
-                                  }
-
-                                  // =========================
-                                  // 🟢 CASE 3: EARLY → ALWAYS FREE
-                                  // =========================
-                                  await _executeScheduleRequest(
-                                    context,
-                                    provider,
-                                    action: "Reschedule",
-                                    lateNotic: noticeType,
-                                    preferredSlot: combinedPreferredSlot,
-                                  );
-                                  // final noticeType = calculateNoticeType(
-                                  //   widget.s.bookingDateStartTime,
-                                  // );
-
-                                  // final Packageprovider =
-                                  //     Provider.of<PackageProvider>(
-                                  //       context,
-                                  //       listen: false,
-                                  //     );
-                                  // // if you taking class later then it will use action rebook and open up cacneclation allowance popup
-                                  // final classDateTime = formatStringToApiDate(
-                                  //   widget.s.bookingDateStartTime,
-                                  // ); // preferredSlot = New selected date + New time range
-                                  // final String newDatePart = DateFormat(
-                                  //   'dd-MMM-yyyy',
-                                  // ).format(_selectedDate);
-                                  // final String combinedPreferredSlot =
-                                  //     "$newDatePart ${_selectedTeacher} ${_selectedSlotTime}";
-
-                                  // final pro = Packageprovider.packages
-                                  //     .firstWhere(
-                                  //       (n) =>
-                                  //           n.paymentRef ==
-                                  //           widget.s.PackageCode.toString(),
-                                  //     );
-
-                                  // /// pass this over terortory id
-                                  // // 1. Parse the bookingDateStartTime date from your widget data
-                                  // final DateTime bookingdata = DateFormat(
-                                  //   'dd MMM yyyy hh:mm a',
-                                  // ).parse(widget.s.bookingDateStartTime);
-                                  // // Current datetime
-                                  // final DateTime now = DateTime.now();
-                                  // final DateTime today = DateTime(
-                                  //   now.year,
-                                  //   now.month,
-                                  //   now.day,
-                                  // );
-                                  // final DateTime scheduledDay = DateTime(
-                                  //   bookingdata.year,
-                                  //   bookingdata.month,
-                                  //   bookingdata.day,
-                                  // );
-                                  // print('NOW =====>>> $now');
-                                  // print('SCHEDULED =====>>> $bookingdata');
-                                  // // Show late notice if now is equal OR after scheduled time
-                                  // if (today == scheduledDay) {
-                                  //   showLateNoticeDialog(context);
-                                  //   return;
-                                  // }
-                                  // // i want to check if current datetime is equals to schedule pacakage date. then show the late notice popup
-                                  // final DateTime packageExpiryDate =
-                                  //     DateTime.parse(widget.s.PackageExpiry);
-                                  // final selectedDay = DateTime(
-                                  //   _selectedDate.year,
-                                  //   _selectedDate.month,
-                                  //   _selectedDate.day,
-                                  // );
-                                  // final expiryDay = DateTime(
-                                  //   packageExpiryDate.year,
-                                  //   packageExpiryDate.month,
-                                  //   packageExpiryDate.day,
-                                  // );
-                                  // print('selectedDay= =====>>> ${selectedDay}');
-                                  // print('expiryDay  =====>>>$expiryDay');
-                                  // if (selectedDay.isAtSameMomentAs(expiryDay) ||
-                                  //     selectedDay.isAfter(expiryDay)) {
-                                  //   print('yesss');
-
-                                  //   // return;
-                                  //   if (pro.remainingExtension != 0) {
-                                  //     // show consume extension dialog
-                                  //     // if extension is available
-                                  //     print('noticeType0 $noticeType');
-                                  //     _showConsumePopup(
-                                  //       context,
-                                  //       onConfirm: () {
-                                  //         _executeScheduleRequest(
-                                  //           context,
-                                  //           provider,
-                                  //           action: 'Rebook',
-                                  //           lateNotic: '$noticeType',
-                                  //           preferredSlot:
-                                  //               combinedPreferredSlot,
-                                  //         );
-                                  //       },
-                                  //     );
-                                  //     return;
-                                  //   } else {
-                                  //     // show paying for an extension to move it
-                                  //     _showNotEnoughExtensionPopup(
-                                  //       context,
-                                  //       ontap: () async {
-                                  //         final servicesProvider =
-                                  //             Provider.of<ServicesProvider>(
-                                  //               context,
-                                  //               listen: false,
-                                  //             );
-                                  //         final scheduleProvider =
-                                  //             Provider.of<ScheduleProvider>(
-                                  //               context,
-                                  //               listen: false,
-                                  //             );
-
-                                  //         servicesProvider.setPaymentType(
-                                  //           PaymentType.schedulePoints,
-                                  //         );
-                                  //         scheduleProvider.setScheduleRequests(
-                                  //           subject: widget.s.subject,
-                                  //           classDateTime: classDateTime,
-                                  //           action: "Reschedule",
-                                  //           preferredSlot:
-                                  //               combinedPreferredSlot,
-                                  //           lateNotice:
-                                  //               noticeType, // Early or Late
-                                  //           branch: "${pro.branch}",
-                                  //           packageId: '${pro.paymentRef}',
-                                  //         );
-
-                                  //         final vat = 50 * 0.05;
-                                  //         final amountWithVat = (50 + vat)
-                                  //             .toInt();
-
-                                  //         final success = await servicesProvider
-                                  //             .startCheckout(
-                                  //               context,
-                                  //               amount: amountWithVat,
-                                  //               redirectUrl:
-                                  //                   "https://melodica-mobile.web.app",
-                                  //             );
-
-                                  //         if (success &&
-                                  //             servicesProvider.paymentUrl !=
-                                  //                 null) {
-                                  //           if (Navigator.canPop(context)) {
-                                  //             Navigator.pop(context);
-                                  //           }
-                                  //           await launchUrl(
-                                  //             Uri.parse(
-                                  //               servicesProvider.paymentUrl!,
-                                  //             ),
-                                  //             mode: LaunchMode
-                                  //                 .externalApplication,
-                                  //           );
-                                  //         }
-                                  //       },
-                                  //     );
-                                  //     return;
-                                  //   }
-                                  // }
-
-                                  // final DateTime bookingay = DateTime(
-                                  //   bookingdata.year,
-                                  //   bookingdata.month,
-                                  //   bookingdata.day,
-                                  // );
-                                  // print('selectedDay ===>> ${selectedDay}');
-                                  // print('bookingdata ===>> ${bookingay}');
-                                  // print(
-                                  //   'is check ${selectedDay.isAfter(bookingay)}',
-                                  // );
-                                  // if (selectedDay.isAfter(bookingay)) {
-                                  //   _showConsumeCancellationDialog(
-                                  //     context,
-                                  //     onConfirm: () {
-                                  //       print('selectedDay.isAfter');
-                                  //       print('noticeType3 $noticeType');
-                                  //       // Proceed with scheduling after user clicks "Yes" in the popup
-                                  //       _executeScheduleRequest(
-                                  //         context,
-                                  //         provider,
-                                  //         action: 'Rebook',
-                                  //         lateNotic: noticeType,
-                                  //         preferredSlot: combinedPreferredSlot,
-                                  //       );
-                                  //     },
-                                  //   );
-                                  //   return;
-                                  // }
-                                  // ////////
-
-                                  // final selectedDate = _selectedDate;
-                                  // print(
-                                  //   '_selectedSlotTime =========>>> $_selectedSlotTime',
-                                  // );
-
-                                  // /// 🚫 Expired slot check
-                                  // if (isExpiredSlot(
-                                  //   selectedDate: selectedDate,
-                                  //   slotRange: _selectedSlotTime!,
-                                  // )) {
-                                  //   _showConsumeExtensionDialog(
-                                  //     context,
-                                  //     onConfirm: () async {
-                                  //       // moving same or earler "reschedule"
-                                  //       // move it later "rebook"
-                                  //       print('noticeType2 $noticeType');
-                                  //       await provider
-                                  //           .submitScheduleRequest(
-                                  //             subject: widget.s.subject,
-                                  //             classDateTime: classDateTime,
-                                  //             action: "Rebook",
-                                  //             preferredSlot:
-                                  //                 combinedPreferredSlot,
-                                  //             reason: "",
-                                  //             branch: '${pro.branch}',
-                                  //             packageid: '${pro.paymentRef}',
-                                  //             lateNotic: noticeType,
-                                  //           )
-                                  //           .then((val) {
-                                  //             Navigator.push(
-                                  //               context,
-                                  //               MaterialPageRoute(
-                                  //                 builder: (context) =>
-                                  //                     CheckoutScreenReschedule(),
-                                  //               ),
-                                  //             );
-                                  //           });
-                                  //     },
-                                  //   );
-                                  //   return;
-                                  // }
-
-                                  // print('noticeType1 $noticeType');
-                                  // print('executte normalu');
-                                  // _executeScheduleRequest(
-                                  //   context,
-                                  //   provider,
-                                  //   action: 'Reschedule',
-                                  //   lateNotic: noticeType,
-                                  //   preferredSlot: combinedPreferredSlot,
-                                  // );
-                                },
-                          child: provider.isLoading
-                              ? CircularProgressIndicator(color: Colors.black)
-                              : Text(
-                                  "Pick a new time",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Consumer<ScheduleProvider>(
-                        builder: (context, provider, child) {
-                          return SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: OutlinedButton(
-                              style: ButtonStyle(
-                                side: WidgetStatePropertyAll(
-                                  BorderSide(
-                                    color: _selectedSlotTime == null
-                                        ? Colors.black
-                                        : Colors.grey,
-                                    // width: 2,
-                                  ),
-                                ),
-                              ),
-                              onPressed: _selectedSlotTime == null
-                                  ? () async {
-                                      final Packageprovider =
-                                          Provider.of<PackageProvider>(
-                                            context,
-                                            listen: false,
-                                          );
-
-                                      // Find the specific package to check its details
-                                      final pro = Packageprovider.packages
-                                          .firstWhere(
-                                            (n) =>
-                                                n.paymentRef ==
-                                                widget.s.PackageCode.toString(),
-                                          );
-
-                                      // Parsing the ORIGINAL class date
-                                      final DateTime bookingdata = DateFormat(
-                                        'dd MMM yyyy hh:mm a',
-                                      ).parse(widget.s.bookingDateStartTime);
-                                      final DateTime now = DateTime.now();
-
-                                      // Standardize dates to compare only the Day
-                                      final DateTime today = DateTime(
-                                        now.year,
-                                        now.month,
-                                        now.day,
-                                      );
-                                      final DateTime scheduledDay = DateTime(
-                                        bookingdata.year,
-                                        bookingdata.month,
-                                        bookingdata.day,
-                                      );
-                                      final servicesProvider =
-                                          Provider.of<ServicesProvider>(
-                                            context,
-                                            listen: false,
-                                          );
-
-                                      final scheduleProvider =
-                                          Provider.of<ScheduleProvider>(
-                                            context,
-                                            listen: false,
-                                          );
-                                      final classDateTime =
-                                          formatStringToApiDate(
-                                            widget.s.bookingDateStartTime,
-                                          );
-                                      // --- FIX 2 & 3: LATE NOTICE & RESTRICTION LOGIC ---
-                                      if (pro.remainingExtension <= 0) {
-                                        _showNotEnoughExtensionPopup(
+                                      } else {
+                                        print('remainingExtension == 0');
+                                        DialogService.showNotEnoughExtensionPopup(
                                           context,
                                           ontap: () async {
                                             servicesProvider.setPaymentType(
@@ -1166,27 +582,100 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                                   subject: widget.s.subject,
                                                   classDateTime: classDateTime,
                                                   action: "Rebook",
-                                                  preferredSlot: '',
-                                                  lateNotice: 'Late',
+                                                  preferredSlot:
+                                                      combinedPreferredSlot,
+                                                  lateNotice: "Late",
                                                   branch: "${pro.branch}",
                                                   packageId:
                                                       '${pro.paymentRef}',
                                                 );
 
                                             final vat = 50 * 0.05;
-                                            final amountWithVat = (50 + vat);
-
-                                            final success = await servicesProvider
-                                                .startCheckout(
-                                                  context,
-                                                  amount: amountWithVat,
-                                                  // redirectUrl:
-                                                  //     "https://melodica-mobile.web.app",
-                                                );
+                                            // extension
+                                            final amountWithVat = (100 + vat);
+                                            // hit payment api first
+                                            final success =
+                                                await servicesProvider
+                                                    .startCheckout(
+                                                      context,
+                                                      amount: amountWithVat,
+                                                    );
+                                            //then hit the submitSchedule
 
                                             if (success &&
                                                 servicesProvider.paymentUrl !=
                                                     null) {
+                                              final requestReturn =
+                                                  await scheduleProvider
+                                                      .submitScheduleRequestAfterPayment(
+                                                        servicesProvider
+                                                            .orderReference!,
+                                                      );
+                                              if (requestReturn) {
+                                                if (Navigator.canPop(context)) {
+                                                  Navigator.pop(context);
+                                                }
+                                                await launchUrl(
+                                                  Uri.parse(
+                                                    servicesProvider
+                                                        .paymentUrl!,
+                                                  ),
+                                                  mode: LaunchMode
+                                                      .externalApplication,
+                                                );
+                                              }
+                                            }
+                                          },
+                                          title:
+                                              "Late notice!\nReschedule earlier to avoid recovery and extension fee.",
+                                          payment: '100',
+                                        );
+                                        return;
+                                      }
+                                    }
+                                  } else if (widget.s.RemainingCancellations ==
+                                          0 &&
+                                      selectedDate.isAfter(scheduledDay)) {
+                                    if (widget.s.RemainingCancellations == 0 &&
+                                        pro.remainingExtension == 0) {
+                                      DialogService.showNotEnoughExtensionPopup(
+                                        context,
+                                        ontap: () async {
+                                          servicesProvider.setPaymentType(
+                                            PaymentType.schedulePoints,
+                                          );
+
+                                          scheduleProvider.setScheduleRequests(
+                                            subject: widget.s.subject,
+                                            classDateTime: classDateTime,
+                                            action: "Rebook",
+                                            preferredSlot:
+                                                combinedPreferredSlot,
+                                            lateNotice: "Late",
+                                            branch: "${pro.branch}",
+                                            packageId: '${pro.paymentRef}',
+                                          );
+
+                                          final vat = 50 * 0.05;
+                                          // extension
+                                          final amountWithVat = (100 + vat);
+                                          print('amountWithVat $amountWithVat');
+                                          final success = await servicesProvider
+                                              .startCheckout(
+                                                context,
+                                                amount: amountWithVat,
+                                              );
+
+                                          if (success &&
+                                              servicesProvider.paymentUrl !=
+                                                  null) {
+                                            final requestReturn =
+                                                await scheduleProvider
+                                                    .submitScheduleRequestAfterPayment(
+                                                      servicesProvider
+                                                          .orderReference!,
+                                                    );
+                                            if (requestReturn) {
                                               if (Navigator.canPop(context)) {
                                                 Navigator.pop(context);
                                               }
@@ -1198,119 +687,309 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                                     .externalApplication,
                                               );
                                             }
-                                          },
+                                          }
+                                        },
+                                        title:
+                                            "Late notice!\nReschedule earlier to avoid recovery and extension fee.",
+                                        payment: '100',
+                                      );
+                                      return;
+                                    }
+                                    print('esle if part');
+                                    DialogService.showNotEnoughCancellationPopup(
+                                      context,
+                                      ontap: () async {
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
                                         );
 
-                                        return;
-                                      }
-                                      if (today == scheduledDay) {
-                                        showLateNoticeDialog(context);
-                                        return;
-                                      }
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: combinedPreferredSlot,
+                                          lateNotice: "Early",
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                        );
 
-                                      // --- FIX 4: CORRECT DATA MAPPING IN SUBMIT ---
-                                      _showConsumeCancellationDialog(
-                                        context,
-                                        onConfirm: () async {
-                                          await provider
-                                              .submitScheduleRequest(
-                                                subject: widget.s.subject,
-                                                // ✅ Manager's requirement: Use the ORIGINAL class date here
-                                                classDateTime: classDateTime,
-                                                action: 'Unbooked',
-                                                // Empty because it's "Schedule Later"
-                                                preferredSlot: "",
-                                                reason: '',
-                                                branch: '${pro.branch}',
-                                                packageid: '${pro.paymentRef}',
-                                                // Pass 'Late' or 'Early' so the API knows which rule to apply
-                                                lateNotic: today == scheduledDay
-                                                    ? 'Late'
-                                                    : 'Early',
-                                              )
-                                              .then((val) {
-                                                if (val == true) {
-                                                  showSuccessDialog(context);
-                                                }
-                                              });
-                                        },
+                                        final vat = 50 * 0.05;
+                                        final amountWithVat = (50 + vat);
+
+                                        final success = await servicesProvider
+                                            .startCheckout(
+                                              context,
+                                              amount: amountWithVat,
+                                            );
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
+                                                    servicesProvider
+                                                        .orderReference!,
+                                                  );
+                                          if (requestReturn) {
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.pop(context);
+                                            }
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        }
+                                      },
+                                    );
+                                    return;
+                                  } else {
+                                    print('else');
+                                    await _executeScheduleRequest(
+                                      context,
+                                      scheduleProvider,
+                                      action: "Reschedule",
+                                      lateNotic: noticeType,
+                                      preferredSlot: combinedPreferredSlot,
+                                    );
+                                    return;
+                                  }
+
+                                  // =========================
+                                  // 🟢 CASE 3: EARLY → ALWAYS FREE
+                                  // =========================
+                                  await _executeScheduleRequest(
+                                    context,
+                                    scheduleProvider,
+                                    action: "Reschedule",
+                                    lateNotic: noticeType,
+                                    preferredSlot: combinedPreferredSlot,
+                                  );
+                                },
+                          child: scheduleProvider.isLoading
+                              ? CircularProgressIndicator(color: Colors.black)
+                              : Text(
+                                  "Select this time",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+
+                      Consumer<ScheduleProvider>(
+                        builder: (context, provider, child) {
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: OutlinedButton(
+                              style: ButtonStyle(
+                                side: WidgetStatePropertyAll(
+                                  BorderSide(
+                                    color: Colors.black,
+
+                                    // width: 2,
+                                  ),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final Packageprovider =
+                                    Provider.of<PackageProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+
+                                // Find the specific package to check its details
+                                final pro = Packageprovider.packages.firstWhere(
+                                  (n) =>
+                                      n.paymentRef ==
+                                      widget.s.PackageCode.toString(),
+                                );
+
+                                // Parsing the ORIGINAL class date
+                                final DateTime bookingdata = DateFormat(
+                                  'dd MMM yyyy hh:mm a',
+                                ).parse(widget.s.bookingDateStartTime);
+                                final DateTime now = DateTime.now();
+
+                                // Standardize dates to compare only the Day
+                                final DateTime today = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                );
+                                final DateTime scheduledDay = DateTime(
+                                  bookingdata.year,
+                                  bookingdata.month,
+                                  bookingdata.day,
+                                );
+                                final servicesProvider =
+                                    Provider.of<ServicesProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+
+                                final scheduleProvider =
+                                    Provider.of<ScheduleProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+                                final classDateTime = formatStringToApiDate(
+                                  widget.s.bookingDateStartTime,
+                                );
+                                // --- FIX 2 & 3: LATE NOTICE & RESTRICTION LOGIC ---
+                                if (pro.remainingExtension <= 0) {
+                                  DialogService.showNotEnoughExtensionPopup(
+                                    context,
+                                    ontap: () async {
+                                      servicesProvider.setPaymentType(
+                                        PaymentType.schedulePoints,
                                       );
-                                    }
-                                  : null,
-                              // onPressed: () {
-                              // final classDateTime = formatToApiDate(
-                              //   _selectedDate,
-                              // );
-                              //   final Packageprovider =
-                              //       Provider.of<PackageProvider>(
-                              //         context,
-                              //         listen: false,
-                              //       );
-                              //   final DateTime bookingdata = DateFormat(
-                              //     'dd/MM/yyyy hh:mm a',
-                              //   ).parse(widget.s.bookingDateStartTime);
-                              //   // Current datetime
-                              //   final DateTime now = DateTime.now();
-                              //   final DateTime today = DateTime(
-                              //     now.year,
-                              //     now.month,
-                              //     now.day,
-                              //   );
-                              //   final DateTime scheduledDay = DateTime(
-                              //     bookingdata.year,
-                              //     bookingdata.month,
-                              //     bookingdata.day,
-                              //   );
-                              //   print('NOW =====>>> $now');
-                              //   print('SCHEDULED =====>>> $bookingdata');
-                              //   // Show late notice if now is equal OR after scheduled time
-                              //   if (today == scheduledDay) {
-                              //     showLateNoticeDialog(context);
-                              //     return;
-                              //   }
-                              //   // print('Packageprovider.packages ${}')
-                              //   final pro = Packageprovider.packages.firstWhere(
-                              //     (n) =>
-                              //         n.paymentRef ==
-                              //         widget.s.PackageCode.toString(),
-                              //   );
-                              //   /// pass this over terortory id
-                              //   print('dataValue =====>>> ${pro.branch}');
-                              //   _showConsumeCancellationDialog(
-                              //     context,
-                              //     onConfirm: () async {
-                              // await provider
-                              //     .submitScheduleRequest(
-                              //       subject: widget.s.subject,
-                              //       classDateTime: classDateTime,
-                              //       action: 'Unbooked',
-                              //       preferredSlot: "",
-                              //       reason: '',
-                              //       branch: '${pro.branch}',
-                              //       packageid: '${pro.paymentRef}',
-                              //       lateNotic: '',
-                              //     )
-                              //     .then((val) {
-                              //       if (val == true) {
-                              //         showSuccessDialog(context);
-                              //       }
-                              //     });
-                              //     },
-                              //   );
-                              //   // provider
-                              //   //     .submitScheduleRequest(
-                              //   //       subject: widget.s.subject,
-                              //   //       classDateTime: classDateTime,
-                              //   //       action: 'Unbooked',
-                              //   //       preferredSlot: "",
-                              //   //       reason: '', branch: '',
-                              //   //     )
-                              //   //     .then((val) {
-                              //   // if (val == true) {
-                              //   //   showSuccessDialog(context);
-                              //   // }
-                              //   //     });
-                              // },
+
+                                      scheduleProvider.setScheduleRequests(
+                                        subject: widget.s.subject,
+                                        classDateTime: classDateTime,
+                                        action: "Rebook",
+                                        preferredSlot: '',
+                                        lateNotice: 'Late',
+                                        branch: "${pro.branch}",
+                                        packageId: '${pro.paymentRef}',
+                                      );
+
+                                      final vat = 50 * 0.05;
+                                      final amountWithVat = (50 + vat);
+
+                                      final success = await servicesProvider
+                                          .startCheckout(
+                                            context,
+                                            amount: amountWithVat,
+                                          );
+
+                                      if (success &&
+                                          servicesProvider.paymentUrl != null) {
+                                        final requestReturn =
+                                            await scheduleProvider
+                                                .submitScheduleRequestAfterPayment(
+                                                  servicesProvider
+                                                      .orderReference!,
+                                                );
+                                        if (requestReturn) {
+                                          if (Navigator.canPop(context)) {
+                                            Navigator.pop(context);
+                                          }
+                                          await launchUrl(
+                                            Uri.parse(
+                                              servicesProvider.paymentUrl!,
+                                            ),
+                                            mode:
+                                                LaunchMode.externalApplication,
+                                          );
+                                        }
+                                      }
+                                    },
+                                    title:
+                                        'No Extension!\nConsider paying for an extension to move it here?',
+                                    payment: '50',
+                                  );
+
+                                  return;
+                                }
+                                if (today == scheduledDay) {
+                                  DialogService.showLateNoticeDialog(context);
+                                  return;
+                                }
+
+                                // --- 1: For remaining cancellations ---
+                                if (widget.s.RemainingCancellations != 0) {
+                                  DialogService.showConsumeCancellationDialog(
+                                    context,
+                                    onConfirm: () async {
+                                      await provider
+                                          .submitScheduleRequest(
+                                            subject: widget.s.subject,
+                                            // ✅ Manager's requirement: Use the ORIGINAL class date here
+                                            classDateTime: classDateTime,
+                                            action: 'Unbooked',
+                                            // Empty because it's "Schedule Later"
+                                            preferredSlot: "",
+                                            reason: '',
+                                            branch: '${pro.branch}',
+                                            packageid: '${pro.paymentRef}',
+                                            // Pass 'Late' or 'Early' so the API knows which rule to apply
+                                            lateNotic: today == scheduledDay
+                                                ? 'Late'
+                                                : 'Early',
+                                          )
+                                          .then((val) {
+                                            if (val == true) {
+                                              DialogService.showSuccessDialog(
+                                                context,
+                                              );
+                                            }
+                                          });
+                                    },
+                                  );
+                                  return;
+                                } else {
+                                  DialogService.showNotEnoughCancellationPopup(
+                                    context,
+                                    ontap: () async {
+                                      servicesProvider.setPaymentType(
+                                        PaymentType.schedulePoints,
+                                      );
+
+                                      scheduleProvider.setScheduleRequests(
+                                        subject: widget.s.subject,
+                                        classDateTime: classDateTime,
+                                        action: "Rebook",
+                                        preferredSlot: "",
+                                        lateNotice: today == scheduledDay
+                                            ? 'Late'
+                                            : 'Early',
+                                        branch: "${pro.branch}",
+                                        packageId: '${pro.paymentRef}',
+                                      );
+
+                                      final vat = 50 * 0.05;
+                                      final amountWithVat = (50 + vat);
+
+                                      final success = await servicesProvider
+                                          .startCheckout(
+                                            context,
+                                            amount: amountWithVat,
+                                          );
+
+                                      if (success &&
+                                          servicesProvider.paymentUrl != null) {
+                                        final requestReturn =
+                                            await scheduleProvider
+                                                .submitScheduleRequestAfterPayment(
+                                                  servicesProvider
+                                                      .orderReference!,
+                                                );
+                                        if (requestReturn) {
+                                          if (Navigator.canPop(context)) {
+                                            Navigator.pop(context);
+                                          }
+                                          await launchUrl(
+                                            Uri.parse(
+                                              servicesProvider.paymentUrl!,
+                                            ),
+                                            mode:
+                                                LaunchMode.externalApplication,
+                                          );
+                                        }
+                                      }
+                                    },
+                                  );
+                                  return;
+                                }
+                              },
                               child: Text(
                                 "Decide later",
                                 style: TextStyle(color: Colors.black),
@@ -1330,413 +1009,110 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
     );
   }
 
-  // popup for late notice
-  void showLateNoticeDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        contentPadding: const EdgeInsets.all(20),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Orange Warning Icon
-            const Icon(
-              Icons.warning_amber_rounded,
-              color: Color(0xFFF27E2B), // Matches the orange in your screenshot
-              size: 80,
-            ),
-            const SizedBox(height: 16),
-
-            // Main Text Content
-            const Text(
-              "Late notice! This will consume cancellation.\nConsider paying recovery fee to book.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.4,
-                color: Color(0xFF4A4A4A),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Action Buttons
-            Row(
+  Widget selectedTimeDataWidget() {
+    return Expanded(
+      child: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: EdgeInsets.symmetric(horizontal: 16),
               children: [
-                // "No, thanks" Button
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: Colors.grey.shade300),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      "No, thanks",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+                // --- 2. LIST OF TEACHERS ---
+                ..._slots.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  final teacher = entry.value;
 
-                // "AED 50" Payment Button
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final servicesProvider = Provider.of<ServicesProvider>(
-                        context,
-                        listen: false,
-                      );
-                      servicesProvider.setPaymentType(
-                        PaymentType.schedulePoints,
-                      );
-                      final vat = 50 * 0.05;
-                      final amountWithVat = (50 + vat).toInt();
+                  // Logic: Show the first teacher OR show everyone if the button was clicked
+                  if (index > 0 && !_showAllTeachers) {
+                    return SizedBox.shrink();
+                  }
 
-                      final success = await servicesProvider.startCheckout(
-                        context,
-                        amount: amountWithVat,
-                        // redirectUrl: "https://melodica-mobile.web.app",
-                      );
-
-                      if (success && servicesProvider.paymentUrl != null) {
-                        if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        }
-                        await launchUrl(
-                          Uri.parse(servicesProvider.paymentUrl!),
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF27E2B),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Row(
-                      children: [
-                        SvgPicture.asset(
-                          'assets/svg/dirham.svg',
-                          color: Colors.black,
-                          height: 12.h,
-                          width: 12.w,
+                  return Column(
+                    children: [
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        margin: EdgeInsets.only(bottom: 10),
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
                         ),
-                        SizedBox(width: 5.w),
-                        const Text(
-                          "${50}",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${teacher.fullname}',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 8),
+                            if (teacher.slots.isEmpty)
+                              Text(
+                                "No slots available",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              )
+                            else
+                              Wrap(
+                                spacing: 5,
+                                children: teacher.slots.map((slotTime) {
+                                  final isSelected =
+                                      _selectedTeacherId == teacher.id &&
+                                      _selectedSlotTime == slotTime;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      final lastname = teacher.lastName
+                                          .split('(')
+                                          .last
+                                          .replaceAll(')', '');
+                                      setState(() {
+                                        _selectedTeacherId = teacher.id;
+                                        _selectedTeacher =
+                                            "${teacher.firstName} $lastname";
+                                        _selectedSlotTime = slotTime;
+                                      });
+                                    },
+                                    child: Chip(
+                                      padding: EdgeInsets.all(0),
+                                      label: Text(slotTime),
+                                      backgroundColor: isSelected
+                                          ? Colors.orange[100]
+                                          : Colors.grey[100],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      // --- 3. THE "SHOW OTHER TEACHERS" BUTTON ---
+                      // Show this only after the first teacher and only if there's more than one teacher
+                      if (index == 0 && _slots.length > 1 && !_showAllTeachers)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Center(
+                            child: ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStatePropertyAll(
+                                  AppColors.primary,
+                                ),
+                              ),
+                              onPressed: () =>
+                                  setState(() => _showAllTeachers = true),
+                              child: Text(
+                                "Show Other Teachers",
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
+                    ],
+                  );
+                }).toList(),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // for  extension or consume extension
-  Future<bool> _showConsumePopup(
-    BuildContext context, {
-    required VoidCallback onConfirm,
-  }) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (_) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: Icon(Icons.warning, color: Colors.orange, size: 40),
-            content: Text(
-              "You're about to consume your Extension.\nWould like to proceed?",
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text("No"),
-              ),
-              InkWell(
-                onTap: () {
-                  Navigator.pop(context);
-                  onConfirm();
-                },
-                child: Container(
-                  height: 50,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      "Yes",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-  }
-
-  // Pay Extension
-  void _showNotEnoughExtensionPopup(
-    BuildContext context, {
-    required VoidCallback ontap,
-  }) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        actionsPadding: EdgeInsets.only(bottom: 20, right: 10),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        backgroundColor: Colors.white,
-        title: Icon(Icons.warning, color: Colors.orange, size: 40),
-        content: Text(
-          "No Extension!\nConsider paying for an extension to move it\nhere?",
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              "No, thanks",
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          InkWell(
-            onTap: ontap,
-            //  () async {
-
-            // servicesProvider.startCheckout(amount:extraCharge, redirectUrl: '' )
-            // },
-            child: Container(
-              height: 50,
-              width: 120,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/svg/dirham.svg',
-                      color: Colors.black,
-                      height: 12.h,
-                      width: 12.w,
-                    ),
-                    SizedBox(width: 5.w),
-                    Text(
-                      " ${50}",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showNotEnoughCancellationPopup(
-    BuildContext context, {
-    required VoidCallback ontap,
-  }) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        actionsPadding: EdgeInsets.only(bottom: 20, right: 10),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        backgroundColor: Colors.white,
-        title: Icon(Icons.warning, color: Colors.orange, size: 40),
-        content: Text(
-          "No Cancellation!\nConsider paying for an cancellation to move it here?",
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              "No, thanks",
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          InkWell(
-            onTap: ontap,
-            //  () async {
-
-            // servicesProvider.startCheckout(amount:extraCharge, redirectUrl: '' )
-            // },
-            child: Container(
-              height: 50,
-              width: 120,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    'assets/svg/dirham.svg',
-                    color: Colors.black,
-                    height: 12.h,
-                    width: 12.w,
-                  ),
-                  SizedBox(width: 5.w),
-                  Text(
-                    "${50}",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  //
-  // Success dialog
-  void showSuccessDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            child: Stack(
-              children: [
-                // Close Button (Top Right)
-                // Positioned(
-                //   right: 0,
-                //   top: 0,
-                //   child: GestureDetector(
-                //     onTap: () => Navigator.pop(context),
-                //     child: Container(
-                //       padding: const EdgeInsets.all(4),
-                //       decoration: const BoxDecoration(
-                //         color: Color(0xFF4A4A4A), // Dark grey background
-                //         shape: BoxShape.circle,
-                //       ),
-                //       child: const Icon(
-                //         Icons.close,
-                //         size: 16,
-                //         color: Colors.white,
-                //       ),
-                //     ),
-                //   ),
-                // ),
-
-                // Main Content
-                Column(
-                  mainAxisSize: MainAxisSize.min, // Wrap content height
-                  children: [
-                    const SizedBox(height: 10),
-
-                    // Green Checkmark Icon
-                    Container(
-                      height: 45.h,
-                      width: 45.w,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Color(0xFF47C97E), width: 4),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.check,
-                          size: 30.adaptSize,
-                          color: Color(0xFF47C97E),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-
-                    Text(
-                      "Your request has been submitted.", // Fixed grammar from screenshot
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16.adaptSize,
-                        color: Color(0xff636363),
-                      ),
-                    ),
-                    Text(
-                      "Our team will get back to you",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14.adaptSize,
-                        color: Color(0xff636363),
-                      ),
-                    ),
-                    SizedBox(height: 15.h),
-                    ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStatePropertyAll(
-                          // AppColors.primary,
-                          Color(0xFF47C97E),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        'Okay',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -1773,26 +1149,6 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
     );
   }
 
-  // void _showErrorDialog(
-  //   BuildContext context, {
-  //   required String title,
-  //   required String message,
-  // }) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (_) => AlertDialog(
-  //       title: Text(title),
-  //       content: Text(message),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           child: const Text("OK"),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   bool isAfterExpiry(DateTime selectedDate, DateTime expiryDate) {
     return selectedDate.isAfter(expiryDate);
   }
@@ -1814,140 +1170,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
     }
   }
 
-  // Dialog triggered by 'Schedule Now'
-  void _showConsumeExtensionDialog(
-    BuildContext context, {
-    required VoidCallback onConfirm,
-  }) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: Icon(Icons.info_rounded, size: 70, color: Color(0xffFE7501)),
-        content: const Text(
-          "No Extensions!\nConsider paying for an extension to move it here?",
-        ),
-        actions: [
-          TextButton(
-            style: ButtonStyle(
-              padding: MaterialStateProperty.all<EdgeInsets>(
-                EdgeInsets.all(10),
-              ),
-              foregroundColor: MaterialStateProperty.all<Color>(Colors.red),
-              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  side: BorderSide(color: Colors.red),
-                ),
-              ),
-            ),
-            onPressed: () => Navigator.pop(context),
-            child: const Text("No, thanks"),
-          ),
-          ElevatedButton(
-            style: ButtonStyle(
-              padding: WidgetStateProperty.all<EdgeInsets>(EdgeInsets.all(15)),
-              backgroundColor: WidgetStateProperty.all<Color>(
-                Color(0xffFE7501),
-              ),
-              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  side: BorderSide(color: Colors.red),
-                ),
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              onConfirm();
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/dirham.svg',
-                  color: Colors.black,
-                  height: 12.h,
-                  width: 12.w,
-                ),
-                SizedBox(width: 5.w),
-                Text("${50} ", style: TextStyle(color: Colors.white)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showConsumeCancellationDialog(
-    BuildContext context, {
-    required VoidCallback onConfirm,
-  }) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.0),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.orange,
-              size: 50,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "You’re about to consume your Cancellation.\nWould like to proceed?",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context), // Close dialog
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.grey),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text("No"),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onConfirm();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE67E22), // Orange color
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text("Yes"),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// new schedule logic is here
-  ///
   bool isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
@@ -1966,177 +1189,6 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
   }) {
     if (noticeType == "Early") return false;
     return !isSameDay(bookingDate, selectedDate);
-  }
-}
-
-class CustomWeeklyDatePicker extends StatefulWidget {
-  final DateTime initialDate;
-  final Function(DateTime) onDateSelected;
-
-  const CustomWeeklyDatePicker({
-    super.key,
-    required this.initialDate,
-    required this.onDateSelected,
-  });
-
-  @override
-  State<CustomWeeklyDatePicker> createState() => _CustomWeeklyDatePickerState();
-}
-
-class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
-  late DateTime _focusedDate;
-  late DateTime _selectedDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusedDate = widget.initialDate;
-    _selectedDate = widget.initialDate;
-  }
-
-  // Helper to get the 7 days of the week for the focused date
-  List<DateTime> _getWeekDays(DateTime date) {
-    // Finding Monday of the current week
-    DateTime monday = date.subtract(Duration(days: date.weekday - 1));
-    return List.generate(7, (index) => monday.add(Duration(days: index)));
-  }
-
-  void _changeWeek(int weeks) {
-    setState(() {
-      _focusedDate = _focusedDate.add(Duration(days: weeks * 7));
-    });
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final days = _getWeekDays(_focusedDate);
-    // Accessing your provider to find available dates
-    final scheduleProvider = context.watch<ScheduleProvider>();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      margin: EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 1. Header: Select Date
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Select Date',
-                style: TextStyle(
-                  fontSize: 14.fSize,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Icon(Icons.arrow_drop_down),
-            ],
-          ),
-          const SizedBox(height: 5),
-
-          // 2. Navigation: < Wed, 3 Nov, 2025 >
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, size: 20),
-                onPressed: () => _changeWeek(-1),
-              ),
-              Text(
-                DateFormat('EEE, d MMM, yyyy').format(_focusedDate),
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              ),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward, size: 20),
-                onPressed: () => _changeWeek(1),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-
-          // 3. Days Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: days.map((day) {
-              final isSelected = _isSameDay(day, _selectedDate);
-              final isAvailable = scheduleProvider.availableDates.any(
-                (d) => _isSameDay(d, day),
-              );
-              // final provider= Provider.of<ScheduleProvider>(context,listen: false);
-              final isPast = _isPastDate(day); // check if day is past
-
-              return GestureDetector(
-                onTap: isPast
-                    ? null // disable tap for past days
-                    : () {
-                        setState(() => _selectedDate = day);
-                        widget.onDateSelected(day);
-                      },
-                child: Column(
-                  children: [
-                    Text(
-                      DateFormat('E').format(day).substring(0, 2),
-                      style: TextStyle(
-                        color: isPast
-                            ? Colors.grey
-                            : Colors.black, // grey for past
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 40,
-                      height: 45,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color.fromARGB(255, 255, 200, 0)
-                            : isAvailable
-                            ? const Color(0xFFFBF3D3)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        day.day.toString(),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: isPast
-                              ? Colors
-                                    .grey // grey for past
-                              : isSelected || isAvailable
-                              ? Colors.black
-                              : Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool _isPastDate(DateTime day) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final d = DateTime(day.year, day.month, day.day);
-    return d.isBefore(today); // true if day is before today
   }
 }
 

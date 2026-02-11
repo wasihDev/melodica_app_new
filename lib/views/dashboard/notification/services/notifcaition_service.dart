@@ -134,10 +134,8 @@ class FirebaseMessagingService {
     final ctrl = Provider.of<CustomerController>(context, listen: false);
     print('provider.all.isEmpty ${provider.all.isEmpty}');
     // Ensure data is loaded
-    if (provider.all.isEmpty) {
-      await ctrl.fetchCustomerData();
-      await provider.fetchNotifications();
-    }
+    await ctrl.fetchCustomerData();
+    await provider.fetchNotifications();
 
     final notification = provider.all.firstWhere(
       (n) => n.notificationId == notificationId,

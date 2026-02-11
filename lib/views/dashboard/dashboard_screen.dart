@@ -55,7 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     print(
       'cusprovider.isCustomerRegistered ${cusprovider.isCustomerRegistered}',
     );
-
+    UpdateService.checkVersion(context);
     print('cusprovider.isShowData ${cusprovider.isShowData}');
     if (cusprovider.isShowData.isEmpty) {
       await provider.fetchUserData();

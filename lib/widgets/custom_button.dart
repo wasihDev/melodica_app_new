@@ -17,7 +17,7 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 40.h,
+      height: 48.h,
       decoration: BoxDecoration(
         color: AppColors.primary,
         // gradient: const LinearGradient(

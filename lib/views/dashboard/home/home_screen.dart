@@ -378,24 +378,31 @@ class _HomeScreenState extends State<HomeScreen> {
                                             Text('${item.monthShort}'),
                                           ],
                                         ),
-                                        title: Text(
-                                          item.subject,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14.fSize,
-                                          ),
+                                        title: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              item.subject,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14.fSize,
+                                              ),
+                                            ),
+                                            Text(
+                                              item.time.startsWith('0')
+                                                  ? item.time.substring(1)
+                                                  : item.time,
+                                              // item.time.toString(),
+                                              style: TextStyle(
+                                                fontSize: 11.fSize,
+                                                color: Colors.grey[500],
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                         subtitle: Text(item.bookingResource),
-                                        trailing: Text(
-                                          item.time.startsWith('0')
-                                              ? item.time.substring(1)
-                                              : item.time,
-                                          // item.time.toString(),
-                                          style: TextStyle(
-                                            fontSize: 12.fSize,
-                                            color: Colors.grey[500],
-                                          ),
-                                        ),
+                                        // trailing:
                                       ),
                                     );
                                   },

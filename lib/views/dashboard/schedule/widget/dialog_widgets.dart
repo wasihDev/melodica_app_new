@@ -14,6 +14,7 @@ class EarlyNoticeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
       content: Column(
         mainAxisSize: MainAxisSize.min,

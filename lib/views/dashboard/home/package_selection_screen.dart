@@ -80,10 +80,9 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
           return ctrl.loading
               ? const Center(child: CircularProgressIndicator())
               : Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: EdgeInsets.symmetric(horizontal: 16.0.w),
                   child: Column(
                     children: [
-                      const SizedBox(height: 0),
                       // Tabs (Music / Dance)
                       Row(
                         children: [
@@ -97,9 +96,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                 });
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
+                                padding: EdgeInsets.symmetric(vertical: 10.h),
                                 decoration: BoxDecoration(
                                   color: ctrl.tab == 'Music'
                                       ? const Color(0xFFF7CD3C)
@@ -142,8 +139,8 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                           );
                                         },
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 10.h,
                                     ),
                                     decoration: BoxDecoration(
                                       color: ctrl.tab == 'Dance'
@@ -191,12 +188,13 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   DropdownButtonFormField<String>(
+                                    padding: EdgeInsets.all(0),
                                     value:
                                         ctrl.selectedServiceName ??
                                         (ctrl.uniqueServices.isEmpty
                                             ? null
                                             : ctrl.uniqueServices.first),
-                                    menuMaxHeight: 350,
+                                    menuMaxHeight: 300.h,
 
                                     dropdownColor: Colors.white,
                                     items: ctrl.uniqueServices
@@ -205,8 +203,8 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                             value: s,
                                             child: Text(
                                               s,
-                                              style: const TextStyle(
-                                                fontSize: 16,
+                                              style: TextStyle(
+                                                fontSize: 14.fSize,
                                               ),
                                             ),
                                           ),
@@ -216,12 +214,12 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                       if (v != null) ctrl.setSelectedService(v);
                                       setState(() {});
                                     },
+
                                     decoration: InputDecoration(
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 18,
-                                          ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 12.h,
+                                      ),
                                       filled: true,
                                       fillColor: Colors.transparent,
                                       border: OutlineInputBorder(
@@ -272,7 +270,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                   //   ),
                                   // ),
                                   SizedBox(
-                                    height: 44.h,
+                                    height: 40.h,
                                     child: ListView(
                                       scrollDirection: Axis.horizontal,
                                       children:
@@ -322,6 +320,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                                       style: TextStyle(
                                                         fontWeight:
                                                             FontWeight.w600,
+                                                        fontSize: 12.fSize,
                                                         color: selected
                                                             ? Colors.black87
                                                             : Colors.black54,
@@ -348,11 +347,10 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                         .toList(),
                                     onChanged: ctrl.setFrequency,
                                     decoration: InputDecoration(
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 18,
-                                          ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12.h,
+                                      ),
                                       filled: true,
                                       fillColor: Colors.transparent,
                                       border: OutlineInputBorder(

@@ -66,6 +66,8 @@ dependencies:
   showcaseview: 
   shared_preferences: 
   screenshot: ^3.0.0
+  scroll_screenshot: ^0.0.8
+  native_screenshot: ^1.0.0
 dev_dependencies:
   flutter_launcher_icons: "^0.14.4"
 flutter_launcher_icons:
