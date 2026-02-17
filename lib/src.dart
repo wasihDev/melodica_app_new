@@ -12,7 +12,6 @@ import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
-import 'package:melodica_app_new/utils/upgrade_custom_dialog.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:showcaseview/showcaseview.dart';
@@ -30,7 +29,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<CountryCodeProvider>(
+        ChangeNotifierProvider<CountryCodeProvider>(
           create: (_) => CountryCodeProvider()..fetch(),
         ),
         ChangeNotifierProvider<CustomerController>(
@@ -58,10 +57,16 @@ class _MyAppState extends State<MyApp> {
             scheduleProvider: context.read<ScheduleProvider>(),
           ),
         ),
-        Provider<OnboardingProvider>(create: (_) => OnboardingProvider()),
-        Provider<AppstateProvider>(create: (_) => AppstateProvider()),
+        ChangeNotifierProvider<OnboardingProvider>(
+          create: (_) => OnboardingProvider(),
+        ),
+        ChangeNotifierProvider<AppstateProvider>(
+          create: (_) => AppstateProvider(),
+        ),
         ChangeNotifierProvider<AuthProviders>(create: (_) => AuthProviders()),
-        Provider<BottomNavProvider>(create: (_) => BottomNavProvider()),
+        ChangeNotifierProvider<BottomNavProvider>(
+          create: (_) => BottomNavProvider(),
+        ),
 
         ChangeNotifierProvider<NotificationProvider>(
           create: (context) => NotificationProvider(
@@ -80,10 +85,17 @@ class _MyAppState extends State<MyApp> {
               title: 'Melodica App',
               debugShowCheckedModeBanner: false,
               navigatorKey: navigatorKey,
-              // routerConfig: router,
+              // Theme,
               theme: ThemeData(
                 useMaterial3: true,
-                // primaryColor: Colors.white,
+                // colorScheme: ColorScheme.fromSwatch(
+                //   primarySwatch: Colors.amber,
+                // ),
+                appBarTheme: const AppBarTheme(
+                  surfaceTintColor: Colors.white,
+                  backgroundColor: Colors.white,
+                ),
+
                 scaffoldBackgroundColor: Colors.white,
               ),
               // routes
@@ -91,25 +103,8 @@ class _MyAppState extends State<MyApp> {
               routes: AppRoutes.routes,
             ),
           );
-
-          // return upgradeAlert;
         },
       ),
     );
   }
-
-  // final router = GoRouter(
-  //   routes: [
-  //     GoRoute(
-  //       path: '/',
-  //       builder: (context, state) =>
-  //           PackageSelectionScreen(isShowdanceTab: false),
-  //     ),
-  //     GoRoute(
-  //       path: '/home',
-  //       builder: (context, state) =>
-  //           Scaffold(appBar: AppBar(leading: Text('home'))),
-  //     ),
-  //   ],
-  // );
 }

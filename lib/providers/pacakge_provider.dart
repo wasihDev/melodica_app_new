@@ -98,7 +98,8 @@ class PackageProvider extends ChangeNotifier {
   }
 
   void _showNotEnoughFreezingPopup(
-    BuildContext context, {
+    BuildContext context,
+    String danceOrmusic, {
     required VoidCallback ontap,
   }) {
     showDialog(
@@ -118,48 +119,55 @@ class PackageProvider extends ChangeNotifier {
                 SizedBox(height: 18),
                 Icon(Icons.warning, color: Colors.orange, size: 40),
                 SizedBox(height: 25),
+
                 Text(
-                  "You do not have enough remaining freezing.\nConsider purchasing extensions",
+                  danceOrmusic == "Dance Classes"
+                      ? "You do not have enough remaining freezing allowance.\nAn extension fee is required to proceed"
+                      : "You do not have enough remaining freeze allowance.Reschedule to an earlier date or pay an extension fee",
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 25),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            AppRoutes.dashboard,
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        splashColor: AppColors.primary.withOpacity(0.2),
-                        highlightColor: AppColors.primary.withOpacity(0.1),
-                        child: Ink(
-                          height: 45.h,
-                          width: 110.w,
-                          padding: EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
+                    danceOrmusic == "Dance Classes"
+                        ? SizedBox()
+                        : Material(
+                            color: Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
-                          ),
-                          // alignment: Alignment.center,
-                          child: Center(
-                            child: Text(
-                              'Reschedule',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  AppRoutes.dashboard,
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              splashColor: AppColors.primary.withOpacity(0.2),
+                              highlightColor: AppColors.primary.withOpacity(
+                                0.1,
+                              ),
+                              child: Ink(
+                                height: 45.h,
+                                width: 110.w,
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                // alignment: Alignment.center,
+                                child: Center(
+                                  child: Text(
+                                    'Reschedule',
+                                    style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.fSize,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
                     InkWell(
                       onTap: ontap,
                       child: Container(
@@ -171,13 +179,18 @@ class PackageProvider extends ChangeNotifier {
                         ),
                         child: Center(
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SvgPicture.asset('assets/svg/dirham.svg'),
+                              SvgPicture.asset(
+                                'assets/svg/dirham.svg',
+                                height: 10.h,
+                                width: 10.w,
+                              ),
                               Text(
                                 " 50",
                                 style: TextStyle(
                                   color: Colors.black,
-                                  fontSize: 12.fSize,
+                                  fontSize: 14.fSize,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -195,6 +208,7 @@ class PackageProvider extends ChangeNotifier {
                     style: TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
+                      fontSize: 14.fSize,
                     ),
                   ),
                 ),
@@ -293,7 +307,8 @@ class PackageProvider extends ChangeNotifier {
   // }
 
   // List<FreezingRequest> freezingRequests = [];
-
+  double amountWithVat = 0;
+  // double get amountWithVat => _amountWithVat;
   Future<void> submitFreeze(
     BuildContext context,
     String reason,
@@ -302,9 +317,17 @@ class PackageProvider extends ChangeNotifier {
     selectedPackage = package;
     selectedReason = reason;
     if (startDate == null || endDate == null) return;
+    print('package.totalClasses ${package.totalClasses}');
     final bool isFourClassPackage = package.totalClasses == 4;
     // final isSameClass = await _isSameClass(selectedClassId);
-
+    final difference = endDate!.difference(startDate!).inDays;
+    if (difference > 28) {
+      _showErrorPopup(
+        context,
+        "The freezing period cannot exceed 4 weeks (28 days).",
+      );
+      return;
+    }
     if (isFourClassPackage) {
       // Show the specific alert: 'You do not have freezing allowance...'
       _showRestrictedFreezingPopup(context);
@@ -316,7 +339,6 @@ class PackageProvider extends ChangeNotifier {
       package.danceOrMusic,
     );
 
-    //
     // // 1️⃣ Local validation
     // if (await _isExactMatch(startDate!, endDate!) ) {
     if (isDuplicate) {
@@ -337,35 +359,43 @@ class PackageProvider extends ChangeNotifier {
     if (!hasEnoughFreezing) {
       _showNotEnoughFreezingPopup(
         context,
+        selectedPackage!.danceOrMusic,
         // pay here
         ontap: () async {
           servicesProvider.setPaymentType(PaymentType.freezingPoints);
 
           final vat = extraCharge * 0.05;
-          final amountWithVat = (extraCharge + vat);
+          amountWithVat = (extraCharge + vat);
 
           final success = await servicesProvider.startCheckout(
             context,
             amount: amountWithVat,
-            // redirectUrl: "https://melodica-mobile.web.app",
           );
 
           if (success && servicesProvider.paymentUrl != null) {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
-            await launchUrl(
-              Uri.parse(servicesProvider.paymentUrl!),
-              mode: LaunchMode.externalApplication,
+            final returnVal = await callFreezingApi(
+              context,
+              reason,
+              package,
+              ref: servicesProvider.orderReference,
             );
+            if (returnVal) {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+              await launchUrl(
+                Uri.parse(servicesProvider.paymentUrl!),
+                mode: LaunchMode.externalApplication,
+              );
+            }
           }
         },
       );
       return;
     }
 
-    final proceed = await _showConsumePopup(context);
-    if (!proceed) return;
+    // final proceed = await _showConsumePopup(context);
+    // if (!proceed) return;
 
     await callFreezingApi(context, reason, package);
     // 4️⃣ Save request locally after successful submission
@@ -395,14 +425,6 @@ class PackageProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final existing = prefs.getStringList('freezingRequests') ?? [];
     return existing.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
-    // return existing.map((e) {
-    //   final data = jsonDecode(e);
-    //   return {
-    //     "start": DateTime.parse(data["start"]),
-    //     "end": DateTime.parse(data["end"]),
-    //     // "class": data[],
-    //   };
-    // }).toList();
   }
 
   Future<bool> _isSameClassAndSameDates(
@@ -431,6 +453,7 @@ class PackageProvider extends ChangeNotifier {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -485,7 +508,7 @@ class PackageProvider extends ChangeNotifier {
     return false;
   }
 
-  Future<void> callFreezingApi(
+  Future<bool> callFreezingApi(
     BuildContext context,
     String reason,
     Package package, {
@@ -496,22 +519,24 @@ class PackageProvider extends ChangeNotifier {
     final bool isMusic = package.danceOrMusic.contains("Music Classes");
     print('isMusic $isMusic');
 
-    print('package.subject ${package.branch}');
+    // print('package.subject ${package.branch}');
     final affectedClasses = scheduleProvider.getAffectedClasses(
       startDate: startDate!,
       endDate: endDate!,
       subject: package.subject,
     );
-
+    print('affectedClasses $affectedClasses');
     if (affectedClasses.isEmpty) {
-      _showErrorPopup(context, "No classes found in selected date range");
+      _showErrorPopup(
+        context,
+        "No classes are affected within the selected date range.Adjust the date range to proceed.",
+      );
       _isLoading = false;
       notifyListeners();
-      return;
+      return false;
     }
 
     print('affectedClasses${affectedClasses}');
-    //
     print('reason ${reason}');
     final body = {
       "firstname": "${customerController.customer!.firstName}",
@@ -561,11 +586,14 @@ class PackageProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         _showSuccessPopup(context);
         await _saveFreezingRequest(startDate!, endDate!, package.danceOrMusic);
+        return true;
       } else {
         _showErrorPopup(context, "Something went wrong");
+        return false;
       }
     } catch (e) {
       _showErrorPopup(context, e.toString());
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

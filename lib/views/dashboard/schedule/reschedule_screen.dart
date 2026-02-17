@@ -1,7 +1,6 @@
 import 'dart:io';
-
+import 'dart:developer' as de;
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/schedule_model.dart';
@@ -10,7 +9,6 @@ import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
-import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/serivices.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/widget/custom_weekly_date_picker.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_service.dart';
@@ -31,6 +29,7 @@ class ScheduleModels {
 }
 
 // ignore: must_be_immutable
+
 class RescheduleScreen extends StatefulWidget {
   ScheduleModel s;
   RescheduleScreen({required this.s});
@@ -40,7 +39,6 @@ class RescheduleScreen extends StatefulWidget {
 
 class _RescheduleScreenState extends State<RescheduleScreen> {
   DateTime _selectedDate = DateTime.now();
-  // TeacherSlot? _selectedSlot;
   List<TeacherSlot> _slots = [];
   bool _isLoading = false;
 
@@ -50,62 +48,11 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
     _fetchSlots();
   }
 
-  // void _fetchSlots() async {
-  //   setState(() => _isLoading = true);
-  //   try {
-  //     List<String> parts = widget.s.Pricing.split(' - ');
-  //     String lastPart = parts.last;
-  //     String duration = lastPart.split(' ').first;
-  //     // 1️⃣ Get slots from API (already List<AvailabilitySlot>)
-  //     final List<AvailabilitySlot> responseSlots = await RescheduleService()
-  //         .getAvailability(
-  //           DateFormat('yyyy-MM-dd').format(_selectedDate),
-  //           widget.s.bookingResourceId,
-  //           int.parse(duration),
-  //         );
-  //     final now = DateTime.now();
-  //     // 2️⃣ Process slots: parse start/end time and mark ongoing
-  //     final slots = responseSlots
-  //         .map((slot) {
-  //           // Parse start & end times
-  //           final times = slot.slotsRange.split(' - ');
-  //           final startParts = times[0].split(':');
-  //           final endParts = times[1].split(':');
-  //           final today = DateTime(now.year, now.month, now.day);
-  //           slot.startTime = DateTime(
-  //             today.year,
-  //             today.month,
-  //             today.day,
-  //             int.parse(startParts[0]),
-  //             int.parse(startParts[1]),
-  //           );
-  //           slot.endTime = DateTime(
-  //             today.year,
-  //             today.month,
-  //             today.day,
-  //             int.parse(endParts[0]),
-  //             int.parse(endParts[1]),
-  //           );
-  //           // Mark ongoing
-  //           slot.isOngoing =
-  //               now.isAfter(slot.startTime) && now.isBefore(slot.endTime);
-  //           return slot;
-  //         })
-  //         // Remove slots that are already ended
-  //         .where((slot) => now.isBefore(slot.endTime))
-  //         .toList();
-  //     setState(() => _slots = slots);
-  //   } finally {
-  //     setState(() => _isLoading = false);
-  //   }
-  // }
-
   // late update
   void _fetchSlots() async {
     setState(() => _isLoading = true);
     try {
       List<String> parts = widget.s.Pricing.split(' - ');
-
       // 2. Get the last part ("30 Mins")
       String lastPart = parts.last;
 
@@ -151,17 +98,35 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
         selectedDate.isBefore(packageExpiryDate)) {
       // Between original class date and package expiry
       if (hasCancellations) {
-        return "Note:\nMoving this booking past its original booking date will consume one of your cancellations, consider taking it earlier if possible.\n";
+        return "Note:\nRescheduling to a later date will use one cancellation. Choose an earlier date to avoid this.\n";
       } else {
         return "Note:\nRescheduling this class to a later date will use one cancellation from your package. To avoid using a cancellation, you can choose an earlier date instead\n";
       }
     } else if (selectedDate.isAfter(packageExpiryDate) &&
-        selectedDate.isBefore(packageExpiryDate.add(Duration(days: 7)))) {
+        selectedDate.isBefore(packageExpiryDate.add(Duration(days: 8)))) {
       // Between package expiry and 1 week after expiry
-      return "Note:\nThis is past your package expiry, booking these timings may result in using your extension or paying for an extension.\n";
+      return "Note:\nThis is past your package expiry, reschedule it to an earlier date.\n";
     } else {
       return "";
     }
+  }
+
+  String getSelectDateString({
+    required DateTime selectedDate,
+    required DateTime originalClassDate,
+    required DateTime packageExpiryDate,
+  }) {
+    print('$selectedDate originalClassDate $originalClassDate');
+    if (isSameDay(selectedDate, originalClassDate)) {
+      return "Confirm Same Day Reschedule";
+    }
+    if (selectedDate.isBefore(originalClassDate)) {
+      return "Confirm Advance Class";
+    }
+    if (selectedDate.isAfter(originalClassDate)) {
+      return "Confirm Cancellation";
+    }
+    return "Select Date and Time";
   }
 
   Future<void> _executeScheduleRequest(
@@ -170,6 +135,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
     required String action,
     required String lateNotic,
     required String preferredSlot,
+    required String prints,
   }) async {
     final classDateTime = formatStringToApiDate(widget.s.bookingDateStartTime);
     final Packageprovider = Provider.of<PackageProvider>(
@@ -190,6 +156,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
           packageid: '${pro.paymentRef}',
           lateNotic: lateNotic, //late or early
           transactionId: '',
+          prints: prints,
         )
         .then((val) {
           if (val == true) {
@@ -212,75 +179,20 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
   String? _selectedTeacherId;
   String? _selectedSlotTime;
   String? _selectedTeacher;
-  bool _showOthers = false;
-  Widget _buildTeacherCard(var teacher) {
-    return Container(
-      alignment: Alignment.centerLeft,
-      margin: EdgeInsets.only(bottom: 10),
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${teacher.fullname}',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Wrap(
-            spacing: 4,
-            children: teacher.slots.map<Widget>((slotTime) {
-              final isSelected =
-                  _selectedTeacherId == teacher.id &&
-                  _selectedSlotTime == slotTime;
-              return GestureDetector(
-                onTap: () {
-                  final lastname = teacher.lastName.contains('(')
-                      ? teacher.lastName.split('(').last.split(')').first
-                      : teacher.lastName;
-                  setState(() {
-                    _selectedTeacherId = teacher.id;
-                    _selectedTeacher = "${teacher.firstName} $lastname";
-                    _selectedSlotTime = slotTime;
-                  });
-                },
-                child: Chip(
-                  label: Text(slotTime),
-                  backgroundColor: isSelected
-                      ? Colors.orange[100]
-                      : Colors.grey[100],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
 
   bool _showAllTeachers = false;
+
+  var _log = "";
+  void printnlog(String log) {
+    print('$log');
+    _log += "${log}\n";
+  }
+
   @override
   Widget build(BuildContext context) {
-    // final packageExpiryDate = DateFormat(
-    //   'dd MMM yyyy hh:mm a',
-    // ).parse(widget.s.PackageExpiry);
-
-    // // Parse bookingDateStartTime (custom format with AM/PM)
-    // final originalClassDate = DateFormat(
-    //   'dd MMM yyyy hh:mm a',
-    // ).parse(widget.s.bookingDateStartTime);
-    // 1. For PackageExpiry: "2026-02-27T00:00:00"
-    // This is ISO8601 format.
     final packageExpiryDate = DateFormat(
       "yyyy-MM-dd'T'HH:mm:ss",
     ).parse(widget.s.PackageExpiry);
-
-    // 2. For bookingDateStartTime: "31 Jan 2026 01:00 PM"
-    // This is your custom display format.
     final originalClassDate = DateFormat(
       "dd MMM yyyy hh:mm a",
     ).parse(widget.s.bookingDateStartTime);
@@ -291,7 +203,6 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
       packageExpiryDate: packageExpiryDate,
       hasCancellations: widget.s.RemainingCancellations > 0,
     );
-    // final sche = Provider.of<ScheduleProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.white, title: Text("Reschedule")),
       body: SafeArea(
@@ -299,7 +210,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
         child: Column(
           children: [
             Divider(),
-            SizedBox(height: 5),
+            SizedBox(height: 5.h),
             // 1. Weekly Date Picker (As per design)
             CustomWeeklyDatePicker(
               initialDate: _selectedDate,
@@ -313,38 +224,47 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
 
                 _fetchSlots();
               },
+              // "Confirm Advance Class"  - if moving the booking earlier
+              // "Confirm Same Day Reschedule" - if moving within the same day
+              // "Confirm Cancellation" - if moving to the future
+              title: getSelectDateString(
+                originalClassDate: originalClassDate,
+                selectedDate: _selectedDate,
+                packageExpiryDate: packageExpiryDate,
+              ),
             ),
 
             // 2. Warning Note
             if (warningNote.isNotEmpty ||
                 _slots.isNotEmpty && _slots.first.slots.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFFFF7EC),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '''$warningNote'''
-                    '''${_slots.isNotEmpty && _slots.first.slots.isEmpty ? "Note:\nYour teacher is unavailable on this date. Available times with other teachers are listed below" : ""}''',
-                    style: TextStyle(color: Colors.orange[800], fontSize: 13),
+              Container(
+                margin: EdgeInsets.only(left: 14.w, right: 14.w, top: 10.h),
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Color(0xFFFFF7EC),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '''$warningNote'''
+                  '''${_slots.isNotEmpty && _slots.first.slots.isEmpty ? "Note:\nYour teacher is unavailable on this date. Available times with other teachers are listed below" : ""}''',
+                  style: TextStyle(
+                    color: Colors.orange[800],
+                    fontSize: 13.fSize,
                   ),
                 ),
               ),
-            SizedBox(height: 10),
+            SizedBox(height: 10.h),
             selectedTimeDataWidget(),
             // 4. Action Buttons (Footer)
             Consumer2<ScheduleProvider, ServicesProvider>(
               builder: (context, scheduleProvider, servicesProvider, child) {
                 return Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.symmetric(horizontal: 16.0.w),
                   child: Column(
                     children: [
                       SizedBox(
                         width: double.infinity,
-                        height: 50,
+                        height: 50.h,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _selectedSlotTime == null
@@ -380,6 +300,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                   // 2️⃣ Calculate notice type (NO 24H logic)
                                   final String noticeType =
                                       calculateNoticeTypeFromDate(bookingDate);
+                                  print("noticeType:${noticeType}");
 
                                   // 3️⃣ Decide charging
                                   final bool chargeUser = shouldCharge(
@@ -405,19 +326,19 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                   print(
                                     ' combinedPreferredSlot ${combinedPreferredSlot}',
                                   );
-                                  print(
-                                    'widget.s.PackageCode ${widget.s.PackageCode}',
-                                  );
+
                                   final pro = packageProvider.packages
                                       .firstWhere(
                                         (n) =>
                                             n.paymentRef ==
                                             widget.s.PackageCode.toString(),
                                       );
-
                                   // Current datetime
                                   final DateTime now = DateTime.now();
                                   final DateTime today = DateTime(
+                                    // 2026,
+                                    // 2,
+                                    // 13,
                                     now.year,
                                     now.month,
                                     now.day,
@@ -428,223 +349,518 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                     bookingDate.day,
                                   );
 
-                                  // if (today == scheduledDay &&
-                                  //     selectedDate. > today) {
-                                  //   showLateNoticeDialog(context);
-                                  //   return;
-                                  // }
-                                  // if (today == scheduledDay) {
-                                  //   showLateNoticeDialog(context);
-                                  //   return;
-                                  // }
-                                  // final remainingExtension = 0;
-                                  print(
-                                    'pro.remainingExtension ${pro.remainingExtension}',
+                                  var remainingcancellations =
+                                      pro.remainingCancellations;
+                                  var remainingextensions =
+                                      pro.remainingExtension;
+                                  var remainingpaidextensions =
+                                      pro.packageRemainingPaidExtension;
+                                  var remainingpaidcancellations =
+                                      pro.packageRemainingPaidRecovery;
+                                  // These will be the business rules for all the conditions
+                                  var latenotice = today.isAtSameMomentAs(
+                                    scheduledDay,
                                   );
-                                  if (today.isAtSameMomentAs(scheduledDay) &&
-                                      selectedDate.isAfter(today) &&
-                                      ((selectedDate.isAfter(expiryDay) &&
-                                              pro.remainingExtension > 0) ||
-                                          selectedDate.isBefore(expiryDay))) {
-                                    DialogService.showLateNoticeDialog(context);
-                                    return;
-                                  }
-                                  // print(
-                                  //   'object ${widget.s.RemainingCancellations != 0 && selectedDate.isAfter(scheduledDay)}',
-                                  // );
-                                  // Remainiign cancellation
-                                  if (widget.s.RemainingCancellations != 0 &&
-                                      selectedDate.isAfter(scheduledDay)) {
-                                    if (selectedDate.isAfter(scheduledDay) &&
-                                        !selectedDate.isAfter(expiryDay)) {
-                                      DialogService.showConsumeCancellationDialog(
+                                  printnlog("rules:latenotice:${latenotice}");
+                                  var rebook = selectedDate.isAfter(
+                                    scheduledDay,
+                                  );
+                                  printnlog("rules:rebook:${rebook}");
+                                  var extend = selectedDate.isAfter(expiryDay);
+                                  printnlog("rules:extend:${extend}");
+                                  //////
+                                  var firstlatenotice =
+                                      widget.s.firstLateCancelDone != null;
+                                  //false;
+                                  // widget.s.firstLateCancelDone != null;
+                                  /////
+
+                                  printnlog(
+                                    "rules:firstlatenotice:${firstlatenotice}",
+                                  );
+                                  var hascancellations =
+                                      remainingcancellations > 0;
+                                  printnlog(
+                                    "rules:hascancellations:${hascancellations}",
+                                  );
+                                  var hasextensions = remainingextensions > 0;
+                                  printnlog(
+                                    "rules:hasextensions:${hasextensions}",
+                                  );
+                                  var haspaidcancellations =
+                                      remainingpaidcancellations > 0;
+                                  printnlog(
+                                    "rules:haspaidcancellations:${haspaidcancellations}",
+                                  );
+                                  var haspaidextensions =
+                                      remainingpaidextensions > 0;
+                                  printnlog(
+                                    "rules:haspaidextensions:${haspaidextensions}",
+                                  );
+                                  var firstlastclass =
+                                      widget.s.LastClass == "TRUE";
+                                  printnlog(
+                                    'rules:firstlastclass:${firstlastclass}',
+                                  );
+                                  var latefee =
+                                      latenotice &&
+                                      !firstlatenotice &&
+                                      !firstlastclass;
+                                  printnlog('rules:latefee:${latefee}');
+                                  // REBOOK + NOT EXTEND
+                                  if (rebook && !extend && hascancellations) {
+                                    if (latefee) {
+                                      printnlog(
+                                        "rules:CONSUME CANCELLATION+LATE NOTICE FEE",
+                                      );
+                                      DialogService.showLateNoticeDialog(
                                         context,
                                         onConfirm: () async {
-                                          await _executeScheduleRequest(
-                                            context,
-                                            scheduleProvider,
-                                            action: "Rebook",
-                                            lateNotic: noticeType,
-                                            preferredSlot:
-                                                combinedPreferredSlot,
+                                          final servicesProvider =
+                                              Provider.of<ServicesProvider>(
+                                                context,
+                                                listen: false,
+                                              );
+                                          final scheduleProvider = context
+                                              .read<ScheduleProvider>();
+                                          servicesProvider.setPaymentType(
+                                            PaymentType.schedulePoints,
                                           );
+
+                                          final vat = 50 * 0.05;
+                                          final amountWithVat = (50 + vat)
+                                              .toInt();
+                                          scheduleProvider.setScheduleRequests(
+                                            subject: widget.s.subject,
+                                            classDateTime: classDateTime,
+                                            action: "Rebook",
+                                            preferredSlot: "",
+                                            lateNotice: latenotice
+                                                ? 'Late'
+                                                : 'Early',
+                                            branch: "${pro.branch}",
+                                            packageId: '${pro.paymentRef}',
+                                            totalamount: "$amountWithVat",
+                                          );
+                                          final success = await servicesProvider
+                                              .startCheckout(
+                                                context,
+                                                amount: amountWithVat,
+                                              );
+                                          if (success &&
+                                              servicesProvider.paymentUrl !=
+                                                  null) {
+                                            final requestReturn =
+                                                await scheduleProvider
+                                                    .submitScheduleRequestAfterPayment(
+                                                      servicesProvider
+                                                          .orderReference!,
+                                                      prints: _log,
+                                                    );
+                                            if (requestReturn) {
+                                              Navigator.pop(context);
+                                              await launchUrl(
+                                                Uri.parse(
+                                                  servicesProvider.paymentUrl!,
+                                                ),
+                                                mode: LaunchMode
+                                                    .externalApplication,
+                                              );
+                                            }
+                                          }
                                         },
                                       );
                                       return;
                                     }
-
-                                    if (noticeType == "Late" && !chargeUser) {
-                                      await _executeScheduleRequest(
+                                    printnlog("rules:CONSUME CANCELLATION");
+                                    DialogService.showConsumeCancellationDialog(
+                                      context,
+                                      onConfirm: () async {
+                                        await _executeScheduleRequest(
+                                          context,
+                                          scheduleProvider,
+                                          action: "Rebook",
+                                          lateNotic: noticeType,
+                                          preferredSlot: combinedPreferredSlot,
+                                          prints: _log,
+                                        );
+                                      },
+                                    );
+                                    return;
+                                  } else if (rebook &&
+                                      !extend &&
+                                      !hascancellations &&
+                                      haspaidcancellations) {
+                                    if (latefee) {
+                                      printnlog(
+                                        "rules:CANCELLATION CHARGED+LATE NOTICE FEE",
+                                      );
+                                      DialogService.showLateNoticeDialog(
                                         context,
-                                        scheduleProvider,
-                                        action: "Reschedule",
-                                        lateNotic: noticeType,
-                                        preferredSlot: combinedPreferredSlot,
+                                        onConfirm: () async {
+                                          final servicesProvider =
+                                              Provider.of<ServicesProvider>(
+                                                context,
+                                                listen: false,
+                                              );
+                                          final scheduleProvider = context
+                                              .read<ScheduleProvider>();
+                                          servicesProvider.setPaymentType(
+                                            PaymentType.schedulePoints,
+                                          );
+
+                                          final vat = 50 * 0.05;
+                                          final amountWithVat = (50 + vat)
+                                              .toInt();
+                                          scheduleProvider.setScheduleRequests(
+                                            subject: widget.s.subject,
+                                            classDateTime: classDateTime,
+                                            action: "Rebook",
+                                            preferredSlot: "",
+                                            lateNotice: latenotice
+                                                ? 'Late'
+                                                : 'Early',
+                                            branch: "${pro.branch}",
+                                            packageId: '${pro.paymentRef}',
+                                            totalamount: "$amountWithVat",
+                                          );
+                                          final success = await servicesProvider
+                                              .startCheckout(
+                                                context,
+                                                amount: amountWithVat,
+                                              );
+                                          if (success &&
+                                              servicesProvider.paymentUrl !=
+                                                  null) {
+                                            final requestReturn =
+                                                await scheduleProvider
+                                                    .submitScheduleRequestAfterPayment(
+                                                      servicesProvider
+                                                          .orderReference!,
+                                                      prints: _log,
+                                                    );
+                                            if (requestReturn) {
+                                              Navigator.pop(context);
+                                              await launchUrl(
+                                                Uri.parse(
+                                                  servicesProvider.paymentUrl!,
+                                                ),
+                                                mode: LaunchMode
+                                                    .externalApplication,
+                                              );
+                                            }
+                                          }
+                                        },
                                       );
                                       return;
                                     }
+                                    printnlog("rules:CANCELLATION CHARGED");
+                                    DialogService.showNotEnoughCancellationPopup(
+                                      context,
+                                      ontap: () async {
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
+                                        );
+                                        final vat = 50 * 0.05;
+                                        final amountWithVat = (50 + vat);
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: combinedPreferredSlot,
+                                          lateNotice: "Early",
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                          totalamount: "${amountWithVat}",
+                                        );
 
-                                    print(
-                                      'pro.remainingExtension ${pro.remainingExtension}',
-                                    );
-                                    if (selectedDate.isAtSameMomentAs(
-                                          expiryDay,
-                                        ) ||
-                                        selectedDate.isAfter(expiryDay)) {
-                                      if (pro.remainingExtension > 0) {
-                                        print('remainingExtension > 0');
-                                        DialogService.showConsumePopup(
-                                          context,
-                                          onConfirm: () async {
-                                            await _executeScheduleRequest(
+                                        final success = await servicesProvider
+                                            .startCheckout(
                                               context,
-                                              scheduleProvider,
-                                              action: "Rebook",
-                                              lateNotic: 'Late',
-                                              preferredSlot:
-                                                  combinedPreferredSlot,
+                                              amount: amountWithVat,
                                             );
-                                          },
-                                        );
-                                        return;
-                                      } else if (widget.s.LastClass == "TRUE") {
-                                        print('widget.s.LastClass');
-                                        DialogService.showNotEnoughExtensionPopup(
-                                          context,
-                                          ontap: () async {
-                                            servicesProvider.setPaymentType(
-                                              PaymentType.schedulePoints,
-                                            );
-
-                                            scheduleProvider
-                                                .setScheduleRequests(
-                                                  subject: widget.s.subject,
-                                                  classDateTime: classDateTime,
-                                                  action: "Rebook",
-                                                  preferredSlot:
-                                                      combinedPreferredSlot,
-                                                  lateNotice: "Late",
-                                                  branch: "${pro.branch}",
-                                                  packageId:
-                                                      '${pro.paymentRef}',
-                                                );
-
-                                            final vat = 50 * 0.05;
-                                            final amountWithVat = (50 + vat);
-
-                                            final success =
-                                                await servicesProvider
-                                                    .startCheckout(
-                                                      context,
-                                                      amount: amountWithVat,
-                                                    );
-
-                                            if (success &&
-                                                servicesProvider.paymentUrl !=
-                                                    null) {
-                                              final requestReturn =
-                                                  await scheduleProvider
-                                                      .submitScheduleRequestAfterPayment(
-                                                        servicesProvider
-                                                            .orderReference!,
-                                                      );
-                                              if (requestReturn) {
-                                                if (Navigator.canPop(context)) {
-                                                  Navigator.pop(context);
-                                                }
-                                                await launchUrl(
-                                                  Uri.parse(
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
                                                     servicesProvider
-                                                        .paymentUrl!,
-                                                  ),
-                                                  mode: LaunchMode
-                                                      .externalApplication,
-                                                );
-                                              }
+                                                        .orderReference!,
+                                                    prints: _log,
+                                                  );
+                                          if (requestReturn) {
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.pop(context);
                                             }
-                                          },
-                                          title:
-                                              'No Extension!\nConsider paying for an extension to move it here?',
-                                          payment: '50',
-                                        );
-                                        return;
-                                      } else {
-                                        print('remainingExtension == 0');
-                                        DialogService.showNotEnoughExtensionPopup(
-                                          context,
-                                          ontap: () async {
-                                            servicesProvider.setPaymentType(
-                                              PaymentType.schedulePoints,
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
                                             );
+                                          }
+                                        }
+                                      },
+                                    );
+                                    return;
+                                  } else if (rebook &&
+                                      !extend &&
+                                      !hascancellations &&
+                                      !haspaidcancellations) {
+                                    printnlog(
+                                      "rules:BLOCKED (NO CANCELLATIONS + NO REMAINING PAID)",
+                                    );
 
-                                            scheduleProvider
-                                                .setScheduleRequests(
-                                                  subject: widget.s.subject,
-                                                  classDateTime: classDateTime,
-                                                  action: "Rebook",
-                                                  preferredSlot:
-                                                      combinedPreferredSlot,
-                                                  lateNotice: "Late",
-                                                  branch: "${pro.branch}",
-                                                  packageId:
-                                                      '${pro.paymentRef}',
-                                                );
+                                    DialogService.showNoMorePaidPopup(
+                                      context,
+                                      onConfirm: () {},
+                                      title:
+                                          'You do not have cancellation allowance! Reschedule to an earlier date to proceed',
+                                    );
+                                    return;
+                                  }
+                                  // REBOOK + EXTEND
+                                  else if (rebook &&
+                                      extend &&
+                                      hasextensions &&
+                                      hascancellations) {
+                                    if (latefee) {
+                                      printnlog(
+                                        "rules:CONSUME EXTENSION + CONSUME CANCELLATION+LATE NOTICE FEE",
+                                      );
+                                      DialogService.showLateNoticeDialog(
+                                        context,
+                                        onConfirm: () async {
+                                          final servicesProvider =
+                                              Provider.of<ServicesProvider>(
+                                                context,
+                                                listen: false,
+                                              );
+                                          final scheduleProvider = context
+                                              .read<ScheduleProvider>();
+                                          servicesProvider.setPaymentType(
+                                            PaymentType.schedulePoints,
+                                          );
 
-                                            final vat = 50 * 0.05;
-                                            // extension
-                                            final amountWithVat = (100 + vat);
-                                            // hit payment api first
-                                            final success =
-                                                await servicesProvider
-                                                    .startCheckout(
-                                                      context,
-                                                      amount: amountWithVat,
+                                          final vat = 50 * 0.05;
+                                          final amountWithVat = (50 + vat)
+                                              .toInt();
+                                          scheduleProvider.setScheduleRequests(
+                                            subject: widget.s.subject,
+                                            classDateTime: classDateTime,
+                                            action: "Rebook",
+                                            preferredSlot: "",
+                                            lateNotice: latenotice
+                                                ? 'Late'
+                                                : 'Early',
+                                            branch: "${pro.branch}",
+                                            packageId: '${pro.paymentRef}',
+                                            totalamount: "$amountWithVat",
+                                          );
+                                          final success = await servicesProvider
+                                              .startCheckout(
+                                                context,
+                                                amount: amountWithVat,
+                                              );
+                                          if (success &&
+                                              servicesProvider.paymentUrl !=
+                                                  null) {
+                                            final requestReturn =
+                                                await scheduleProvider
+                                                    .submitScheduleRequestAfterPayment(
+                                                      servicesProvider
+                                                          .orderReference!,
+                                                      prints: _log,
                                                     );
-                                            //then hit the submitSchedule
-
-                                            if (success &&
-                                                servicesProvider.paymentUrl !=
-                                                    null) {
-                                              final requestReturn =
-                                                  await scheduleProvider
-                                                      .submitScheduleRequestAfterPayment(
-                                                        servicesProvider
-                                                            .orderReference!,
-                                                      );
-                                              if (requestReturn) {
-                                                if (Navigator.canPop(context)) {
-                                                  Navigator.pop(context);
-                                                }
-                                                await launchUrl(
-                                                  Uri.parse(
-                                                    servicesProvider
-                                                        .paymentUrl!,
-                                                  ),
-                                                  mode: LaunchMode
-                                                      .externalApplication,
-                                                );
-                                              }
+                                            if (requestReturn) {
+                                              Navigator.pop(context);
+                                              await launchUrl(
+                                                Uri.parse(
+                                                  servicesProvider.paymentUrl!,
+                                                ),
+                                                mode: LaunchMode
+                                                    .externalApplication,
+                                              );
                                             }
-                                          },
-                                          title:
-                                              "Late notice!\nReschedule earlier to avoid recovery and extension fee.",
-                                          payment: '100',
-                                        );
-                                        return;
-                                      }
+                                          }
+                                        },
+                                      );
+                                      return;
                                     }
-                                  } else if (widget.s.RemainingCancellations ==
-                                          0 &&
-                                      selectedDate.isAfter(scheduledDay)) {
-                                    if (widget.s.RemainingCancellations == 0 &&
-                                        pro.remainingExtension == 0) {
+                                    printnlog(
+                                      "rules:CONSUME EXTENSION + CONSUME CANCELLATION",
+                                    );
+                                    DialogService.showConsumeCancellationDialog(
+                                      context,
+                                      onConfirm: () async {
+                                        await _executeScheduleRequest(
+                                          context,
+                                          scheduleProvider,
+                                          action: "Rebook",
+                                          lateNotic: noticeType,
+                                          preferredSlot: combinedPreferredSlot,
+                                          prints: _log,
+                                        );
+                                      },
+                                    );
+                                    return;
+                                  } else if (rebook &&
+                                      extend &&
+                                      hasextensions &&
+                                      !hascancellations &&
+                                      haspaidcancellations) {
+                                    if (latefee) {
+                                      printnlog(
+                                        "rules:CONSUME EXTENSION + CANCELLATION CHARGED+LATE NOTICE FEE",
+                                      );
+                                      DialogService.showLateNoticeDialog(
+                                        context,
+                                        onConfirm: () async {
+                                          final servicesProvider =
+                                              Provider.of<ServicesProvider>(
+                                                context,
+                                                listen: false,
+                                              );
+                                          final scheduleProvider = context
+                                              .read<ScheduleProvider>();
+                                          servicesProvider.setPaymentType(
+                                            PaymentType.schedulePoints,
+                                          );
+
+                                          final vat = 50 * 0.05;
+                                          final amountWithVat = (50 + vat)
+                                              .toInt();
+                                          scheduleProvider.setScheduleRequests(
+                                            subject: widget.s.subject,
+                                            classDateTime: classDateTime,
+                                            action: "Rebook",
+                                            preferredSlot: "",
+                                            lateNotice: latenotice
+                                                ? 'Late'
+                                                : 'Early',
+                                            branch: "${pro.branch}",
+                                            packageId: '${pro.paymentRef}',
+                                            totalamount: "$amountWithVat",
+                                          );
+                                          final success = await servicesProvider
+                                              .startCheckout(
+                                                context,
+                                                amount: amountWithVat,
+                                              );
+                                          if (success &&
+                                              servicesProvider.paymentUrl !=
+                                                  null) {
+                                            final requestReturn =
+                                                await scheduleProvider
+                                                    .submitScheduleRequestAfterPayment(
+                                                      servicesProvider
+                                                          .orderReference!,
+                                                      prints: _log,
+                                                    );
+                                            if (requestReturn) {
+                                              Navigator.pop(context);
+                                              await launchUrl(
+                                                Uri.parse(
+                                                  servicesProvider.paymentUrl!,
+                                                ),
+                                                mode: LaunchMode
+                                                    .externalApplication,
+                                              );
+                                            }
+                                          }
+                                        },
+                                      );
+                                      return;
+                                    }
+                                    printnlog(
+                                      "rules:CONSUME EXTENSION + CANCELLATION CHARGED",
+                                    );
+                                    DialogService.showNotEnoughCancellationPopup(
+                                      context,
+                                      ontap: () async {
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
+                                        );
+                                        final vat = 50 * 0.05;
+                                        final amountWithVat = (50 + vat);
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: combinedPreferredSlot,
+                                          lateNotice: "Early",
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                          totalamount: "${amountWithVat}",
+                                        );
+
+                                        final success = await servicesProvider
+                                            .startCheckout(
+                                              context,
+                                              amount: amountWithVat,
+                                            );
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
+                                                    servicesProvider
+                                                        .orderReference!,
+                                                    prints: _log,
+                                                  );
+                                          if (requestReturn) {
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.pop(context);
+                                            }
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        }
+                                      },
+                                    );
+                                    return;
+                                  } else if (rebook &&
+                                      extend &&
+                                      hasextensions &&
+                                      !hascancellations &&
+                                      !haspaidcancellations) {
+                                    printnlog(
+                                      "rules:BLOCKED (NEED CANCELLATION CHARGE BUT NO REMAINING PAID)",
+                                    );
+                                    DialogService.showNoMorePaidPopup(
+                                      context,
+                                      onConfirm: () {},
+                                      title:
+                                          "You do not have cancellation allowance! Reschedule to an earlier date to proceed",
+                                    );
+                                    return;
+                                  } else if (rebook &&
+                                      extend &&
+                                      !hasextensions &&
+                                      hascancellations &&
+                                      haspaidextensions) {
+                                    if (latefee) {
+                                      printnlog(
+                                        "rules:EXTENSION CHARGED + CONSUME CANCELLATION+LATE NOTICE FEE",
+                                      );
                                       DialogService.showNotEnoughExtensionPopup(
                                         context,
                                         ontap: () async {
                                           servicesProvider.setPaymentType(
                                             PaymentType.schedulePoints,
                                           );
-
+                                          final double amount = 100.0;
+                                          final double vat = amount * 0.05;
+                                          final double amountWithVat =
+                                              amount + vat;
                                           scheduleProvider.setScheduleRequests(
                                             subject: widget.s.subject,
                                             classDateTime: classDateTime,
@@ -654,11 +870,642 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                             lateNotice: "Late",
                                             branch: "${pro.branch}",
                                             packageId: '${pro.paymentRef}',
+                                            totalamount: "$amountWithVat",
                                           );
 
-                                          final vat = 50 * 0.05;
-                                          // extension
-                                          final amountWithVat = (100 + vat);
+                                          // hit payment api first
+                                          final success = await servicesProvider
+                                              .startCheckout(
+                                                context,
+                                                amount: amountWithVat,
+                                              );
+                                          //then hit the submitSchedule
+
+                                          if (success &&
+                                              servicesProvider.paymentUrl !=
+                                                  null) {
+                                            final requestReturn =
+                                                await scheduleProvider
+                                                    .submitScheduleRequestAfterPayment(
+                                                      servicesProvider
+                                                          .orderReference!,
+                                                      prints: _log,
+                                                    );
+                                            if (requestReturn) {
+                                              if (Navigator.canPop(context)) {
+                                                Navigator.pop(context);
+                                              }
+                                              await launchUrl(
+                                                Uri.parse(
+                                                  servicesProvider.paymentUrl!,
+                                                ),
+                                                mode: LaunchMode
+                                                    .externalApplication,
+                                              );
+                                            }
+                                          }
+                                        },
+                                        title:
+                                            "Late notice!\nReschedule earlier to avoid recovery and extension fee.",
+                                        payment: '100',
+                                      );
+                                      return;
+                                    }
+                                    printnlog(
+                                      "rules:EXTENSION CHARGED + CONSUME CANCELLATION",
+                                    );
+                                    DialogService.showNotEnoughExtensionPopup(
+                                      context,
+                                      ontap: () async {
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
+                                        );
+                                        final vat = 50 * 0.05;
+                                        final amountWithVat = (50 + vat);
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: combinedPreferredSlot,
+                                          lateNotice: "Late",
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                          totalamount: "$amountWithVat",
+                                        );
+
+                                        final success = await servicesProvider
+                                            .startCheckout(
+                                              context,
+                                              amount: amountWithVat,
+                                            );
+
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
+                                                    servicesProvider
+                                                        .orderReference!,
+                                                    prints: _log,
+                                                  );
+                                          if (requestReturn) {
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.pop(context);
+                                            }
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        }
+                                      },
+                                      title:
+                                          'Booking is beyond your package expiry. An extension fee will apply. Consider rescheduling to an earlier date.',
+                                      payment: '50',
+                                    );
+                                    return;
+                                  } else if (rebook &&
+                                      extend &&
+                                      !hasextensions &&
+                                      hascancellations &&
+                                      !haspaidextensions) {
+                                    printnlog(
+                                      "rules:BLOCKED (NEED EXTENSION CHARGE BUT NO REMAINING PAID)",
+                                    );
+                                    DialogService.showNoMorePaidPopup(
+                                      context,
+                                      onConfirm: () {},
+                                      title:
+                                          "This date is beyond your package expiry. Please select an earlier date to continue",
+                                    );
+                                    return;
+                                  } else if (rebook &&
+                                      extend &&
+                                      !hasextensions &&
+                                      !hascancellations &&
+                                      haspaidcancellations &&
+                                      haspaidextensions) {
+                                    if (latefee) {
+                                      printnlog(
+                                        "rules:CANCELLATION & EXTENSION CHARGED+LATE NOTICE FEE",
+                                      );
+                                      DialogService.showNotEnoughExtensionPopup(
+                                        context,
+                                        ontap: () async {
+                                          servicesProvider.setPaymentType(
+                                            PaymentType.schedulePoints,
+                                          );
+                                          final double amount = 100.0;
+                                          final double vat = amount * 0.05;
+                                          final double amountWithVat =
+                                              amount + vat;
+                                          scheduleProvider.setScheduleRequests(
+                                            subject: widget.s.subject,
+                                            classDateTime: classDateTime,
+                                            action: "Rebook",
+                                            preferredSlot:
+                                                combinedPreferredSlot,
+                                            lateNotice: "Late",
+                                            branch: "${pro.branch}",
+                                            packageId: '${pro.paymentRef}',
+                                            totalamount: "$amountWithVat",
+                                          );
+
+                                          // hit payment api first
+                                          final success = await servicesProvider
+                                              .startCheckout(
+                                                context,
+                                                amount: amountWithVat,
+                                              );
+                                          //then hit the submitSchedule
+
+                                          if (success &&
+                                              servicesProvider.paymentUrl !=
+                                                  null) {
+                                            final requestReturn =
+                                                await scheduleProvider
+                                                    .submitScheduleRequestAfterPayment(
+                                                      servicesProvider
+                                                          .orderReference!,
+                                                      prints: _log,
+                                                    );
+                                            if (requestReturn) {
+                                              if (Navigator.canPop(context)) {
+                                                Navigator.pop(context);
+                                              }
+                                              await launchUrl(
+                                                Uri.parse(
+                                                  servicesProvider.paymentUrl!,
+                                                ),
+                                                mode: LaunchMode
+                                                    .externalApplication,
+                                              );
+                                            }
+                                          }
+                                        },
+                                        title:
+                                            "Late notice!\nReschedule earlier to avoid recovery and extension fee.",
+                                        payment: '100',
+                                      );
+                                      return;
+                                    }
+                                    printnlog(
+                                      "rules:CANCELLATION & EXTENSION CHARGED",
+                                    );
+                                    DialogService.showNotEnoughExtensionPopup(
+                                      context,
+                                      ontap: () async {
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
+                                        );
+                                        final double amount = 100.0;
+                                        final double vat = amount * 0.05;
+                                        final double amountWithVat =
+                                            amount + vat;
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: combinedPreferredSlot,
+                                          lateNotice: "Late",
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                          totalamount: "$amountWithVat",
+                                        );
+
+                                        // hit payment api first
+                                        final success = await servicesProvider
+                                            .startCheckout(
+                                              context,
+                                              amount: amountWithVat,
+                                            );
+                                        //then hit the submitSchedule
+
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
+                                                    servicesProvider
+                                                        .orderReference!,
+                                                    prints: _log,
+                                                  );
+                                          if (requestReturn) {
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.pop(context);
+                                            }
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        }
+                                      },
+                                      title:
+                                          "You do not have cancellation allowance or extension!\nReschedule earlier to avoid recovery and extension fee.",
+                                      payment: '100',
+                                    );
+                                    return;
+                                  } else if (rebook &&
+                                      extend &&
+                                      !hasextensions &&
+                                      !hascancellations &&
+                                      haspaidcancellations &&
+                                      !haspaidextensions) {
+                                    printnlog(
+                                      "rules:CANCELLATION CHARGED (NO EXTENSION AVAILABLE)",
+                                    );
+                                    DialogService.showNoMorePaidPopup(
+                                      context,
+                                      onConfirm: () {},
+                                      title:
+                                          "This date is beyond your package expiry. Please select an earlier date to continue",
+                                    );
+                                    return;
+                                    // your cancellation payment logic here
+                                  } else if (rebook &&
+                                      extend &&
+                                      !hasextensions &&
+                                      !hascancellations &&
+                                      !haspaidcancellations &&
+                                      haspaidextensions) {
+                                    printnlog(
+                                      "rules:CANCELLATION CHARGED (NO CANCELLATION AVAILABLE)",
+                                    );
+                                    DialogService.showNoMorePaidPopup(
+                                      context,
+                                      onConfirm: () {},
+                                      title:
+                                          "You do not have cancellation allowance! Reschedule to an earlier date to proceed",
+                                    );
+                                    return;
+                                    // your cancellation payment logic here
+                                  } else if (rebook &&
+                                      extend &&
+                                      !hasextensions &&
+                                      !hascancellations &&
+                                      !haspaidcancellations &&
+                                      !haspaidextensions) {
+                                    printnlog(
+                                      "rules:BLOCKED (NEED DOUBLE CHARGE BUT NO REMAINING PAID)",
+                                    );
+                                    DialogService.showNoMorePaidPopup(
+                                      context,
+                                      onConfirm: () {},
+                                      title:
+                                          "You do not have cancellation allowance! Reschedule to an earlier date to proceed",
+                                    );
+                                    return;
+                                  }
+                                  // FALLBACK
+                                  else {
+                                    printnlog("rules:RESCHEDULE");
+                                    await _executeScheduleRequest(
+                                      context,
+                                      scheduleProvider,
+                                      action: "Reschedule",
+                                      lateNotic: noticeType,
+                                      preferredSlot: combinedPreferredSlot,
+                                      prints: _log,
+                                    );
+                                    return;
+                                  }
+                                  /*
+
+                                  // LATE NOTICE CHARGED:
+                                  if (latenotice &&
+                                      rebook &&
+                                      !extend &&
+                                      !firstlatenotice) {
+                                    print('rules:LATE NOTICE CHARGED');
+                                    DialogService.showLateNoticeDialog(
+                                      context,
+                                      onConfirm: () async {
+                                        final servicesProvider =
+                                            Provider.of<ServicesProvider>(
+                                              context,
+                                              listen: false,
+                                            );
+                                        final scheduleProvider = context
+                                            .read<ScheduleProvider>();
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
+                                        );
+
+                                        final vat = 50 * 0.05;
+                                        final amountWithVat = (50 + vat)
+                                            .toInt();
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: "",
+                                          lateNotice: latenotice
+                                              ? 'Late'
+                                              : 'Early',
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                          totalamount: "$amountWithVat",
+                                        );
+                                        final success = await servicesProvider
+                                            .startCheckout(
+                                              context,
+                                              amount: amountWithVat,
+                                            );
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
+                                                    servicesProvider
+                                                        .orderReference!,
+                                                  );
+                                          if (requestReturn) {
+                                            Navigator.pop(context);
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        }
+                                      },
+                                    );
+                                    return;
+                                  }
+                                  // CONSUME CANCELLATION:
+                                  else if ((!latenotice || firstlatenotice) &&
+                                      hascancellations &&
+                                      rebook &&
+                                      (!extend || !hasextensions)) {
+                                    print("rules:CONSUME CANCELLATION");
+                                    DialogService.showConsumeCancellationDialog(
+                                      context,
+                                      onConfirm: () async {
+                                        await _executeScheduleRequest(
+                                          context,
+                                          scheduleProvider,
+                                          action: "Rebook",
+                                          lateNotic: noticeType,
+                                          preferredSlot: combinedPreferredSlot,
+                                        );
+                                      },
+                                    );
+                                    return;
+                                  }
+                                  // CANCELLAITON CHARGED:
+                                  else if ((!latenotice || firstlatenotice) &&
+                                      rebook &&
+                                      !hascancellations &&
+                                      (!extend || hasextensions)) {
+                                    print("rules:CANCELLAITON CHARGED");
+                                    DialogService.showNotEnoughCancellationPopup(
+                                      context,
+                                      ontap: () async {
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
+                                        );
+                                        final vat = 50 * 0.05;
+                                        final amountWithVat = (50 + vat);
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: combinedPreferredSlot,
+                                          lateNotice: "Early",
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                          totalamount: "${amountWithVat}",
+                                        );
+
+                                        final success = await servicesProvider
+                                            .startCheckout(
+                                              context,
+                                              amount: amountWithVat,
+                                            );
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
+                                                    servicesProvider
+                                                        .orderReference!,
+                                                  );
+                                          if (requestReturn) {
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.pop(context);
+                                            }
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        }
+                                      },
+                                    );
+                                    return;
+                                  }
+                                  // CONSUME EXTENSION:
+                                  else if (extend &&
+                                      hasextensions &&
+                                      !hascancellations) {
+                                    print('rules:CONSUME EXTENSION');
+                                    DialogService.showConsumePopup(
+                                      context,
+                                      onConfirm: () async {
+                                        await _executeScheduleRequest(
+                                          context,
+                                          scheduleProvider,
+                                          action: "Rebook",
+                                          lateNotic: noticeType,
+                                          preferredSlot: combinedPreferredSlot,
+                                        );
+                                      },
+                                    );
+                                    return;
+                                  }
+                                  // EXTENSION CHARGED:
+                                  else if (extend &&
+                                      !hasextensions &&
+                                      hascancellations) {
+                                    print("rules:EXTENSION CHARGED");
+                                    DialogService.showNotEnoughExtensionPopup(
+                                      context,
+                                      ontap: () async {
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
+                                        );
+                                        final vat = 50 * 0.05;
+                                        final amountWithVat = (50 + vat);
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: combinedPreferredSlot,
+                                          lateNotice: "Late",
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                          totalamount: "$amountWithVat",
+                                        );
+
+                                        final success = await servicesProvider
+                                            .startCheckout(
+                                              context,
+                                              amount: amountWithVat,
+                                            );
+
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
+                                                    servicesProvider
+                                                        .orderReference!,
+                                                  );
+                                          if (requestReturn) {
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.pop(context);
+                                            }
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        }
+                                      },
+                                      title:
+                                          'No Extension!\nConsider paying for an extension to move it here?',
+                                      payment: '50',
+                                    );
+                                    return;
+                                  }
+                                  // CANCELLATION & EXTENSION CHARGED:
+                                  else if (extend &&
+                                      !hasextensions &&
+                                      !hascancellations) {
+                                    print(
+                                      "rules:CANCELLATION & EXTENSION CHARGED",
+                                    );
+                                    DialogService.showNotEnoughExtensionPopup(
+                                      context,
+                                      ontap: () async {
+                                        servicesProvider.setPaymentType(
+                                          PaymentType.schedulePoints,
+                                        );
+                                        final double amount = 100.0;
+                                        final double vat = amount * 0.05;
+                                        final double amountWithVat =
+                                            amount + vat;
+                                        scheduleProvider.setScheduleRequests(
+                                          subject: widget.s.subject,
+                                          classDateTime: classDateTime,
+                                          action: "Rebook",
+                                          preferredSlot: combinedPreferredSlot,
+                                          lateNotice: "Late",
+                                          branch: "${pro.branch}",
+                                          packageId: '${pro.paymentRef}',
+                                          totalamount: "$amountWithVat",
+                                        );
+
+                                        // hit payment api first
+                                        final success = await servicesProvider
+                                            .startCheckout(
+                                              context,
+                                              amount: amountWithVat,
+                                            );
+                                        //then hit the submitSchedule
+
+                                        if (success &&
+                                            servicesProvider.paymentUrl !=
+                                                null) {
+                                          final requestReturn =
+                                              await scheduleProvider
+                                                  .submitScheduleRequestAfterPayment(
+                                                    servicesProvider
+                                                        .orderReference!,
+                                                  );
+                                          if (requestReturn) {
+                                            if (Navigator.canPop(context)) {
+                                              Navigator.pop(context);
+                                            }
+                                            await launchUrl(
+                                              Uri.parse(
+                                                servicesProvider.paymentUrl!,
+                                              ),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          }
+                                        }
+                                      },
+                                      title:
+                                          "Late notice!\nReschedule earlier to avoid recovery and extension fee.",
+                                      payment: '100',
+                                    );
+                                    return;
+                                  }
+                                  // BLOCKED:
+                                  // RESCHEUDLE:
+                                  else {
+                                    print("rules:RESCHEDULE");
+                                    await _executeScheduleRequest(
+                                      context,
+                                      scheduleProvider,
+                                      action: "Reschedule",
+                                      lateNotic: noticeType,
+                                      preferredSlot: combinedPreferredSlot,
+                                    );
+                                    return;
+                                  }
+*/
+                                  /*
+                                   if (widget.s.RemainingCancellations ==
+                                          0 &&
+                                      selectedDate.isAfter(scheduledDay)) {
+                                    // in case if user had both remaining cancelation and remaining extension is ZERO
+                                    if (widget.s.RemainingCancellations == 0 &&
+                                        pro.remainingExtension == 0) {
+                                      DialogService.showNotEnoughExtensionPopup(
+                                        context,
+                                        ontap: () async {
+                                          servicesProvider.setPaymentType(
+                                            PaymentType.schedulePoints,
+                                          );
+                                          final double amount = 100.0;
+                                          final double vat = amount * 0.05;
+                                          final double amountWithVat =
+                                              amount + vat;
+                                          scheduleProvider.setScheduleRequests(
+                                            subject: widget.s.subject,
+                                            classDateTime: classDateTime,
+                                            action: "Rebook",
+                                            preferredSlot:
+                                                combinedPreferredSlot,
+                                            lateNotice: "Late",
+                                            branch: "${pro.branch}",
+                                            packageId: '${pro.paymentRef}',
+                                            totalamount: "${amountWithVat}",
+                                          );
+
                                           print('amountWithVat $amountWithVat');
                                           final success = await servicesProvider
                                               .startCheckout(
@@ -702,7 +1549,8 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                         servicesProvider.setPaymentType(
                                           PaymentType.schedulePoints,
                                         );
-
+                                        final vat = 50 * 0.05;
+                                        final amountWithVat = (50 + vat);
                                         scheduleProvider.setScheduleRequests(
                                           subject: widget.s.subject,
                                           classDateTime: classDateTime,
@@ -711,10 +1559,8 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                           lateNotice: "Early",
                                           branch: "${pro.branch}",
                                           packageId: '${pro.paymentRef}',
+                                          totalamount: "${amountWithVat}",
                                         );
-
-                                        final vat = 50 * 0.05;
-                                        final amountWithVat = (50 + vat);
 
                                         final success = await servicesProvider
                                             .startCheckout(
@@ -746,28 +1592,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                       },
                                     );
                                     return;
-                                  } else {
-                                    print('else');
-                                    await _executeScheduleRequest(
-                                      context,
-                                      scheduleProvider,
-                                      action: "Reschedule",
-                                      lateNotic: noticeType,
-                                      preferredSlot: combinedPreferredSlot,
-                                    );
-                                    return;
-                                  }
-
-                                  // =========================
-                                  // 🟢 CASE 3: EARLY → ALWAYS FREE
-                                  // =========================
-                                  await _executeScheduleRequest(
-                                    context,
-                                    scheduleProvider,
-                                    action: "Reschedule",
-                                    lateNotic: noticeType,
-                                    preferredSlot: combinedPreferredSlot,
-                                  );
+                                  } */
                                 },
                           child: scheduleProvider.isLoading
                               ? CircularProgressIndicator(color: Colors.black)
@@ -775,26 +1600,23 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                   "Select this time",
                                   style: TextStyle(
                                     color: Colors.black,
+                                    fontSize: 14.fSize,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                         ),
                       ),
-                      SizedBox(height: 10),
+                      SizedBox(height: 10.h),
 
                       Consumer<ScheduleProvider>(
                         builder: (context, provider, child) {
                           return SizedBox(
                             width: double.infinity,
-                            height: 50,
+                            height: 50.h,
                             child: OutlinedButton(
                               style: ButtonStyle(
                                 side: WidgetStatePropertyAll(
-                                  BorderSide(
-                                    color: Colors.black,
-
-                                    // width: 2,
-                                  ),
+                                  BorderSide(color: Colors.black),
                                 ),
                               ),
                               onPressed: () async {
@@ -842,34 +1664,133 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                 final classDateTime = formatStringToApiDate(
                                   widget.s.bookingDateStartTime,
                                 );
+                                var remainingcancellations =
+                                    pro.remainingCancellations;
+
+                                var remainingpaidcancellations =
+                                    pro.packageRemainingPaidRecovery;
+
+                                var latenotice = today.isAtSameMomentAs(
+                                  scheduledDay,
+                                );
+                                de.log('START');
+                                printnlog("rules:latenotice:${latenotice}");
+                                var firstlatenotice = false;
+                                // widget.s.firstLateCancelDone != null;
+                                printnlog(
+                                  "rules:firstlatenotice:${firstlatenotice}",
+                                );
+                                var hascancellations =
+                                    remainingcancellations > 0;
+                                printnlog(
+                                  "rules:hascancellations:${hascancellations}",
+                                );
+
+                                var haspaidcancellations =
+                                    remainingpaidcancellations > 0;
+                                printnlog(
+                                  "rules:haspaidcancellations:${haspaidcancellations}",
+                                );
+
+                                var firstlastclass =
+                                    widget.s.LastClass == "TRUE";
+                                printnlog(
+                                  'rules:firstlastclass:${firstlastclass}',
+                                );
+                                var latefee =
+                                    latenotice &&
+                                    !firstlatenotice &&
+                                    !firstlastclass;
+                                printnlog('rules:latefee:${latefee}');
                                 // --- FIX 2 & 3: LATE NOTICE & RESTRICTION LOGIC ---
-                                if (pro.remainingExtension <= 0) {
-                                  DialogService.showNotEnoughExtensionPopup(
+                                // if (haspaidextensions && !hasextensions  <= 0) {
+                                //   DialogService.showNotEnoughExtensionPopup(
+                                //     context,
+                                //     ontap: () async {
+                                //       servicesProvider.setPaymentType(
+                                //         PaymentType.schedulePoints,
+                                //       );
+                                //       final vat = 50 * 0.05;
+                                //       final amountWithVat = (50 + vat);
+                                //       scheduleProvider.setScheduleRequests(
+                                //         subject: widget.s.subject,
+                                //         classDateTime: classDateTime,
+                                //         action: "Rebook",
+                                //         preferredSlot: '',
+                                //         lateNotice: 'Late',
+                                //         branch: "${pro.branch}",
+                                //         packageId: '${pro.paymentRef}',
+                                //         totalamount: "${amountWithVat}",
+                                //       );
+                                //       final success = await servicesProvider
+                                //           .startCheckout(
+                                //             context,
+                                //             amount: amountWithVat,
+                                //           );
+                                //       if (success &&
+                                //           servicesProvider.paymentUrl != null) {
+                                //         final requestReturn =
+                                //             await scheduleProvider
+                                //                 .submitScheduleRequestAfterPayment(
+                                //                   servicesProvider
+                                //                       .orderReference!,
+                                //                   prints: _log,
+                                //                 );
+                                //         if (requestReturn) {
+                                //           if (Navigator.canPop(context)) {
+                                //             Navigator.pop(context);
+                                //           }
+                                //           await launchUrl(
+                                //             Uri.parse(
+                                //               servicesProvider.paymentUrl!,
+                                //             ),
+                                //             mode:
+                                //                 LaunchMode.externalApplication,
+                                //           );
+                                //         }
+                                //       }
+                                //     },
+                                //     title:
+                                //         'No Extension!\nConsider paying for an extension to move it here?',
+                                //     payment: '50',
+                                //   );
+                                //   return;
+                                // }
+
+                                if (latefee && haspaidcancellations) {
+                                  DialogService.showLateNoticeDialog(
                                     context,
-                                    ontap: () async {
+                                    onConfirm: () async {
+                                      final servicesProvider =
+                                          Provider.of<ServicesProvider>(
+                                            context,
+                                            listen: false,
+                                          );
+                                      final scheduleProvider = context
+                                          .read<ScheduleProvider>();
                                       servicesProvider.setPaymentType(
                                         PaymentType.schedulePoints,
                                       );
 
+                                      final vat = 50 * 0.05;
+                                      final amountWithVat = (50 + vat).toInt();
                                       scheduleProvider.setScheduleRequests(
                                         subject: widget.s.subject,
                                         classDateTime: classDateTime,
                                         action: "Rebook",
-                                        preferredSlot: '',
-                                        lateNotice: 'Late',
+                                        preferredSlot: "",
+                                        lateNotice: today == scheduledDay
+                                            ? 'Late'
+                                            : 'Early',
                                         branch: "${pro.branch}",
                                         packageId: '${pro.paymentRef}',
+                                        totalamount: "$amountWithVat",
                                       );
-
-                                      final vat = 50 * 0.05;
-                                      final amountWithVat = (50 + vat);
-
                                       final success = await servicesProvider
                                           .startCheckout(
                                             context,
                                             amount: amountWithVat,
                                           );
-
                                       if (success &&
                                           servicesProvider.paymentUrl != null) {
                                         final requestReturn =
@@ -877,11 +1798,10 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                                 .submitScheduleRequestAfterPayment(
                                                   servicesProvider
                                                       .orderReference!,
+                                                  prints: _log,
                                                 );
                                         if (requestReturn) {
-                                          if (Navigator.canPop(context)) {
-                                            Navigator.pop(context);
-                                          }
+                                          Navigator.pop(context);
                                           await launchUrl(
                                             Uri.parse(
                                               servicesProvider.paymentUrl!,
@@ -892,35 +1812,24 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                         }
                                       }
                                     },
-                                    title:
-                                        'No Extension!\nConsider paying for an extension to move it here?',
-                                    payment: '50',
                                   );
-
-                                  return;
-                                }
-                                if (today == scheduledDay) {
-                                  DialogService.showLateNoticeDialog(context);
                                   return;
                                 }
 
                                 // --- 1: For remaining cancellations ---
-                                if (widget.s.RemainingCancellations != 0) {
+                                if (hascancellations) {
                                   DialogService.showConsumeCancellationDialog(
                                     context,
                                     onConfirm: () async {
                                       await provider
                                           .submitScheduleRequest(
                                             subject: widget.s.subject,
-                                            // ✅ Manager's requirement: Use the ORIGINAL class date here
                                             classDateTime: classDateTime,
                                             action: 'Unbooked',
-                                            // Empty because it's "Schedule Later"
                                             preferredSlot: "",
                                             reason: '',
                                             branch: '${pro.branch}',
                                             packageid: '${pro.paymentRef}',
-                                            // Pass 'Late' or 'Early' so the API knows which rule to apply
                                             lateNotic: today == scheduledDay
                                                 ? 'Late'
                                                 : 'Early',
@@ -935,14 +1844,15 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                     },
                                   );
                                   return;
-                                } else {
+                                } else if (haspaidcancellations) {
                                   DialogService.showNotEnoughCancellationPopup(
                                     context,
                                     ontap: () async {
                                       servicesProvider.setPaymentType(
                                         PaymentType.schedulePoints,
                                       );
-
+                                      final vat = 50 * 0.05;
+                                      final amountWithVat = (50 + vat);
                                       scheduleProvider.setScheduleRequests(
                                         subject: widget.s.subject,
                                         classDateTime: classDateTime,
@@ -953,10 +1863,8 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                             : 'Early',
                                         branch: "${pro.branch}",
                                         packageId: '${pro.paymentRef}',
+                                        totalamount: "$amountWithVat",
                                       );
-
-                                      final vat = 50 * 0.05;
-                                      final amountWithVat = (50 + vat);
 
                                       final success = await servicesProvider
                                           .startCheckout(
@@ -971,6 +1879,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                                 .submitScheduleRequestAfterPayment(
                                                   servicesProvider
                                                       .orderReference!,
+                                                  prints: _log,
                                                 );
                                         if (requestReturn) {
                                           if (Navigator.canPop(context)) {
@@ -988,16 +1897,28 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                     },
                                   );
                                   return;
+                                } else {
+                                  DialogService.showNoMorePaidPopup(
+                                    context,
+                                    onConfirm: () {},
+                                    title:
+                                        "You do not have cancellation allowance! Reschedule to an earlier date to proceed",
+                                  );
+                                  return;
                                 }
                               },
                               child: Text(
                                 "Decide later",
-                                style: TextStyle(color: Colors.black),
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16.fSize,
+                                ),
                               ),
                             ),
                           );
                         },
                       ),
+                      SizedBox(height: 10.h),
                     ],
                   ),
                 );
@@ -1014,7 +1935,7 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
       child: _isLoading
           ? Center(child: CircularProgressIndicator())
           : ListView(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               children: [
                 // --- 2. LIST OF TEACHERS ---
                 ..._slots.asMap().entries.map((entry) {
@@ -1044,18 +1965,18 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                               '${teacher.fullname}',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 8.h),
                             if (teacher.slots.isEmpty)
                               Text(
                                 "No slots available",
                                 style: TextStyle(
                                   color: Colors.grey,
-                                  fontSize: 12,
+                                  fontSize: 12.fSize,
                                 ),
                               )
                             else
                               Wrap(
-                                spacing: 5,
+                                spacing: 5.adaptSize,
                                 children: teacher.slots.map((slotTime) {
                                   final isSelected =
                                       _selectedTeacherId == teacher.id &&
@@ -1074,8 +1995,10 @@ class _RescheduleScreenState extends State<RescheduleScreen> {
                                       });
                                     },
                                     child: Chip(
-                                      padding: EdgeInsets.all(0),
-                                      label: Text(slotTime),
+                                      label: Text(
+                                        slotTime,
+                                        style: TextStyle(fontSize: 12.fSize),
+                                      ),
                                       backgroundColor: isSelected
                                           ? Colors.orange[100]
                                           : Colors.grey[100],

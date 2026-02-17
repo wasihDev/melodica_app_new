@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/dance_data_model.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 
 class PackageWidgetCard extends StatelessWidget {
   final DanceDataModel package;
@@ -44,7 +45,7 @@ class PackageWidgetCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 15),
+                  SizedBox(height: 15.h),
                   // Text(
                   //   package.packageName,
                   //   style: const TextStyle(
@@ -54,19 +55,25 @@ class PackageWidgetCard extends StatelessWidget {
                   // ),
                   Text(
                     packageDisplay,
-                    style: const TextStyle(
-                      fontSize: 24,
+                    style: TextStyle(
+                      fontSize: 24.fSize,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     "Cancellation: ${package.cancellations == null ? 0 : package.cancellations}Times",
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]!),
+                    style: TextStyle(
+                      fontSize: 14.fSize,
+                      color: Colors.grey[600]!,
+                    ),
                   ),
                   Text(
                     "Freezing: ${package.freezings == null ? 0 : package.freezings}",
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]!),
+                    style: TextStyle(
+                      fontSize: 14.fSize,
+                      color: Colors.grey[600]!,
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -113,6 +120,7 @@ class PackageWidgetCard extends StatelessWidget {
                                     "OFF",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 16.fSize,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -149,24 +157,28 @@ class PackageWidgetCard extends StatelessWidget {
                       // mainAxisAlignment: MainAxisAlignment.end,
                       // crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Row(
                           children: [
-                            SvgPicture.asset('assets/svg/dirham.svg'),
+                            SvgPicture.asset(
+                              'assets/svg/dirham.svg',
+                              height: 14.h,
+                              width: 14.w,
+                            ),
                             Text(
                               ' ${package.price}', // Using the currency symbol from the image
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 18.fSize,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Text(
                           '$perClassCost per Class',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 12.fSize,
                             color: Colors.grey.shade600,
                           ),
                         ),

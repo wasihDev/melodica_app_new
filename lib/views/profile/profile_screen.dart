@@ -5,6 +5,7 @@ import 'package:melodica_app_new/providers/auth_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/views/profile/delete_screen.dart';
 import 'package:melodica_app_new/views/profile/packages/packages_screen.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +21,6 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
-
         title: Text(
           "Profile",
           style: TextStyle(
@@ -53,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           child: Consumer2<UserprofileProvider, CustomerController>(
             builder: (context, provider, customerprovider, child) {
               return Column(
@@ -64,11 +64,8 @@ class ProfileScreen extends StatelessWidget {
                   // avatar
                   Center(
                     child: InkWell(
-                      // onTap: () async {
-                      //   await provider.pickImage(context);
-                      // },
                       child: CircleAvatar(
-                        radius: 56,
+                        radius: 46.adaptSize,
                         backgroundColor: Colors.blue[50],
                         // replace with AssetImage('assets/avatar.png') if you add asset
                         backgroundImage: provider.uint8list == null
@@ -87,7 +84,7 @@ class ProfileScreen extends StatelessWidget {
                     provider.userModel.firstName ?? "",
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: 24,
+                      fontSize: 20.fSize,
                     ),
                   ),
 
@@ -98,33 +95,12 @@ class ProfileScreen extends StatelessWidget {
                     'Parents ID: ${customerprovider.customer?.mbId}',
                     style: textTheme.bodyMedium?.copyWith(
                       color: Colors.grey[600],
-                      fontSize: 13,
+                      fontSize: 13.fSize,
                     ),
                   ),
 
                   const SizedBox(height: 10),
-
-                  // Edit info link
-                  // InkWell(
-                  //   onTap: () async {
-                  //     // final provider = Provider.of<AuthProviders>(
-                  //     //   context,
-                  //     //   listen: false,
-                  //     // );
-                  //     // await provider.logout(context);
-
-                  //     Navigator.pushNamed(context, AppRoutes.editprofile);
-                  //   },
-                  //   child: Text(
-                  //     'Edit info',
-                  //     style: textTheme.bodyMedium?.copyWith(
-                  //       decoration: TextDecoration.underline,
-                  //       color: Colors.grey[800],
-                  //       fontSize: 15,
-                  //     ),
-                  //   ),
-                  // ),
-                  const SizedBox(height: 22),
+                  SizedBox(height: 16.h),
 
                   // Personal info section
                   Align(
@@ -133,7 +109,7 @@ class ProfileScreen extends StatelessWidget {
                       'Personal info',
                       style: textTheme.labelLarge?.copyWith(
                         color: Colors.grey[600],
-                        fontSize: 12,
+                        fontSize: 12.fSize,
                       ),
                     ),
                   ),
@@ -141,35 +117,8 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   _buildInfoRow('Email', provider.userModel.email ?? ""),
-                  const SizedBox(height: 8),
-                  // _buildInfoRow(
-                  //   'Provide',
-                  //   ' ${provider.userModel.} ',
-                  // ),
 
-                  // _buildInfoRow(
-                  //                   'Phone',
-                  //                   ' ${customerprovider.customer!.mobileCountryCode} ${customerprovider.customer!.mobilePhone}',
-                  //                 ),
-
-                  // const SizedBox(height: 8),
-                  // _buildInfoRow('Date of Birth', '08 Feb 2001'),
-                  const SizedBox(height: 18),
-
-                  // Align(
-                  //   alignment: Alignment.centerLeft,
-                  //   child: Text(
-                  //     'Preferences',
-                  //     style: textTheme.labelLarge?.copyWith(
-                  //       color: Colors.grey[600],
-                  //       fontSize: 12,
-                  //     ),
-                  //   ),
-                  // ),
-
-                  // const SizedBox(height: 12),
-
-                  // Cards list like screenshot
+                  SizedBox(height: 16.h),
                   _buildPreferenceCard(
                     context,
                     title: 'Students',
@@ -207,10 +156,6 @@ class ProfileScreen extends StatelessWidget {
                       );
                     },
                   ),
-
-                  // const SizedBox(height: 12),
-                  // _buildSettingsCard(context),
-                  const SizedBox(height: 90),
                 ],
               );
             },
@@ -226,9 +171,12 @@ class ProfileScreen extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 16.fSize, fontWeight: FontWeight.w600),
         ),
-        Text(value, style: TextStyle(fontSize: 15, color: Colors.grey[700])),
+        Text(
+          value,
+          style: TextStyle(fontSize: 15.fSize, color: Colors.grey[700]),
+        ),
       ],
     );
   }
@@ -265,22 +213,25 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: 14.fSize,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6.h),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 12.fSize,
+                      color: Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios,
-              size: 18,
+              size: 18.adaptSize,
               color: Colors.black54,
             ),
           ],

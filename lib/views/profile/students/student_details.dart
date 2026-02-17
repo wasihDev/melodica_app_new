@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/models/student_models.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
-import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
-import 'package:melodica_app_new/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -18,14 +16,7 @@ class StudentDetails extends StatelessWidget {
 
   String formatMyDate(String rawDate) {
     try {
-      // 1. Logic for cleaning/fixing invalid data if necessary
-      // If the API literally sends '32', we should cap it at the last day of the month
-      // For now, let's assume it's a valid string like '1992-01-31'
-
-      // 2. Parse the input (yyyy-M-d handles single digits like '1' automatically)
       DateTime parsedDate = DateFormat("yyyy-M-d").parse(rawDate);
-
-      // 3. Format to the desired output: 31-Jan-1992
       return DateFormat("d MMM yyyy").format(parsedDate);
     } catch (e) {
       return "Invalid Date";
@@ -121,33 +112,7 @@ class StudentDetails extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 0),
-
-                  // Row(
-                  //   children: [
-                  //     // Expanded(
-                  //     //   child: Column(
-                  //     //     crossAxisAlignment: CrossAxisAlignment.start,
-                  //     //     children: [
-                  //     //       _label('Relation'),
-                  //     //       // _readOnlyDropdown(student.),
-                  //     //     ],
-                  //     //   ),
-                  //     // ),
-                  //     const SizedBox(width: 12),
-                  //     Expanded(
-                  //       child: Column(
-                  //         crossAxisAlignment: CrossAxisAlignment.start,
-                  //         children: [
-                  //           _label('Level'),
-                  //           _readOnlyDropdown('Beginner'),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
                   const SizedBox(height: 20),
-
                   _label('Have you been a Melodica student before?'),
                   Row(
                     children: const [
@@ -156,7 +121,6 @@ class StudentDetails extends StatelessWidget {
                       _DisabledRadio(label: 'No i am new', selected: true),
                     ],
                   ),
-
                   const SizedBox(height: 28),
 
                   /// Next Button
@@ -187,25 +151,6 @@ class StudentDetails extends StatelessWidget {
               );
             },
           ),
-        ),
-      ),
-      // bottomNavigationBar: Padding(
-      //   padding: EdgeInsets.only(bottom: 20.0.h, left: 20.w, right: 20.w),
-      //   child: _buildAddStudentSection(context),
-      // ),
-    );
-  }
-
-  Widget _buildAddStudentSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0.0),
-      child: CustomButton(
-        onTap: () {
-          Navigator.pushNamed(context, AppRoutes.newStudent);
-        },
-        widget: Text(
-          'Update Student',
-          style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
     );
@@ -272,16 +217,16 @@ class StudentDetails extends StatelessWidget {
     );
   }
 
-  static Widget _readOnlyBox(String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Text(value, style: TextStyle(fontSize: 12.fSize)),
-    );
-  }
+  // static Widget _readOnlyBox(String value) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+  //     decoration: BoxDecoration(
+  //       borderRadius: BorderRadius.circular(12),
+  //       border: Border.all(color: Colors.grey.shade300),
+  //     ),
+  //     child: Text(value, style: TextStyle(fontSize: 12.fSize)),
+  //   );
+  // }
 }
 
 /// Disabled Radio Widget
@@ -305,236 +250,3 @@ class _DisabledRadio extends StatelessWidget {
     );
   }
 }
-
-// class StudentDetails extends StatefulWidget {
-//   const StudentDetails({super.key});
-
-//   @override
-//   State<StudentDetails> createState() => _NewStudentScreenState();
-// }
-
-// class _NewStudentScreenState extends State<StudentDetails> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: AppColors.lightGrey,
-//       appBar: AppBar(
-//         backgroundColor: AppColors.lightGrey,
-//         elevation: 0,
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back_ios, color: AppColors.darkText),
-//           onPressed: () {
-//             Navigator.pop(context);
-//           },
-//         ),
-//         title: const Text(
-//           'New Student',
-//           style: TextStyle(
-//             color: AppColors.darkText,
-//             fontWeight: FontWeight.bold,
-//             fontSize: 20,
-//           ),
-//         ),
-//         centerTitle: true,
-//       ),
-
-//       // final ctrl = Provider.of<CustomerController>(context, listen: false);
-      // body: Consumer<CustomerController>(
-      //   builder: (context, provider, child) {
-//           return SingleChildScrollView(
-//             padding: const EdgeInsets.all(24.0),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.center,
-//               children: [
-//                 // Avatar
-//                 Container(
-//                   width: 100,
-//                   height: 100,
-//                   decoration: BoxDecoration(
-//                     shape: BoxShape.circle,
-//                     border: Border.all(color: AppColors.primary, width: 3),
-//                   ),
-//                   child: ClipOval(
-//                     child: Image.asset(
-//                       'assets/images/image_upload.png', // Replace with your avatar asset
-//                       fit: BoxFit.cover,
-//                       errorBuilder: (context, error, stackTrace) => const Icon(
-//                         Icons.person,
-//                         size: 60,
-//                         color: AppColors.secondaryText,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 32),
-
-//                 // First Name
-//                 const CustomTextField(
-//                   labelText: 'First Name',
-//                   initialValue: 'first name',
-//                   suffixIcon: Icon(
-//                     Icons.person_outline,
-//                     color: AppColors.secondaryText,
-//                   ), // User icon
-//                 ),
-//                 const SizedBox(height: 20),
-
-//                 // Last Name
-//                 const CustomTextField(
-//                   labelText: 'Last Name',
-//                   initialValue: 'last name',
-//                   suffixIcon: Icon(
-//                     Icons.person_outline,
-//                     color: AppColors.secondaryText,
-//                   ), // User icon
-//                 ),
-//                 const SizedBox(height: 20),
-
-//                 // Date of Birth & Gender
-//                 Row(
-//                   children: [
-//                     Expanded(
-//                       child: CustomTextField(
-//                         labelText: 'Date of Birth',
-//                         initialValue: '8 Feb, 2004',
-//                         readOnly: true,
-//                         // onTap: () => _selectDate(context),
-//                         suffixIcon: SvgPicture.asset(
-//                           'assets/svg/schedule.svg',
-//                           width: 24,
-//                           height: 24,
-//                         ), // Calendar icon
-//                       ),
-//                     ),
-//                     const SizedBox(width: 16),
-//                     Expanded(
-//                       child: CustomDropdownField<String>(
-//                         labelText: 'Gender',
-//                         value: provider.customer!.gender,
-//                         items: const ['', 'Male', 'Female', 'Other'],
-//                         itemToString: (item) => item,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 20),
-
-//                 // Relation & Level
-//                 Row(
-//                   children: [
-//                     Expanded(
-//                       child: CustomDropdownField<String>(
-//                         labelText: 'Relation',
-//                         value: _selectedRelation,
-//                         items: const ['', 'Mother', 'Father', 'Guardian'],
-//                         itemToString: (item) => item,
-//                         onChanged: (newValue) {
-//                           if (newValue != null) {
-//                             setState(() {
-//                               _selectedRelation = newValue;
-//                             });
-//                           }
-//                         },
-//                       ),
-//                     ),
-//                     const SizedBox(width: 16),
-//                     Expanded(
-//                       child: CustomDropdownField<String>(
-//                         labelText: 'Level',
-//                         value: _selectedLevel,
-//                         items: const [
-//                           '',
-//                           'Beginner',
-//                           'Intermediate',
-//                           'Advanced',
-//                         ],
-//                         itemToString: (item) => item,
-//                         onChanged: (newValue) {
-//                           if (newValue != null) {
-//                             setState(() {
-//                               _selectedLevel = newValue;
-//                             });
-//                           }
-//                         },
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 20),
-
-//                 // Radio Buttons
-//                 Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     const Text(
-//                       'Have you been a Melodica student before?',
-//                       style: TextStyle(
-//                         fontSize: 14,
-//                         color: AppColors.secondaryText,
-//                       ),
-//                     ),
-//                     const SizedBox(height: 8),
-//                     Row(
-//                       children: [
-//                         Radio<bool>(
-//                           value: true,
-//                           groupValue: _isMelodicaStudent,
-//                           onChanged: (value) {
-//                             setState(() {
-//                               _isMelodicaStudent = value;
-//                             });
-//                           },
-//                           activeColor: AppColors.primary,
-//                           materialTapTargetSize: MaterialTapTargetSize
-//                               .shrinkWrap, // Reduce extra padding
-//                         ),
-//                         const Text(
-//                           'Yes i am',
-//                           style: TextStyle(color: AppColors.darkText),
-//                         ),
-//                         const SizedBox(width: 24),
-//                         Radio<bool>(
-//                           value: false,
-//                           groupValue: _isMelodicaStudent,
-//                           onChanged: (value) {
-//                             setState(() {
-//                               _isMelodicaStudent = value;
-//                             });
-//                           },
-//                           activeColor: AppColors.primary,
-//                           materialTapTargetSize: MaterialTapTargetSize
-//                               .shrinkWrap, // Reduce extra padding
-//                         ),
-//                         const Text(
-//                           'No I am new',
-//                           style: TextStyle(color: AppColors.darkText),
-//                         ),
-//                       ],
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 40),
-
-//                 // Next Button
-//                 PrimaryButton(
-//                   text: 'Next',
-//                   onPressed: () {
-//                     print('Next button pressed on New Student screen!');
-//                     // Navigate to PackageSelectionScreen
-//                     Navigator.push(
-//                       context,
-//                       MaterialPageRoute(
-//                         builder: (context) =>
-//                             PackageSelectionScreen(isShowdanceTab: true),
-//                       ),
-//                     );
-//                   },
-//                 ),
-//               ],
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }

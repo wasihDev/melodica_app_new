@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:melodica_app_new/constants/app_colors.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
@@ -30,7 +31,7 @@ class UpdateService {
       // 2. Compare versions
       // TODO:: fix the verison
       if (latestVersion.isNotEmpty &&
-          _isUpdateAvailable("1.1.1", latestVersion)) {
+          _isUpdateAvailable(currentVersion, latestVersion)) {
         _showUpdateDialog(context, latestVersion);
       }
     } catch (e) {
@@ -73,7 +74,10 @@ class UpdateService {
   // VERSION COMPARISON LOGIC
   static bool _isUpdateAvailable(String current, String latest) {
     List<int> currentParts = current.split('.').map(int.parse).toList();
+    print('currentParts $currentParts');
+
     List<int> latestParts = latest.split('.').map(int.parse).toList();
+    print('latestParts $latestParts');
 
     for (int i = 0; i < latestParts.length; i++) {
       if (i >= currentParts.length || latestParts[i] > currentParts[i])
@@ -82,6 +86,31 @@ class UpdateService {
     }
     return false;
   }
+
+  // static bool _isUpdateAvailableIOS(String current, String latest) {
+  //   List<int> currentParts = current
+  //       .split('.')
+  //       .map((e) => int.tryParse(e) ?? 0)
+  //       .toList();
+  //   List<int> latestParts = latest
+  //       .split('.')
+  //       .map((e) => int.tryParse(e) ?? 0)
+  //       .toList();
+
+  //   int maxLength = currentParts.length > latestParts.length
+  //       ? currentParts.length
+  //       : latestParts.length;
+
+  //   for (int i = 0; i < maxLength; i++) {
+  //     int currentValue = i < currentParts.length ? currentParts[i] : 0;
+  //     int latestValue = i < latestParts.length ? latestParts[i] : 0;
+
+  //     if (latestValue > currentValue) return true;
+  //     if (latestValue < currentValue) return false;
+  //   }
+
+  //   return false;
+  // }
 
   // 3. SHOW THE POPUP
   static void _showUpdateDialog(BuildContext context, String newVersion) {
@@ -106,11 +135,11 @@ class UpdateService {
               children: [
                 // --- ICON/IMAGE HEADER ---
                 CircleAvatar(
-                  radius: 40,
+                  radius: 40.adaptSize,
                   backgroundColor: AppColors.primary.withOpacity(0.1),
                   child: Icon(
                     Icons.system_update,
-                    size: 40,
+                    size: 40.adaptSize,
                     color: AppColors.primary,
                   ),
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:melodica_app_new/models/student_models.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/routes/routes.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/widgets/custom_appbar.dart';
 import 'package:melodica_app_new/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
@@ -75,7 +76,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
 
   Widget _buildStudentCard(Student student) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+      margin: EdgeInsets.symmetric(horizontal: 10.0.w, vertical: 4.0.h),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -110,8 +111,8 @@ class _StudentsScreenState extends State<StudentsScreen> {
                   children: [
                     Text(
                       student.fullName,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: 14.fSize,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -119,19 +120,14 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     Text(
                       'ID: ${student.mbId}',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.fSize,
                         color: Colors.grey.shade600,
                       ),
                     ),
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () {
-                  // Handle edit action
-                },
-                icon: Icon(Icons.arrow_forward, color: Colors.grey.shade500),
-              ),
+              Icon(Icons.arrow_forward, color: Colors.grey.shade500),
             ],
           ),
         ],

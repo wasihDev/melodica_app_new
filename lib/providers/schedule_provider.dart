@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/schedule_model.dart';
+import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/services/api_config_service.dart';
@@ -9,6 +10,7 @@ import 'package:melodica_app_new/services/schedule_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:nb_utils/nb_utils.dart';
+import 'package:provider/provider.dart';
 // same day only charge new selecting booking after today is green...
 
 class ScheduleProvider extends ChangeNotifier {
@@ -38,7 +40,16 @@ class ScheduleProvider extends ChangeNotifier {
   String? lateNotice; // Early / Late
   String? branch;
   String? packageId;
+  String? totalamount;
+  // Inside ScheduleProvider
+  List<ScheduleModel> get upcomingClasses =>
+      upcomingSchedules.where((s) => s.status == "Booked").toList();
 
+  List<ScheduleModel> get completedClasses =>
+      schedules.where((s) => s.statusReason == "Unbooked").toList();
+
+  List<ScheduleModel> get unbookedClasses =>
+      schedules.where((s) => s.statusReason == "Completed").toList();
   void setScheduleRequests({
     required String subject,
     required String classDateTime,
@@ -47,6 +58,7 @@ class ScheduleProvider extends ChangeNotifier {
     required String lateNotice,
     required String branch,
     required String packageId,
+    required String totalamount,
   }) {
     this.subject = subject;
     this.classDateTime = classDateTime;
@@ -55,9 +67,13 @@ class ScheduleProvider extends ChangeNotifier {
     this.lateNotice = lateNotice;
     this.branch = branch;
     this.packageId = packageId;
+    this.totalamount = totalamount;
   }
 
-  Future<bool> submitScheduleRequestAfterPayment(String transactionRef) async {
+  Future<bool> submitScheduleRequestAfterPayment(
+    String transactionRef, {
+    required String prints,
+  }) async {
     if (subject == null ||
         classDateTime == null ||
         action == null ||
@@ -78,6 +94,7 @@ class ScheduleProvider extends ChangeNotifier {
         packageid: packageId!,
         lateNotic: "Early",
         transactionId: transactionRef, // ✅ payment reference
+        prints: prints,
       );
       return scheduleRequest;
     } catch (e) {
@@ -292,6 +309,7 @@ class ScheduleProvider extends ChangeNotifier {
     required String branch,
     required String reason,
     required String lateNotic,
+    String? prints,
     String? transactionId,
   }) async {
     showLoadingDialog(navigatorKey.currentContext!);
@@ -323,6 +341,7 @@ class ScheduleProvider extends ChangeNotifier {
           "reason": reason,
           "transactionid": "${transactionId}",
           "noticetype": "${lateNotic}",
+          "log": "$prints",
         }),
       );
       print('response.body ${response.body}');
@@ -397,23 +416,80 @@ class ScheduleProvider extends ChangeNotifier {
   List<ScheduleModel> get upcomingSchedules {
     final now = DateTime.now();
     return schedules.where((s) {
-        // ❌ REMOVE empty / dummy schedules
-
-        if (s.bookingDateTime == null) return false;
-        // if (s.bookingRoom == '') return false;
-        // if (s.bookingDay == '' || s.bookingDay.isEmpty) return false;
-        // if (s.day == '' || s.day == 0) return false;
-        // if (s.monthShort == '' || s.monthShort.isEmpty) return false;
-        final bookingDate = s.bookingDateTime!;
-        // ✅ upcoming date only
-        if (!bookingDate.isAfter(now)) return false;
-        // ✅ time filter
-        final bookingMinutes = bookingDate.hour * 60 + bookingDate.minute;
-        return bookingMinutes >= _toMinutes(startTime) &&
-            bookingMinutes <= _toMinutes(endTime);
-      }).toList()
-      ..sort((a, b) => a.bookingDateTime!.compareTo(b.bookingDateTime!));
+      if (s.BookingtimeEnd == null) return false;
+      // if (s.bookingRoom == '') return false;
+      // if (s.bookingDay == '' || s.bookingDay.isEmpty) return false;
+      // if (s.day == '' || s.day == 0) return false;
+      // if (s.monthShort == '' || s.monthShort.isEmpty) return false;
+      final bookingDate = s.BookingtimeEnd!;
+      // ✅ upcoming date only
+      if (!bookingDate.isAfter(now)) return false;
+      // ✅ time filter
+      final bookingMinutes = bookingDate.hour * 60 + bookingDate.minute;
+      return bookingMinutes >= _toMinutes(startTime) &&
+          bookingMinutes <= _toMinutes(endTime);
+    }).toList()..sort((a, b) => a.BookingtimeEnd!.compareTo(b.BookingtimeEnd!));
   }
+
+  List<ScheduleModel> get completedSchedules {
+    final now = DateTime.now();
+    return schedules.where((s) {
+      if (s.BookingtimeEnd == null) return false;
+      // if (s.bookingRoom == '') return false;
+      // if (s.bookingDay == '' || s.bookingDay.isEmpty) return false;
+      // if (s.day == '' || s.day == 0) return false;
+      // if (s.monthShort == '' || s.monthShort.isEmpty) return false;
+      final bookingDate = s.BookingtimeEnd!;
+      // ✅ upcoming date only
+      if (!bookingDate.isBefore(now)) return false;
+      // ✅ time filter
+      final bookingMinutes = bookingDate.hour * 60 + bookingDate.minute;
+      return bookingMinutes >= _toMinutes(startTime) &&
+          bookingMinutes <= _toMinutes(endTime);
+    }).toList()..sort((a, b) => a.BookingtimeEnd!.compareTo(b.BookingtimeEnd!));
+  }
+
+  List<ScheduleModel> get cancelledSchedules {
+    return schedules.where((s) {
+      if (s.BookingtimeEnd == null) return false;
+
+      final status = s.cancellation_status;
+      // s.cancellation_status
+      return status != '';
+    }).toList()..sort((a, b) => a.BookingtimeEnd!.compareTo(b.BookingtimeEnd!));
+  }
+
+  // List<ScheduleModel> get upcomingScheduless {
+  //   final now = DateTime.now();
+  //   return schedules.where((s) {
+  //       final provider = Provider.of<PackageProvider>(
+  //         navigatorKey.currentContext!,
+  //         listen: false,
+  //       );
+
+  //       //  provider.packages.where((e){
+  //       //   e.
+  //       //  })
+  //       // if (s.PackageCode==) {
+
+  //       // }
+  //       // ❌ REMOVE empty / dummy schedules
+
+  //       if (s.bookingDateTime == null) return false;
+  //       // if (s.bookingRoom == '') return false;
+  //       // if (s.bookingDay == '' || s.bookingDay.isEmpty) return false;
+  //       // if (s.day == '' || s.day == 0) return false;
+  //       // if (s.monthShort == '' || s.monthShort.isEmpty) return false;
+  //       final bookingDate = s.bookingDateTime!;
+  //       // ✅ upcoming date only
+  //       if (!bookingDate.isAfter(now)) return false;
+  //       // ✅ time filter
+  //       final bookingMinutes = bookingDate.hour * 60 + bookingDate.minute;
+  //       return bookingMinutes >= _toMinutes(startTime) &&
+  //           bookingMinutes <= _toMinutes(endTime);
+  //     }).toList()
+  //     ..sort((a, b) => a.bookingDateTime!.compareTo(b.bookingDateTime!));
+  // }
 
   // List<ScheduleModel> get upcomingSchedules {
   //   final now = DateTime.now();

@@ -142,9 +142,11 @@ class _PackageListView extends StatelessWidget {
       separatorBuilder: (context, index) => SizedBox(height: 15),
       itemBuilder: (context, index) {
         final package = packages[index];
-        print('package.subject ${package.subject}');
-        final remainingFreezes =
-            package.totalAllowedFreezings - package.totalFreezingTaken;
+        // print('package.subject ${package.subject}');
+        // final remainingFreezes =
+        //     package.totalAllowedFreezings - package.totalFreezingTaken;
+        final unbookedClasses = package.totalClasses - package.totalBooked;
+
         // print('package.packageExpiry ${package.packageExpiry}');
         return InkWell(
           onTap: () {
@@ -156,9 +158,9 @@ class _PackageListView extends StatelessWidget {
             );
           },
           child: Container(
-            height: 380.h,
+            height: package.danceOrMusic == "Dance Classes" ? 300.h : 425.h,
             width: double.infinity,
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.all(12.adaptSize),
             margin: EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -171,80 +173,90 @@ class _PackageListView extends StatelessWidget {
                 ListTile(
                   tileColor: Colors.grey[100],
                   contentPadding: EdgeInsets.all(0),
-                  title: Text('${package.serviceandproduct}'),
+                  title: Text(
+                    '${package.serviceandproduct}',
+                    style: TextStyle(
+                      fontSize: 20.fSize,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   subtitle: Text(package.locationName),
                   // trailing: Text(
                   //   '${package.remainingSessions.toString().split('.').first}/${package.totalClasses}',
                   //   style: const TextStyle(fontWeight: FontWeight.bold),
                   // ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 80.h,
-                        width: double.infinity,
-                        padding: EdgeInsets.only(top: 8, left: 14),
-                        // alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
-                          border: Border.all(color: Colors.grey[300]!),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Total Classes'),
-                            SizedBox(height: 8),
-                            Text(
-                              package.totalClasses.toString(),
-                              style: TextStyle(
-                                fontSize: 18.fSize,
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
+                package.danceOrMusic == "Dance Classes"
+                    ? SizedBox()
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 80.h,
+                              width: double.infinity,
+                              padding: EdgeInsets.only(top: 8, left: 14),
+                              // alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.white,
+                                border: Border.all(color: Colors.grey[300]!),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Total Classes'),
+                                  SizedBox(height: 5.h),
+                                  Text(
+                                    package.totalClasses.toString(),
+                                    style: TextStyle(
+                                      fontSize: 22.fSize,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        height: 80.h,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Container(
+                              height: 80.h,
 
-                        width: double.infinity,
-                        padding: EdgeInsets.only(top: 8, left: 14),
-                        // alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Remaining Classes'),
-                            SizedBox(height: 8),
-                            Text(
-                              package.remainingSessions
-                                  .toString()
-                                  .split('.')
-                                  .first,
-                              style: TextStyle(
-                                fontSize: 18.fSize,
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
+                              width: double.infinity,
+                              padding: EdgeInsets.only(top: 8, left: 14),
+                              // alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey[300]!),
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.white,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Remaining Classes'),
+                                  SizedBox(height: 5.h),
+                                  Text(
+                                    package.remainingSessions
+                                        .toString()
+                                        .split('.')
+                                        .first,
+                                    style: TextStyle(
+                                      fontSize: 22.fSize,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
+                SizedBox(height: 10.h),
+                Divider(color: Color(0xffE2E2E2)),
+                SizedBox(height: 10.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -252,12 +264,17 @@ class _PackageListView extends StatelessWidget {
                       children: [
                         SvgPicture.asset('assets/svg/teacher.svg'),
                         SizedBox(width: 5),
-                        Text('Remaining Cancellation: '),
+                        Text('Teacher: ', style: TextStyle(fontSize: 14.fSize)),
                       ],
                     ),
-                    Text('${package.remainingCancellations}X'),
+                    Text(
+                      '${package.teacherName}',
+                      style: TextStyle(fontSize: 14.fSize),
+                    ),
                   ],
                 ),
+
+                SizedBox(height: 10.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -265,78 +282,93 @@ class _PackageListView extends StatelessWidget {
                       children: [
                         SvgPicture.asset('assets/svg/location.svg'),
                         SizedBox(width: 5),
-                        Text('Remaining Cancellation: '),
+                        Text(
+                          'Location: ',
+                          style: TextStyle(fontSize: 14.fSize),
+                        ),
                       ],
                     ),
-                    Text('${package.remainingCancellations}X'),
+                    Text(
+                      '${package.locationName}',
+                      style: TextStyle(fontSize: 14.fSize),
+                    ),
                   ],
                 ),
+                package.danceOrMusic == "Dance Classes"
+                    ? SizedBox()
+                    : SizedBox(height: 10.h),
+                package.danceOrMusic == "Dance Classes"
+                    ? SizedBox()
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset('assets/svg/remaining.svg'),
+                              SizedBox(width: 5),
+                              Text(
+                                'Remaining Cancellation (Classes):',
+                                style: TextStyle(fontSize: 14.fSize),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '${package.remainingCancellations}/${package.totalAllowedCancellation}',
+                            style: TextStyle(fontSize: 14.fSize),
+                          ),
+                        ],
+                      ),
+                SizedBox(height: 10.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        SvgPicture.asset('assets/svg/remaining.svg'),
+                        SvgPicture.asset('assets/svg/freez.svg'),
                         SizedBox(width: 5),
-                        Text('Remaining Cancellation: '),
+                        Text(
+                          "Freezing Remaining (Weeks):",
+                          style: TextStyle(fontSize: 14.fSize),
+                        ),
                       ],
                     ),
-                    Text('${package.remainingCancellations}X'),
-                  ],
-                ),
-                Row(
-                  children: [
-                    SvgPicture.asset('assets/svg/freez.svg'),
-                    SizedBox(width: 5),
-                    Text(
-                      "Freezing Remaining (Weeks)",
-                      style: TextStyle(color: Colors.red, fontSize: 12.fSize),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        SvgPicture.asset('assets/svg/unscheduled.svg'),
-                        SizedBox(width: 5),
-                        Text('Remaining Cancellation: '),
-                      ],
-                    ),
-                    Text('${package.remainingCancellations}X'),
-                  ],
-                ),
 
-                Row(
-                  children: [
                     Text(
-                      "${remainingFreezes} Weeks",
-                      style: TextStyle(color: Colors.red, fontSize: 12.fSize),
+                      '${package.totalAllowedFreezings - package.totalFreezingTaken}/${package.totalAllowedFreezings}',
+                      style: TextStyle(fontSize: 14.fSize),
                     ),
                   ],
                 ),
+                SizedBox(height: 10.h),
+                package.danceOrMusic == "Dance Classes"
+                    ? SizedBox()
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset('assets/svg/unscheduled.svg'),
+                              SizedBox(width: 5),
+                              Text(
+                                'Unscheduled Count:',
+                                style: TextStyle(fontSize: 14.fSize),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '${unbookedClasses.isNegative ? 0 : unbookedClasses}',
+                            style: TextStyle(fontSize: 14.fSize),
+                          ),
+                        ],
+                      ),
 
-                Row(
-                  children: [
-                    Row(
-                      children: [
-                        //
-                        // SvgPicture.asset('assets/svg/teacher.svg'),
-                        // SvgPicture.asset('assets/svg/location.svg'),
-                        //
-                        // SvgPicture.asset('assets/svg/unscheduled.svg'),
-                      ],
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Text('Remaining Freezing : '),
-                const Spacer(), // Pushes the link to the bottom
+                package.danceOrMusic == "Dance Classes"
+                    ? SizedBox(height: 20.h)
+                    : const Spacer(), // Pushes the link to the bottom
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 4.0),
+                    padding: const EdgeInsets.only(bottom: 2.0),
                     child: Container(
                       height: 45.h,
                       width: double.infinity,

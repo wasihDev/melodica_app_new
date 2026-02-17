@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/schedule_model.dart';
+import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/utils/date_format.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/reschedule_screen.dart';
+import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_service.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_widgets.dart';
 import 'package:melodica_app_new/widgets/appointment_card.dart';
 import 'package:melodica_app_new/widgets/custom_app_bar.dart';
@@ -270,7 +272,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
 
                 // Note Box
                 Container(
@@ -288,18 +290,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         style: TextStyle(
                           color: Color(0xFFE67E22), // Orange text
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 14.fSize,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 8.h),
 
                       Text(
                         today == scheduledDay
                             ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
+                            : s.RemainingCancellations <= 0
+                            ? "You don't have allowable cancellations left. Reschedule before ${removingTimeFromDate(s.bookingDateStartTime)} or pay AED 50 to reschedule it to a later date."
                             : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.grey,
-                          fontSize: 13,
+                          fontSize: 12.fSize,
                         ),
                       ),
                     ],
@@ -363,10 +367,68 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       );
                       print('NOW =====>>> $now');
                       print('SCHEDULED =====>>> $bookingdata');
-
+                      final classDateTime = formatStringToApiDate(
+                        s.bookingDateStartTime,
+                      );
                       // Show late notice if now is equal OR after scheduled time
                       if (today == scheduledDay) {
-                        showLateNoticeDialog(context);
+                        DialogService.showLateNoticeDialog(
+                          context,
+                          onConfirm: () async {
+                            final servicesProvider =
+                                Provider.of<ServicesProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                            final packageProvider =
+                                Provider.of<PackageProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                            final scheduleProvider = context
+                                .read<ScheduleProvider>();
+                            servicesProvider.setPaymentType(
+                              PaymentType.schedulePoints,
+                            );
+
+                            final pro = packageProvider.packages.firstWhere(
+                              (n) => n.paymentRef == s.PackageCode.toString(),
+                            );
+
+                            final vat = 50 * 0.05;
+                            final amountWithVat = (50 + vat).toInt();
+                            scheduleProvider.setScheduleRequests(
+                              subject: s.subject,
+                              classDateTime: classDateTime,
+                              action: "Rebook",
+                              preferredSlot: "",
+                              lateNotice: today == scheduledDay
+                                  ? 'Late'
+                                  : 'Early',
+                              branch: "${pro.branch}",
+                              packageId: '${pro.paymentRef}',
+                              totalamount: "$amountWithVat",
+                            );
+                            final success = await servicesProvider
+                                .startCheckout(context, amount: amountWithVat);
+                            if (success &&
+                                servicesProvider.paymentUrl != null) {
+                              final requestReturn = await scheduleProvider
+                                  .submitScheduleRequestAfterPayment(
+                                    servicesProvider.orderReference!,
+                                    prints: '',
+                                  );
+                              if (requestReturn) {
+                                Navigator.pop(context);
+                                await launchUrl(
+                                  Uri.parse(servicesProvider.paymentUrl!),
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              }
+                            }
+                          },
+                        );
+
                         return;
                       }
                       showDialog(
@@ -395,119 +457,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
         );
       },
-    );
-  }
-
-  void showLateNoticeDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        contentPadding: const EdgeInsets.all(20),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Orange Warning Icon
-            const Icon(
-              Icons.warning_amber_rounded,
-              color: Color(0xFFF27E2B), // Matches the orange in your screenshot
-              size: 80,
-            ),
-            const SizedBox(height: 16),
-
-            // Main Text Content
-            const Text(
-              "Late notice! This will consume cancellation.\nConsider paying recovery fee to book.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.4,
-                color: Color(0xFF4A4A4A),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Action Buttons
-            Row(
-              children: [
-                // "No, thanks" Button
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: Colors.grey.shade300),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      "No, thanks",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // "AED 50" Payment Button
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final servicesProvider = Provider.of<ServicesProvider>(
-                        context,
-                        listen: false,
-                      );
-                      servicesProvider.setPaymentType(
-                        PaymentType.freezingPoints,
-                      );
-                      final vat = 50 * 0.05;
-                      final amountWithVat = (50 + vat);
-
-                      final success = await servicesProvider.startCheckout(
-                        context,
-                        amount: amountWithVat,
-                        // redirectUrl: "https://melodica-mobile.web.app",
-                      );
-
-                      if (success && servicesProvider.paymentUrl != null) {
-                        if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        }
-                        await launchUrl(
-                          Uri.parse(servicesProvider.paymentUrl!),
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF27E2B),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      "AED ${50}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -544,5 +493,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final now = DateTime.now();
     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
     return DateFormat('hh:mm a').format(dt);
+  }
+
+  String formatStringToApiDate(String dateString) {
+    try {
+      final parsedDate = DateFormat('dd MMM yyyy hh:mm a').parse(dateString);
+      return parsedDate.toUtc().toIso8601String().split('.').first + 'Z';
+    } catch (e) {
+      print("Error parsing date string: $e");
+      return dateString;
+    }
   }
 }

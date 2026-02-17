@@ -11,7 +11,6 @@ import 'package:melodica_app_new/views/dashboard/home/home_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/new_student_screen.dart';
 import 'package:melodica_app_new/views/onboarding/onboarding_screen.dart';
 import 'package:melodica_app_new/views/profile/edit_profile_screen.dart';
-import 'package:melodica_app_new/views/profile/order/order_screen.dart';
 import 'package:melodica_app_new/views/profile/students/student_details.dart';
 import 'package:melodica_app_new/views/profile/students/students_screen.dart';
 import 'package:melodica_app_new/views/splash/splash_screen.dart';
@@ -29,7 +28,6 @@ class AppRoutes {
   // static const packageSelection = '/packageSelection';
   static const newStudent = '/newStudent';
   static const editprofile = '/editprofile';
-  static const ordersScreen = '/ordersScreen';
   static const receiptScreen = '/receiptScreen';
   static const studentsScreen = '/studentsScreen';
   static const studentDetails = '/studentDetails';
@@ -53,7 +51,6 @@ class AppRoutes {
     },
     editprofile: (context) => EditProfileScreen(),
     receiptScreen: (context) => ReceiptScreen(),
-    ordersScreen: (context) => OrdersScreen(),
     studentsScreen: (context) => StudentsScreen(),
 
     studentDetails: (context) {

@@ -114,6 +114,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                     color: ctrl.tab == 'Music'
                                         ? Colors.black87
                                         : Colors.black54,
+                                    fontSize: 16.fSize,
                                   ),
                                 ),
                               ),
@@ -159,6 +160,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                         color: ctrl.tab == 'Dance'
                                             ? Colors.black87
                                             : Colors.black54,
+                                        fontSize: 16.fSize,
                                       ),
                                     ),
                                   ),
@@ -183,6 +185,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                       'Select Course',
                                       style: TextStyle(
                                         color: Colors.grey.shade700,
+                                        fontSize: 16.fSize,
                                       ),
                                     ),
                                   ),
@@ -341,7 +344,12 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                         .map(
                                           (f) => DropdownMenuItem(
                                             value: f,
-                                            child: Text(f),
+                                            child: Text(
+                                              f,
+                                              style: TextStyle(
+                                                fontSize: 16.fSize,
+                                              ),
+                                            ),
                                           ),
                                         )
                                         .toList(),
@@ -409,8 +417,9 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                   // Next button
                                   SafeArea(
                                     top: false,
-                                    child: SizedBox(
+                                    child: Container(
                                       width: double.infinity,
+                                      margin: EdgeInsets.only(bottom: 10.h),
                                       child: ElevatedButton(
                                         onPressed: ctrl.selectedPackages.isEmpty
                                             ? null
@@ -445,8 +454,8 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                               ? Colors.grey
                                               : const Color(0xFFF7CD3C),
                                           foregroundColor: Colors.black87,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 18,
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 18.h,
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
@@ -454,10 +463,10 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                             ),
                                           ),
                                         ),
-                                        child: const Text(
+                                        child: Text(
                                           'Next',
                                           style: TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 18.fSize,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -477,6 +486,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                       'Select Course',
                                       style: TextStyle(
                                         color: Colors.grey.shade700,
+                                        fontSize: 16.fSize,
                                       ),
                                     ),
                                   ),
@@ -497,7 +507,9 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                             provider.alldanceList.first.subject,
                                             // 'Ballet, Hip Hop, Contemporary & Belly Dance',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(fontSize: 16),
+                                            style: TextStyle(
+                                              fontSize: 16.fSize,
+                                            ),
                                           ),
                                         );
                                       },
@@ -511,6 +523,9 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                           child: Center(
                                             child: Text(
                                               'No Dance Package found',
+                                              style: TextStyle(
+                                                fontSize: 16.fSize,
+                                              ),
                                             ),
                                           ),
                                         );
@@ -558,8 +573,9 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                       return SafeArea(
                                         top: false,
                                         bottom: true,
-                                        child: SizedBox(
+                                        child: Container(
                                           width: double.infinity,
+                                          margin: EdgeInsets.only(bottom: 10.h),
                                           child: ElevatedButton(
                                             onPressed:
                                                 widget.iscomingFromNewStudent ==
@@ -609,19 +625,18 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                                 0xFFF7CD3C,
                                               ),
                                               foregroundColor: Colors.black87,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 18,
-                                                  ),
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: 18.h,
+                                              ),
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                               ),
                                             ),
-                                            child: const Text(
+                                            child: Text(
                                               'Next',
                                               style: TextStyle(
-                                                fontSize: 18,
+                                                fontSize: 18.fSize,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -648,6 +663,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
         return Consumer<CustomerController>(
           builder: (context, ctrl, _) {
             return AlertDialog(
+              backgroundColor: Colors.white,
               title: const Text('Select Student'),
               content: SizedBox(
                 width: double.maxFinite,
@@ -661,8 +677,21 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                         ctrl.selectedStudent?.mbId == student.mbId;
 
                     return ListTile(
-                      title: Text(student.fullName),
-                      subtitle: Text("MBID: ${student.mbId.toString()}"),
+                      leading: CircleAvatar(
+                        backgroundImage: AssetImage(
+                          'assets/images/image_upload.png',
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.all(0),
+                      title: Text(
+                        student.fullName,
+                        style: TextStyle(fontSize: 14.fSize),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        "MBID: ${student.mbId.toString()}",
+                        overflow: TextOverflow.ellipsis,
+                      ),
 
                       trailing: isSelected
                           ? const Icon(Icons.check, color: Colors.green)

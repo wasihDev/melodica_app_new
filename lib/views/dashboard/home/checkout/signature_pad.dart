@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
+import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:provider/provider.dart';
 import 'package:signature/signature.dart';
 
@@ -59,7 +60,7 @@ class _SignaturePadState extends State<SignaturePad> {
         return Column(
           children: [
             Container(
-              height: 140,
+              height: 140.h,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(12),
@@ -69,7 +70,7 @@ class _SignaturePadState extends State<SignaturePad> {
                 backgroundColor: Colors.white,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -77,9 +78,9 @@ class _SignaturePadState extends State<SignaturePad> {
                   provider.signratureCtrl.clear();
                   widget.onSave(null);
                 },
-                child: const Text(
+                child: Text(
                   'Clear',
-                  style: TextStyle(color: Colors.black),
+                  style: TextStyle(color: Colors.black, fontSize: 16.fSize),
                 ),
               ),
             ),

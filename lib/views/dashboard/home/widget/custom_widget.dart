@@ -30,8 +30,8 @@ class PrimaryButton extends StatelessWidget {
         child: child == null
             ? Text(
                 text,
-                style: const TextStyle(
-                  fontSize: 18,
+                style: TextStyle(
+                  fontSize: 18.fSize,
                   fontWeight: FontWeight.bold,
                   color: AppColors.darkText, // Text color is dark on yellow
                 ),

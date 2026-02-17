@@ -34,11 +34,14 @@ class HelpCenter extends StatelessWidget {
                 child: ListTile(
                   title: Text(
                     'FAQ\'s',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16.fSize,
+                    ),
                   ),
                   subtitle: Text(
                     'Have a look at some frequently asked questions to find answers',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 12.fSize),
                   ),
                   trailing: Icon(Icons.arrow_forward),
                 ),
@@ -63,11 +66,14 @@ class HelpCenter extends StatelessWidget {
                 child: ListTile(
                   title: Text(
                     'Help Center',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16.fSize,
+                    ),
                   ),
                   subtitle: Text(
                     'In case you still need help, here you can select a topic and speak to a representative',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 12.fSize),
                   ),
                   trailing: Icon(Icons.arrow_forward),
                 ),

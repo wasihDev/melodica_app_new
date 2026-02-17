@@ -16,7 +16,7 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
   DateTime _selectedDate = DateTime.now();
 
   final Color _textColor = const Color(0xFF333333);
-
+  bool _isBrowsing = false;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -66,7 +66,9 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
           onPressed: () => _changeWeek(-1),
         ),
         Text(
-          DateFormat('EEE, d MMM, yyyy').format(_selectedDate),
+          _isBrowsing
+              ? DateFormat('EEE, d MMM, yyyy').format(_focusedDate)
+              : DateFormat('EEE, d MMM, yyyy').format(_selectedDate),
           style: TextStyle(fontSize: 14.fSize, color: Colors.grey[600]),
         ),
         IconButton(
@@ -140,6 +142,7 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
           : () {
               setState(() {
                 _selectedDate = day;
+                _isBrowsing = false;
               });
               context.read<ScheduleProvider>().selectDate(day);
             },
@@ -174,6 +177,7 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
   void _changeWeek(int offset) {
     setState(() {
       _focusedDate = _focusedDate.add(Duration(days: offset * 7));
+      _isBrowsing = true;
     });
   }
 

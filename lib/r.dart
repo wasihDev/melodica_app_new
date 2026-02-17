@@ -19,6 +19,7 @@ class AssetSvg {
 	static const String check = 'assets/svg/check.svg';
 	static const String danceClass = 'assets/svg/dance_class.svg';
 	static const String dirham = 'assets/svg/dirham.svg';
+	static const String dirhamLogo = 'assets/svg/dirham_logo.svg';
 	static const String exit = 'assets/svg/exit.svg';
 	static const String facebook = 'assets/svg/facebook.svg';
 	static const String freez = 'assets/svg/freez.svg';

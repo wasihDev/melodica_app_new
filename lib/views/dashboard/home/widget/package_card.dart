@@ -37,7 +37,7 @@ class PackageCard extends StatelessWidget {
 
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.fromLTRB(16, 0, 0, 12),
+        padding: EdgeInsets.fromLTRB(16, 0, 0, 5.h),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -64,8 +64,8 @@ class PackageCard extends StatelessWidget {
                   // ),
                   Text(
                     packageDisplay,
-                    style: const TextStyle(
-                      fontSize: 24,
+                    style: TextStyle(
+                      fontSize: 24.fSize,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -178,24 +178,28 @@ class PackageCard extends StatelessWidget {
                       // mainAxisAlignment: MainAxisAlignment.end,
                       // crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Row(
                           children: [
-                            SvgPicture.asset('assets/svg/dirham.svg'),
+                            SvgPicture.asset(
+                              'assets/svg/dirham.svg',
+                              height: 12.h,
+                              width: 12.w,
+                            ),
                             Text(
                               ' ${package.price}', // Using the currency symbol from the image
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 18.fSize,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 5),
+                        SizedBox(height: 5.h),
                         Text(
                           '$perClassCost per Class',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 12.fSize,
                             color: Colors.grey.shade600,
                           ),
                         ),

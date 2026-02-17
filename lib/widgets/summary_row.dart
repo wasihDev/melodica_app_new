@@ -49,7 +49,7 @@ class SummaryRow extends StatelessWidget {
                 value,
                 textAlign: TextAlign.right,
                 style: TextStyle(
-                  fontSize: fontSize,
+                  fontSize: 16.fSize,
                   color: valueColor,
                   fontWeight: valueWeight,
                 ),
@@ -101,7 +101,7 @@ class SummaryRow1 extends StatelessWidget {
                 value,
                 textAlign: TextAlign.right,
                 style: TextStyle(
-                  fontSize: fontSize,
+                  fontSize: 16.fSize,
                   color: valueColor,
                   fontWeight: valueWeight,
                 ),

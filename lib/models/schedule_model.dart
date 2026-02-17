@@ -20,12 +20,17 @@ class ScheduleModel {
   final String danceOrMusic;
   final String LastClass;
   final String BookingEndTime;
+  final String BookingDate;
+  final String statusReason;
+  final String cancellation_status;
+  final String? firstLateCancelDone;
   // "PackageExpiry": "2026-04-20T00:00:00",
   //   "RemainingCancellations": 1
 
   ScheduleModel({
     required this.bookingId,
     required this.subject,
+    required this.BookingDate,
     required this.ClientID,
     required this.bookingDateStartTime,
     required this.bookingDay,
@@ -43,6 +48,9 @@ class ScheduleModel {
     required this.danceOrMusic,
     required this.LastClass,
     required this.BookingEndTime,
+    required this.statusReason,
+    required this.cancellation_status,
+    required this.firstLateCancelDone,
   });
 
   factory ScheduleModel.fromJson(Map<String, dynamic> json) {
@@ -50,6 +58,7 @@ class ScheduleModel {
     return ScheduleModel(
       bookingId: json['BookingID'] ?? '',
       subject: json['SubjectUpdated'] ?? json['Subject'] ?? '',
+      BookingDate: json['BookingDate'] ?? "",
       bookingDateStartTime: json['BookingDateStartTime'] ?? '',
       bookingDay: json['BookingDay'] ?? '',
       ClientID: json['ClientID'] ?? "",
@@ -67,6 +76,9 @@ class ScheduleModel {
       danceOrMusic: json['DanceOrMusic'] ?? "",
       LastClass: json['LastClass'] ?? "",
       BookingEndTime: json['BookingEndTime'] ?? "",
+      statusReason: json['StatusReason'] ?? "",
+      cancellation_status: json['Cancellation Status'] ?? "",
+      firstLateCancelDone: json['FirstLateCancelDone'] ?? "",
     );
   }
 
@@ -82,23 +94,48 @@ class ScheduleModel {
     }
   }
 
-  /// ✅ SAFE DateTime parsing
-  // DateTime? get Bookingtime {
-  //   if (BookingEndTime.isEmpty) return null;
+  DateTime? get Bookingdate {
+    if (BookingDate.isEmpty) return null;
+    try {
+      return DateTime.parse(BookingDate.toUpperCase());
+    } catch (e) {
+      try {
+        return DateFormat('d MMM yyyy h:mm a').parseLoose(BookingDate);
+      } catch (innerError) {
+        print('bookingDate error $innerError');
+        return null;
+      }
+    }
+  }
 
-  //   try {
-  //     return DateFormat('d MMM yyyy h:mm a').parseLoose(BookingEndTime);
-  //   } catch (e) {
-  //     print('bookingDate error $e');
-  //     return null;
-  //   }
+  // DateTime? get combinedEndDateTime {
+  //   final datePart = Bookingdate; // From your start date
+  //   final timePart = BookingtimeEnd; // From your BookingEndTime
+  //   if (datePart == null || timePart == null) return null;
+  //   return DateTime(
+  //     datePart.year,
+  //     datePart.month,
+  //     datePart.day,
+  //     timePart.hour,
+  //     timePart.minute,
+  //     timePart.second,
+  //   );
   // }
-  DateTime? get Bookingtime {
+
+  DateTime? get BookingtimeEnd {
     if (BookingEndTime.isEmpty) return null;
     try {
       // 1. Convert "1899-12-30t16:30:00" to "1899-12-30T16:30:00" (uppercase T)
       // 2. DateTime.parse handles ISO 8601 automatically
-      return DateTime.parse(BookingEndTime.toUpperCase());
+      var time = DateTime.parse(BookingEndTime.toUpperCase());
+      return DateTime(
+        Bookingdate!.year,
+        Bookingdate!.month,
+        Bookingdate!.day,
+        time.hour,
+        time.minute,
+        time.second,
+      );
     } catch (e) {
       // If it's not ISO, try your original format as a fallback
       try {
@@ -148,7 +185,7 @@ class ScheduleModel {
   // }
   String get time {
     final start = bookingDateTime;
-    final end = Bookingtime;
+    final end = BookingtimeEnd;
 
     if (start == null || end == null) return '--';
 

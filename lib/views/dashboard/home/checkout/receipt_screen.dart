@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
@@ -257,31 +258,31 @@ class ReceiptScreen extends StatelessWidget {
                             children: [
                               SummaryRow(
                                 label: 'Course Fee',
-                                value: ' ${ctrl.totalPrice}',
+                                value: '${ctrl.totalPrice}',
                                 valueColor: AppColors.darkText,
                               ),
                               ctrl.isStudentNew == true
                                   ? SummaryRow(
                                       label: 'Registration Fees',
-                                      value: ' 150',
+                                      value: '150',
                                       valueColor: Colors.green,
                                     )
                                   : SizedBox.shrink(),
                               SummaryRow(
                                 label: 'Discount',
-                                value: ' ${ctrl.totalDiscount}',
+                                value: '${ctrl.totalDiscount}',
                                 valueColor: AppColors.redError,
                               ),
                               SummaryRow(
                                 label: 'VAT',
-                                value: ' ${ctrl.vatAmount}',
+                                value: '${ctrl.vatAmount}',
                                 valueColor: Colors.green,
                               ),
                               SummaryRow(
                                 label: 'Total',
                                 value: ctrl.isStudentNew == true
-                                    ? ' ${ctrl.payableAmount + 150}'
-                                    : ' ${ctrl.payableAmount}',
+                                    ? '${ctrl.payableAmount + 150}'
+                                    : '${ctrl.payableAmount}',
                                 valueColor: AppColors.darkText,
                               ),
                             ],
@@ -411,6 +412,7 @@ class ReceiptScreen extends StatelessWidget {
     final signatureImage = signatureBytes != null
         ? pw.MemoryImage(signatureBytes)
         : null;
+    final svgRaw = await rootBundle.loadString('assets/svg/dirham_logo.svg');
 
     pdf.addPage(
       pw.Page(
@@ -478,7 +480,16 @@ class ReceiptScreen extends StatelessWidget {
                                     pw.Text('${pkg.sessionstext}'),
                                   ],
                                 ),
-                                pw.Text("${pkg.price}"),
+                                pw.Row(
+                                  children: [
+                                    pw.SvgImage(
+                                      svg: svgRaw,
+                                      width: 10,
+                                      height: 10,
+                                    ),
+                                    pw.Text(" ${pkg.price}"),
+                                  ],
+                                ),
                               ],
                             ),
                           ],
@@ -498,10 +509,15 @@ class ReceiptScreen extends StatelessWidget {
                       fontWeight: pw.FontWeight.bold,
                     ),
                   ),
-                  pw.Text(
-                    "AED ${provider.totalPrice}",
-                    textAlign: pw.TextAlign.right,
-                    style: pw.TextStyle(fontSize: 14),
+                  pw.Row(
+                    children: [
+                      pw.SvgImage(svg: svgRaw, width: 12, height: 12),
+                      pw.Text(
+                        " ${provider.totalPrice}",
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(fontSize: 14),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -511,7 +527,7 @@ class ReceiptScreen extends StatelessWidget {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text(
-                          'Admission Fees',
+                          'Admission Fee',
                           style: pw.TextStyle(
                             fontSize: 16,
                             fontWeight: pw.FontWeight.bold,
@@ -520,8 +536,9 @@ class ReceiptScreen extends StatelessWidget {
 
                         pw.Row(
                           children: [
+                            pw.SvgImage(svg: svgRaw, width: 12, height: 12),
                             pw.Text(
-                              "AED 150",
+                              " 150",
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(fontSize: 14),
                             ),
@@ -541,13 +558,42 @@ class ReceiptScreen extends StatelessWidget {
                       fontWeight: pw.FontWeight.bold,
                     ),
                   ),
-                  pw.Text(
-                    "AED ${provider.totalDiscount}",
-                    textAlign: pw.TextAlign.right,
-                    style: pw.TextStyle(fontSize: 14),
+                  pw.Row(
+                    children: [
+                      pw.SvgImage(svg: svgRaw, width: 12, height: 12),
+                      pw.Text(
+                        " ${provider.totalDiscount}",
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(fontSize: 14),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              pw.SizedBox(height: 10),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'VAT',
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.Row(
+                    children: [
+                      pw.SvgImage(svg: svgRaw, width: 12, height: 12),
+                      pw.Text(
+                        " ${provider.vatAmount.toStringAsFixed(2)}",
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
               pw.SizedBox(height: 10),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -559,12 +605,17 @@ class ReceiptScreen extends StatelessWidget {
                       fontWeight: pw.FontWeight.bold,
                     ),
                   ),
-                  pw.Text(
-                    provider.isStudentNew == true
-                        ? 'AED ${provider.payableAmount + 150}'
-                        : "AED ${provider.payableAmount}",
-                    textAlign: pw.TextAlign.right,
-                    style: pw.TextStyle(fontSize: 14),
+                  pw.Row(
+                    children: [
+                      pw.SvgImage(svg: svgRaw, width: 12, height: 12),
+                      pw.Text(
+                        provider.isStudentNew == true
+                            ? ' ${provider.payableAmount + 150}'
+                            : " ${provider.payableAmount}",
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(fontSize: 14),
+                      ),
+                    ],
                   ),
                 ],
               ),

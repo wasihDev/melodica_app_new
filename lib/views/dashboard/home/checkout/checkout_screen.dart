@@ -53,21 +53,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
-        actions: [
-          // IconButton(
-          //   onPressed: () async {
-          //     final pdfBytes = await generateFullReceiptPdf(
-          //       context.read<ServicesProvider>(),
-          //       widget.iscomingFromNewStudent,
-          //     );
-          //     await Printing.layoutPdf(
-          //       onLayout: (PdfPageFormat format) async => pdfBytes,
-          //       name: 'Receipt_${DateTime.now().millisecondsSinceEpoch}.pdf',
-          //     );
-          //   },
-          //   icon: Icon(Icons.abc),
-          // ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     onPressed: () async {
+        //       final pdfBytes = await generateFullReceiptPdf(
+        //         context.read<ServicesProvider>(),
+        //         widget.iscomingFromNewStudent,
+        //       );
+        //       await Printing.layoutPdf(
+        //         onLayout: (PdfPageFormat format) async => pdfBytes,
+        //         name: 'Receipt_${DateTime.now().millisecondsSinceEpoch}.pdf',
+        //       );
+        //     },
+        //     icon: Icon(Icons.abc),
+        //   ),
+        // ],
         leading: Consumer2<ServicesProvider, CustomerController>(
           builder: (context, provider, custPro, child) {
             return IconButton(
@@ -88,12 +88,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             );
           },
         ),
-        title: const Text(
+        title: Text(
           'Checkout',
           style: TextStyle(
             color: AppColors.black,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 20.fSize,
           ),
         ),
         centerTitle: true,
@@ -203,15 +203,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: Text.rich(
                           TextSpan(
                             text: 'I agree to the ',
-                            style: const TextStyle(
-                              fontSize: 14,
+                            style: TextStyle(
+                              fontSize: 14.fSize,
                               color: AppColors.darkText,
                             ),
                             children: [
                               TextSpan(
                                 text: 'Privacy Policy',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   decoration: TextDecoration.underline,
+                                  fontSize: 16.fSize,
                                 ),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
@@ -236,29 +237,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16.h),
+                  Text(
                     'Draw a Signature',
                     style: TextStyle(
                       color: AppColors.secondaryText,
-                      fontSize: 14,
+                      fontSize: 14.fSize,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   SignaturePad(
                     onSave: (bytes) {
                       provider.signatureBytes = bytes;
                       debugPrint('Auto-saved: ${bytes?.length}');
                     },
                   ),
-                  const SizedBox(height: 5),
+                  SizedBox(height: 5.h),
 
                   // --- Payment Summary ---
-                  const Text(
+                  Text(
                     'Payment Summary',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: 18.fSize,
                       color: AppColors.darkText,
                     ),
                   ),
@@ -276,6 +277,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           value: '${provider.totalPrice.toStringAsFixed(2)}',
                           valueColor: AppColors.darkText,
                         ),
+
                         SummaryRow(
                           label: 'Admission Fee',
                           value: provider.isStudentNew == true
@@ -421,8 +423,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         children: [
                           Text(
                             title,
-                            style: const TextStyle(
-                              fontSize: 16,
+                            style: TextStyle(
+                              fontSize: 16.fSize,
                               fontWeight: FontWeight.bold,
                               color: AppColors.darkText,
                             ),
@@ -492,8 +494,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           child: Text(
                             '$discount%\nOFF',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 12,
+                            style: TextStyle(
+                              fontSize: 12.fSize,
                               fontWeight: FontWeight.bold,
                               height: 1.2,
                             ),
@@ -514,17 +516,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  SvgPicture.asset('assets/svg/dirham.svg'),
+                  SvgPicture.asset(
+                    'assets/svg/dirham.svg',
+                    height: 14.h,
+                    width: 14.w,
+                  ),
                   Text(
                     " $price",
-                    style: const TextStyle(
-                      fontSize: 20,
+                    style: TextStyle(
+                      fontSize: 20.fSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              Text(pricePerClass),
+              Text(pricePerClass, style: TextStyle(fontSize: 16.fSize)),
             ],
           ),
         ],
@@ -544,6 +550,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     ServicesProvider provider,
     bool isNewStudent,
   ) async {
+    final svgRaw = await rootBundle.loadString('assets/svg/dirham_logo.svg');
     final pdf = pw.Document();
     final iconBytes = await rootBundle.load('assets/images/check.png');
     final iconImage = pw.MemoryImage(iconBytes.buffer.asUint8List());
@@ -620,6 +627,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   provider.isStudentNew == true ||
                   provider.customerController.selectedStudent?.isregistred !=
                       'Yes';
+
               return pw.Container(
                 margin: const pw.EdgeInsets.only(bottom: 15),
                 padding: const pw.EdgeInsets.all(12),
@@ -670,10 +678,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             crossAxisAlignment: pw.CrossAxisAlignment.start,
                             children: [
                               pw.Text(
-                                'Student Name:  ${chargeAdmission ? "${provider.customerController.firstNameCtrl.text}" : provider.customerController.selectedStudent?.fullName}',
+                                'Student Name:  ${chargeAdmission
+                                    ? "${provider.customerController.firstNameCtrl.text}"
+                                    : provider.customerController.selectedStudent!.isregistred == 'Yes'
+                                    ? provider.customerController.selectedStudent?.fullName
+                                    : provider.customerController.selectedStudent?.fullName}',
                               ),
                               pw.Text(
-                                'Student Email: ${chargeAdmission ? "${provider.customerController.emailCtrl.text}" : provider.customerController.selectedStudent?.email}',
+                                'Student Email: ${chargeAdmission
+                                    ? "${provider.customerController.emailCtrl.text}"
+                                    : provider.customerController.selectedStudent!.isregistred == 'Yes'
+                                    ? provider.customerController.selectedStudent?.email
+                                    : provider.customerController.selectedStudent?.email}}',
                               ),
                             ],
                           ),
@@ -728,31 +744,64 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         if (discountPercentage > 0) ...[
                           // Show original price with a strikethrough effect (manual)
-                          pw.Text(
-                            "AED ${originalPrice.toStringAsFixed(2)}",
-                            style: pw.TextStyle(
-                              fontSize: 9,
-                              color: PdfColors.grey600,
-                              decoration: pw.TextDecoration.lineThrough,
-                            ),
+                          pw.Row(
+                            children: [
+                              pw.SvgImage(
+                                svg: svgRaw,
+                                width: 7,
+                                height: 7,
+                                colorFilter: PdfColors.grey600,
+                              ),
+                              pw.Text(
+                                " ${originalPrice.toStringAsFixed(2)}",
+                                style: pw.TextStyle(
+                                  fontSize: 9,
+                                  color: PdfColors.grey600,
+                                  decoration: pw.TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
                           ),
-                          pw.Text(
-                            "Saved: AED ${discountAmount.toStringAsFixed(2)}",
-                            style: pw.TextStyle(
-                              fontSize: 8,
-                              color: PdfColors.green,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
+                          pw.Row(
+                            children: [
+                              pw.Text(
+                                'Saved: ',
+                                style: pw.TextStyle(
+                                  fontSize: 8,
+                                  color: PdfColors.green,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                              pw.SvgImage(
+                                svg: svgRaw,
+                                width: 7,
+                                height: 7,
+                                colorFilter: PdfColors.green,
+                              ),
+                              pw.Text(
+                                " ${discountAmount.toStringAsFixed(2)}",
+                                style: pw.TextStyle(
+                                  fontSize: 8,
+                                  color: PdfColors.green,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                         // THE PRICE AFTER DISCOUNT
-                        pw.Text(
-                          "AED ${finalItemPrice.toStringAsFixed(2)}",
-                          style: pw.TextStyle(
-                            fontSize: 14,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.black,
-                          ),
+                        pw.Row(
+                          children: [
+                            pw.SvgImage(svg: svgRaw, width: 13, height: 13),
+                            pw.Text(
+                              " ${finalItemPrice.toStringAsFixed(2)}",
+                              style: pw.TextStyle(
+                                fontSize: 14,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.black,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -832,6 +881,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   _buildPdfSummaryRow(
                     "Course Fee",
                     provider.totalPrice.toStringAsFixed(2),
+                    svgRaw: svgRaw,
                   ),
                   _buildPdfSummaryRow(
                     "Admission Fee",
@@ -843,15 +893,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 'Yes')
                         ? "150.00"
                         : "0.00",
+                    svgRaw: svgRaw,
                   ),
                   _buildPdfSummaryRow(
                     "Discount",
                     "-${provider.totalDiscount.toStringAsFixed(2)}",
                     color: PdfColors.red,
+                    svgRaw: svgRaw,
                   ),
                   _buildPdfSummaryRow(
                     "VAT",
                     provider.vatAmount.toStringAsFixed(2),
+                    svgRaw: svgRaw,
                   ),
                   pw.Divider(color: PdfColors.grey),
                   _buildPdfSummaryRow(
@@ -862,6 +915,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     //  provider.payableAmount.toStringAsFixed(2),
                     isBold: true,
                     fontSize: 14,
+                    svgRaw: svgRaw,
                   ),
                 ],
               ),
@@ -913,6 +967,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     bool isBold = false,
     double fontSize = 10,
     PdfColor? color,
+    required String svgRaw,
   }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
@@ -926,13 +981,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
           ),
-          pw.Text(
-            value,
-            style: pw.TextStyle(
-              fontSize: fontSize,
-              fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
-              color: color,
-            ),
+          pw.Row(
+            children: [
+              pw.SvgImage(
+                svg: svgRaw,
+                width: isBold ? 13 : 10,
+                height: isBold ? 13 : 10,
+                colorFilter: color,
+              ),
+              pw.SizedBox(width: 2),
+              pw.Text(
+                value,
+                style: pw.TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: isBold
+                      ? pw.FontWeight.bold
+                      : pw.FontWeight.normal,
+                  color: color,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -116,28 +116,29 @@ class ServicesProvider extends ChangeNotifier {
         print("provider.selectedPackage ${provider.selectedPackage}");
         if (provider.selectedPackage != null &&
             provider.selectedReason != null) {
-          await provider
-              .callFreezingApi(
-                navigatorKey.currentContext!,
-                provider.selectedReason!,
-                provider.selectedPackage!,
-                ref: ref, // ✅ payment reference
-              )
-              .then((val) {
-                Navigator.push(
-                  navigatorKey.currentContext!,
-                  MaterialPageRoute(
-                    builder: (_) => CustomRecipetScreen(
-                      orderId: ref,
-                      amount: provider.extraCharge.toString(),
-                      paymentMethod: 'Network International',
-                      status: 'success',
-                      date: DateTime.now(),
-                      //  package: Package,
-                    ),
-                  ),
-                );
-              });
+          Navigator.push(
+            navigatorKey.currentContext!,
+            MaterialPageRoute(
+              builder: (_) => CustomRecipetScreen(
+                orderId: ref,
+                amount: provider.extraCharge.toString(),
+                paymentMethod: 'Network International',
+                status: 'success',
+                date: DateTime.now(),
+                //  package: Package,
+              ),
+            ),
+          );
+          // await provider
+          //     .callFreezingApi(
+          //       navigatorKey.currentContext!,
+          //       provider.selectedReason!,
+          //       provider.selectedPackage!,
+          //       ref: ref, // ✅ payment reference
+          //     )
+          //     .then((val) {
+
+          //     });
         }
 
         break;
@@ -153,8 +154,7 @@ class ServicesProvider extends ChangeNotifier {
           MaterialPageRoute(
             builder: (_) => CustomRecipetScreen(
               orderId: ref,
-              // TODO:: sometime it will added 100 for weeks of extension
-              amount: "50",
+              amount: "${Packageprovider.totalamount}",
               paymentMethod: 'Network International',
               status: 'success',
               date: DateTime.now(),
@@ -276,7 +276,6 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
     // final auth = FirebaseAuth.instance.currentUser;
     try {
-      // TODO
       final uri = Uri.parse(
         // '${ApiConfigService.endpoints.getServices}${auth?.email}',
         '${ApiConfigService.endpoints.getServices}${customerController.selectedBranch}',
@@ -339,14 +338,9 @@ class ServicesProvider extends ChangeNotifier {
     _loading = true;
     _error = null;
     notifyListeners();
-    // TODO:
-    // final auth = FirebaseAuth.instance.currentUser;
-    // print("${ApiConfigService.endpoints.getMemberships}${auth?.email}");
     try {
       final uri = Uri.parse(
         '${ApiConfigService.endpoints.getMemberships}${customerController.selectedBranch}',
-        //C27B1894-7C6E-EE11-9AE7-0022489F8146',
-        // 'https://bf67c0337b6de47faeee4735e1fe49.46.environment.api.powerplatform.com/powerautomate/automations/direct/workflows/19d12f88493c44eca47defb553aab05e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=adzRWIXbH-lg5lnxWCNgD-w9SbvgQ0zgnqIrAWQADo8&locationid=C27B1894-7C6E-EE11-9AE7-0022489F8146',
       );
       final resp = await http.get(
         uri,

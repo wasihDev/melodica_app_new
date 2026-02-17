@@ -100,65 +100,96 @@ class _CustomAppBarState extends State<CustomAppBar> {
       title: _studentDropdown(
         context,
 
-        Row(
-          children: [
-            /// PROFILE IMAGE
-            Consumer<UserprofileProvider>(
-              builder: (_, provider, __) {
-                return CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppColors.primary,
-                  backgroundImage: provider.uint8list == null
-                      ? const NetworkImage(
-                          'https://cdn-icons-png.flaticon.com/512/219/219983.png',
-                        )
-                      : MemoryImage(provider.uint8list!),
-                );
-              },
-            ),
+        Showcase(
+          key: selectStudent,
+          title: "Select Student",
+          description: "Switch between your students or add a new one",
+          onBarrierClick: () {
+            ShowCaseWidget.of(context).next();
+          },
+          tooltipActionConfig: const TooltipActionConfig(
+            alignment: MainAxisAlignment.spaceBetween,
+            gapBetweenContentAndAction: 10,
+            position: TooltipActionPosition.outside,
+          ),
 
-            const SizedBox(width: 12),
-
-            /// STUDENT NAME + ID
-            Consumer<CustomerController>(
-              builder: (_, provider, __) {
-                final student = provider.selectedStudent;
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 180.w,
-                          color: Colors.transparent,
-                          child: Text(
-                            student?.fullName ?? "loading..",
-                            // provider.customer!.fullName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Icon(Icons.arrow_drop_down),
-                      ],
-                    ),
-                    Text(
-                      "${student?.mbId ?? ''}",
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                );
-                // _studentDropdown(
-                //   context,
-
-                // );
-              },
+          titleAlignment: Alignment.topLeft,
+          titleTextStyle: TextStyle(
+            fontSize: 16.fSize,
+            fontWeight: FontWeight.w700,
+          ),
+          toolTipMargin: 40,
+          descTextStyle: TextStyle(color: Colors.grey[700]),
+          tooltipActions: const [
+            TooltipActionButton(
+              type: TooltipDefaultActionType.next,
+              backgroundColor: AppColors.primary,
+              textStyle: TextStyle(color: Colors.black),
             ),
           ],
+          child: Row(
+            children: [
+              /// PROFILE IMAGE
+              Consumer<UserprofileProvider>(
+                builder: (_, provider, __) {
+                  return CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.primary,
+                    backgroundImage: provider.uint8list == null
+                        ? const NetworkImage(
+                            'https://cdn-icons-png.flaticon.com/512/219/219983.png',
+                          )
+                        : MemoryImage(provider.uint8list!),
+                  );
+                },
+              ),
+
+              const SizedBox(width: 12),
+
+              /// STUDENT NAME + ID
+              Consumer<CustomerController>(
+                builder: (_, provider, __) {
+                  final student = provider.selectedStudent;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 180.w,
+                            color: Colors.transparent,
+                            child: Text(
+                              student?.fullName ?? "loading..",
+                              // provider.customer!.fullName,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(Icons.arrow_drop_down),
+                        ],
+                      ),
+                      Text(
+                        "${student?.mbId ?? ''}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  );
+                  // _studentDropdown(
+                  //   context,
+
+                  // );
+                },
+              ),
+            ],
+          ),
         ),
       ),
 
@@ -169,10 +200,36 @@ class _CustomAppBarState extends State<CustomAppBar> {
               key: notificationKey,
               title: "Notifications",
               description:
-                  "Receive academy announcements, class rescheduling, and reminders.",
+                  "Receive academy annoucements, class rescheduling, and reminders",
               onBarrierClick: () {
                 ShowCaseWidget.of(context).next();
               },
+              tooltipActionConfig: const TooltipActionConfig(
+                alignment: MainAxisAlignment.spaceBetween,
+                gapBetweenContentAndAction: 10,
+                position: TooltipActionPosition.outside,
+              ),
+
+              titleAlignment: Alignment.topLeft,
+              titleTextStyle: TextStyle(
+                fontSize: 16.fSize,
+                fontWeight: FontWeight.w700,
+              ),
+
+              descTextStyle: TextStyle(color: Colors.grey[700]),
+              tooltipActions: const [
+                TooltipActionButton(
+                  backgroundColor: Colors.transparent,
+                  type: TooltipDefaultActionType.previous,
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  textStyle: TextStyle(color: Colors.white),
+                ),
+                TooltipActionButton(
+                  type: TooltipDefaultActionType.next,
+                  backgroundColor: AppColors.primary,
+                  textStyle: TextStyle(color: Colors.black),
+                ),
+              ],
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: () {

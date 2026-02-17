@@ -8,10 +8,12 @@ class CustomWeeklyDatePicker extends StatefulWidget {
   final DateTime initialDate;
   final DateTime expiryDate; // 1. Added expiryDate parameter
   final Function(DateTime) onDateSelected;
+  final String title;
 
   const CustomWeeklyDatePicker({
     super.key,
     required this.initialDate,
+    required this.title,
     required this.expiryDate, // Pass this from your API data
     required this.onDateSelected,
   });
@@ -23,7 +25,7 @@ class CustomWeeklyDatePicker extends StatefulWidget {
 class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
   late DateTime _focusedDate;
   late DateTime _selectedDate;
-
+  bool _isBrowsing = false;
   @override
   void initState() {
     super.initState();
@@ -56,6 +58,8 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
 
     setState(() {
       _focusedDate = newFocus;
+      // _selectedDate = null;
+      _isBrowsing = true;
     });
   }
 
@@ -65,12 +69,6 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
     DateTime monday = date.subtract(Duration(days: date.weekday - 1));
     return List.generate(7, (index) => monday.add(Duration(days: index)));
   }
-
-  // void _changeWeek(int weeks) {
-  //   setState(() {
-  //     _focusedDate = _focusedDate.add(Duration(days: weeks * 7));
-  //   });
-  // }
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -83,8 +81,8 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
     final scheduleProvider = context.read<ScheduleProvider>();
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.all(16.adaptSize),
+      margin: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -95,39 +93,39 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
         children: [
           // 1. Header: Select Date
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
-                'Select Date',
+                widget.title,
+                //  'Select Date and Time',
                 style: TextStyle(
                   fontSize: 14.fSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const Icon(Icons.arrow_drop_down),
             ],
           ),
-          const SizedBox(height: 5),
 
           // 2. Navigation: < Wed, 3 Nov, 2025 >
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, size: 20),
+                icon: Icon(Icons.arrow_back, size: 20.adaptSize),
                 onPressed: () => _changeWeek(-1),
               ),
               Text(
-                DateFormat('EEE, d MMM, yyyy').format(_selectedDate),
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                _isBrowsing
+                    ? DateFormat('EEE, d MMM, yyyy').format(_focusedDate)
+                    : DateFormat('EEE, d MMM, yyyy').format(_selectedDate),
+                style: TextStyle(color: Colors.grey[600], fontSize: 14.fSize),
               ),
               IconButton(
-                icon: const Icon(Icons.arrow_forward, size: 20),
+                icon: Icon(Icons.arrow_forward, size: 20.adaptSize),
                 onPressed: () => _changeWeek(1),
               ),
             ],
           ),
-          const SizedBox(height: 5),
 
           // 3. Days Row
           Row(
@@ -145,6 +143,7 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
                     ? null // disable tap for past days
                     : () {
                         setState(() => _selectedDate = day);
+                        _isBrowsing = false;
                         widget.onDateSelected(day);
                       },
                 child: Column(
@@ -155,13 +154,13 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
                         color: isDisabled || isPast
                             ? Colors.grey
                             : Colors.black, // grey for past
-                        fontSize: 14,
+                        fontSize: 14.fSize,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     Container(
-                      width: 40,
-                      height: 45,
+                      width: 40.w,
+                      height: 45.h,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: isSelected
@@ -174,7 +173,7 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
                       child: Text(
                         day.day.toString(),
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 16.fSize,
                           fontWeight: isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,

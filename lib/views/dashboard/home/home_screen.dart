@@ -113,12 +113,39 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Showcase(
                           key: bookClassKey,
-                          title: "Book Classes",
-                          description: "Easily book music and dance classes.",
+                          title: "Add Classes",
+                          description:
+                              "Browse and purchase music class packages that fit your goals.",
 
                           onBarrierClick: () {
                             ShowCaseWidget.of(context).next();
                           },
+                          tooltipActionConfig: const TooltipActionConfig(
+                            alignment: MainAxisAlignment.spaceBetween,
+                            gapBetweenContentAndAction: 10,
+                            position: TooltipActionPosition.outside,
+                          ),
+
+                          titleAlignment: Alignment.topLeft,
+                          titleTextStyle: TextStyle(
+                            fontSize: 16.fSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+
+                          descTextStyle: TextStyle(color: Colors.grey[700]),
+                          tooltipActions: const [
+                            TooltipActionButton(
+                              backgroundColor: Colors.transparent,
+                              type: TooltipDefaultActionType.previous,
+                              padding: EdgeInsets.symmetric(vertical: 4),
+                              textStyle: TextStyle(color: Colors.white),
+                            ),
+                            TooltipActionButton(
+                              type: TooltipDefaultActionType.next,
+                              backgroundColor: AppColors.primary,
+                              textStyle: TextStyle(color: Colors.black),
+                            ),
+                          ],
                           child: _buildCategoryCard(
                             'assets/svg/music_class.svg',
                             'Add Music',
@@ -140,46 +167,84 @@ class _HomeScreenState extends State<HomeScreen> {
                           selector: (_, ctrl) => ctrl.display,
                           builder: (context, display, child) {
                             print('UI display rebuilt: $display');
-                            return Expanded(
-                              child: Column(
-                                children: [
-                                  InkWell(
-                                    borderRadius: BorderRadius.circular(18),
-                                    onTap: display
-                                        ? () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    PackageSelectionScreen(
-                                                      isShowdanceTab: true,
-                                                    ),
-                                              ),
-                                            );
-                                          }
-                                        : () {
-                                            SnackbarUtils.showInfo(
-                                              context,
-                                              "There are currently no dance packages available for this branch. "
-                                              "Feel free to enquire about packages at our other branches.",
-                                            );
-                                          },
-                                    child: SvgPicture.asset(
-                                      'assets/svg/dance_class.svg',
-                                      color: display ? null : Colors.grey[500],
+                            return Showcase(
+                              key: dancekey,
+                              title: "Add Dance",
+                              description:
+                                  "Explore and buy dance class packages for all levels.",
+
+                              onBarrierClick: () {
+                                ShowCaseWidget.of(context).next();
+                              },
+                              tooltipActionConfig: const TooltipActionConfig(
+                                alignment: MainAxisAlignment.spaceBetween,
+                                gapBetweenContentAndAction: 10,
+                                position: TooltipActionPosition.outside,
+                              ),
+
+                              titleAlignment: Alignment.topLeft,
+                              titleTextStyle: TextStyle(
+                                fontSize: 16.fSize,
+                                fontWeight: FontWeight.w700,
+                              ),
+
+                              descTextStyle: TextStyle(color: Colors.grey[700]),
+                              tooltipActions: const [
+                                TooltipActionButton(
+                                  backgroundColor: Colors.transparent,
+                                  type: TooltipDefaultActionType.previous,
+                                  padding: EdgeInsets.symmetric(vertical: 4),
+                                  textStyle: TextStyle(color: Colors.white),
+                                ),
+                                TooltipActionButton(
+                                  type: TooltipDefaultActionType.next,
+                                  backgroundColor: AppColors.primary,
+                                  textStyle: TextStyle(color: Colors.black),
+                                ),
+                              ],
+                              child: Expanded(
+                                child: Column(
+                                  children: [
+                                    InkWell(
+                                      borderRadius: BorderRadius.circular(18),
+                                      onTap: display
+                                          ? () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      PackageSelectionScreen(
+                                                        isShowdanceTab: true,
+                                                      ),
+                                                ),
+                                              );
+                                            }
+                                          : () {
+                                              SnackbarUtils.showInfo(
+                                                context,
+                                                "There are currently no dance packages available for this branch. "
+                                                "Feel free to enquire about packages at our other branches.",
+                                              );
+                                            },
+                                      child: SvgPicture.asset(
+                                        'assets/svg/dance_class.svg',
+                                        color: display
+                                            ? null
+                                            : Colors.grey[500],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Add Dance',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Add Dance',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -189,12 +254,37 @@ class _HomeScreenState extends State<HomeScreen> {
                         Showcase(
                           key: packageKey,
                           title: "My Packages",
-
                           description:
-                              "Explore your packages, track usage, or freeze a package",
+                              "View your active and completed packages, check details, or freeze a package anytime.",
                           onBarrierClick: () {
                             ShowCaseWidget.of(context).next();
                           },
+                          tooltipActionConfig: const TooltipActionConfig(
+                            alignment: MainAxisAlignment.spaceBetween,
+                            gapBetweenContentAndAction: 10,
+                            position: TooltipActionPosition.outside,
+                          ),
+
+                          titleAlignment: Alignment.topLeft,
+                          titleTextStyle: TextStyle(
+                            fontSize: 16.fSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+
+                          descTextStyle: TextStyle(color: Colors.grey[700]),
+                          tooltipActions: const [
+                            TooltipActionButton(
+                              backgroundColor: Colors.transparent,
+                              type: TooltipDefaultActionType.previous,
+                              padding: EdgeInsets.symmetric(vertical: 4),
+                              textStyle: TextStyle(color: Colors.white),
+                            ),
+                            TooltipActionButton(
+                              type: TooltipDefaultActionType.next,
+                              backgroundColor: AppColors.primary,
+                              textStyle: TextStyle(color: Colors.black),
+                            ),
+                          ],
                           child: _buildCategoryCard(
                             'assets/svg/packages.svg',
                             'My Packages',
@@ -213,10 +303,36 @@ class _HomeScreenState extends State<HomeScreen> {
                           key: onlinestore,
                           title: "Online Store",
                           description:
-                              "Find and buy your favorite instruments from our online store.",
+                              "Shop for musical instruments and accessories",
                           onBarrierClick: () {
                             ShowCaseWidget.of(context).next();
                           },
+                          tooltipActionConfig: const TooltipActionConfig(
+                            alignment: MainAxisAlignment.spaceBetween,
+                            gapBetweenContentAndAction: 10,
+                            position: TooltipActionPosition.outside,
+                          ),
+
+                          titleAlignment: Alignment.topLeft,
+                          titleTextStyle: TextStyle(
+                            fontSize: 16.fSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+
+                          descTextStyle: TextStyle(color: Colors.grey[700]),
+                          tooltipActions: const [
+                            TooltipActionButton(
+                              backgroundColor: Colors.transparent,
+                              type: TooltipDefaultActionType.previous,
+                              padding: EdgeInsets.symmetric(vertical: 4),
+                              textStyle: TextStyle(color: Colors.white),
+                            ),
+                            TooltipActionButton(
+                              type: TooltipDefaultActionType.next,
+                              backgroundColor: AppColors.primary,
+                              textStyle: TextStyle(color: Colors.black),
+                            ),
+                          ],
                           child: _buildCategoryCard(
                             'assets/svg/online_store.svg',
                             'Online Store',
@@ -435,6 +551,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void showAppointmentBottomSheet(BuildContext context, ScheduleModel s) {
+    final DateTime now = DateTime.now();
+    final DateTime bookingDate = DateFormat(
+      'dd MMM yyyy hh:mm a',
+    ).parse(s.bookingDateStartTime);
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final DateTime scheduledDay = DateTime(
+      bookingDate.year,
+      bookingDate.month,
+      bookingDate.day,
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -549,7 +675,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       // DateFormat('dd/MM/yyyy hh:mm a').parse(PackageExpiry);
                       Text(
-                        "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
+                        today == scheduledDay
+                            ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
+                            : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
                         // 'Reschedule before the ${DateFormat('dd MMM yyyy').format(expiryDate)} to avoid using your cancellation.',
                         style: const TextStyle(
                           color: Colors.grey,

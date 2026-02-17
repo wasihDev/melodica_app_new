@@ -13,6 +13,7 @@ class EarlyNoticeDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // print();
     return AlertDialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
@@ -25,8 +26,8 @@ class EarlyNoticeDialog extends StatelessWidget {
             size: 50,
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Are you sure you want to cancel?\nYou can reschedule to avoid losing it.",
+          Text(
+            "Are you sure you want to cancel?\n${s.danceOrMusic == "Dance Classes" ? "" : "You can reschedule to avoid losing it."}",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16),
           ),

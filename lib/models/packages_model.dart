@@ -1,3 +1,12 @@
+import 'package:melodica_app_new/models/student_models.dart';
+
+class SelectedPackageItem {
+  final Package package;
+  final Student student;
+
+  SelectedPackageItem({required this.package, required this.student});
+}
+
 class Package {
   final String itemName;
   final String locationName;
@@ -71,6 +80,7 @@ class Package {
       classDuration: json['Packages[Class Duration]'] ?? 'N/A',
       resource: json['Packages[Resource]'] ?? 'N/A',
       danceOrMusic: json['Packages[Dance/Music]'] ?? "",
+
       packageRemainingPaidRecovery:
           json['Packages[Remaining Paid Recovery]'] ?? 0.0,
       packageRemainingPaidExtension:

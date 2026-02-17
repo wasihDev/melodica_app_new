@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:melodica_app_new/providers/schedule_provider.dart';
-import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart'; // Adjust based on your path
-import 'package:melodica_app_new/providers/services_provider.dart'; // Adjust path
 import 'package:melodica_app_new/constants/app_colors.dart'; // Adjust path
 
 class DialogService {
@@ -75,7 +71,10 @@ class DialogService {
   }
 
   // 1. showLateNoticeDialog
-  static void showLateNoticeDialog(BuildContext context) {
+  static void showLateNoticeDialog(
+    BuildContext context, {
+    required VoidCallback onConfirm,
+  }) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -128,34 +127,7 @@ class DialogService {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      final servicesProvider = Provider.of<ServicesProvider>(
-                        context,
-                        listen: false,
-                      );
-                      final scheduleProvider = context.read<ScheduleProvider>();
-                      servicesProvider.setPaymentType(
-                        PaymentType.schedulePoints,
-                      );
-                      final vat = 50 * 0.05;
-                      final amountWithVat = (50 + vat).toInt();
-
-                      final success = await servicesProvider.startCheckout(
-                        context,
-                        amount: amountWithVat,
-                      );
-                      if (success && servicesProvider.paymentUrl != null) {
-                        final requestReturn = await scheduleProvider
-                            .submitScheduleRequestAfterPayment(
-                              servicesProvider.orderReference!,
-                            );
-                        if (requestReturn) {
-                          Navigator.pop(context);
-                          await launchUrl(
-                            Uri.parse(servicesProvider.paymentUrl!),
-                            mode: LaunchMode.externalApplication,
-                          );
-                        }
-                      }
+                      onConfirm();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFF27E2B),
@@ -411,7 +383,8 @@ class DialogService {
                   ),
                 ),
                 Text(
-                  "You will receive an update shortly.",
+                  "Up to 2 hours for reflecting",
+                  //    "You will receive an update shortly.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.adaptSize,
@@ -435,5 +408,48 @@ class DialogService {
         );
       },
     );
+  }
+
+  /// new popoups
+  static Future<bool> showNoMorePaidPopup(
+    BuildContext context, {
+    required String title,
+    required VoidCallback onConfirm,
+  }) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Icon(Icons.warning, color: Colors.orange, size: 40),
+            content: Text("$title", textAlign: TextAlign.center),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context, true);
+                  onConfirm();
+                },
+                child: Container(
+                  height: 50,
+                  width: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      "Ok",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 }

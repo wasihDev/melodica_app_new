@@ -25,10 +25,11 @@ class CustomRecipetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double baseAmount = double.parse(amount);
-    final double vat = baseAmount * 0.05;
-    final double total = baseAmount + vat;
-
+    final double baseAmount1 = double.parse(amount);
+    // final double vat = baseAmount * 0.05;
+    // final double total = baseAmount + vat;
+    double baseAmount = baseAmount1 / 1.05; // 100.0
+    double vat = baseAmount1 - baseAmount; // 5.0
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -71,8 +72,8 @@ class CustomRecipetScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               _buildRow('Order ID', orderId),
-              _buildRow1('Vat', " ${vat}"),
-              _buildRow1('Amount', " ${total}"),
+              _buildRow1('Vat', " ${vat.toStringAsFixed(2)}"),
+              _buildRow1('Amount', " ${amount}"),
               _buildRow('Payment Method', paymentMethod),
               _buildRow(
                 'Date',
@@ -144,10 +145,10 @@ class CustomRecipetScreen extends StatelessWidget {
               SvgPicture.asset(
                 'assets/svg/dirham.svg',
                 color: Colors.black,
-                height: 12.h,
-                width: 12.w,
+                height: 11.h,
+                width: 11.w,
               ),
-              SizedBox(width: 2.w),
+              SizedBox(width: 0.w),
               Text(
                 value,
                 style: const TextStyle(

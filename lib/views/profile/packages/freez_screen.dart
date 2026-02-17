@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:melodica_app_new/models/packages_model.dart';
 import 'package:melodica_app_new/providers/pacakge_provider.dart';
@@ -86,7 +87,11 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
           appBar: AppBar(
             backgroundColor: Colors.white,
             title: const Text("Freezing Request"),
-            leading: const BackButton(),
+            leading: BackButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
           ),
           body: SafeArea(
             bottom: Platform.isIOS ? false : true,
@@ -103,7 +108,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                     _freezingInfo(p),
                     SizedBox(height: 10.h),
                     _reasonDropdown(),
-                    SizedBox(height: 10.h),
+                    SizedBox(height: 5.h),
                   ],
                 ),
               ),
@@ -125,24 +130,24 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "Select start and end dates of your freezing",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 18.fSize, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Chip(
-              backgroundColor: Colors.white,
-              label: Text("${DateFormat('d MMM yyyy').format(DateTime.now())}"),
-            ),
-            // SizedBox(width: 8),
-            // Chip(
-            //   backgroundColor: Colors.white,
-            //   label: Text("${package.classDuration} "),
-            // ),
-          ],
-        ),
+        SizedBox(height: 6.h),
+        // Row(
+        //   children: [
+        //     Chip(
+        //       backgroundColor: Colors.white,
+        //       label: Text("${DateFormat('d MMM yyyy').format(DateTime.now())}"),
+        //     ),
+        //     // SizedBox(width: 8),
+        //     // Chip(
+        //     //   backgroundColor: Colors.white,
+        //     //   label: Text("${package.classDuration} "),
+        //     // ),
+        //   ],
+        // ),
         package.subject == "Dance Classes"
             ? SizedBox()
             : SizedBox(height: 10.h),
@@ -151,6 +156,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
             : Text(
                 "Remaining Classes: ${package.remainingSessions.toString().split(".").first}/${package.totalClasses.toString()}",
               ),
+        SizedBox(height: 4.h),
         package.subject == "Dance Classes"
             ? SizedBox()
             : ClipRRect(
@@ -302,13 +308,14 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
           children: [
             Text(
               "Freezing duration: ${p.freezeWeeks} week(s)",
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.fSize),
             ),
             const SizedBox(height: 4),
             Text(
               "Remaining Freezing: ${p.freezingRemaining}",
               style: TextStyle(
                 color: p.hasEnoughFreezing ? Colors.green : Colors.red,
+                fontSize: 14.fSize,
               ),
             ),
             Consumer<PackageProvider>(
@@ -323,7 +330,10 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                   children: [
                     Text(
                       "Extra freezing required: ${p.extraWeeks} week(s)",
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14.fSize,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     //                   final double baseAmount = double.parse(amount);
@@ -336,12 +346,31 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                     //     fontWeight: FontWeight.bold,
                     //   ),
                     // ),
-                    Text(
-                      "Additional charge: AED ${p.extraCharge + vat}",
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'Additional fee: ',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.fSize,
+                          ),
+                        ),
+                        SvgPicture.asset(
+                          'assets/svg/dirham_logo.svg',
+                          height: 12.h,
+                          width: 12.w,
+                          color: Colors.red,
+                        ),
+                        Text(
+                          " ${p.extraCharge}", //+ vat
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.fSize,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 );
@@ -370,12 +399,13 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
           // borderSide: BorderSide(color: Colors.yellow),
         ),
       ),
+      padding: EdgeInsets.all(0),
     );
   }
 
   Widget _submitButton(PackageProvider p) {
-    return Padding(
-      padding: const EdgeInsets.all(0),
+    return SafeArea(
+      bottom: Platform.isIOS ? false : true,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -384,7 +414,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
               backgroundColor: const Color(0xFFF5C542),
               minimumSize: const Size(double.infinity, 48),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+                borderRadius: BorderRadius.circular(12.adaptSize),
               ),
             ),
             onPressed: p.startDate != null && p.endDate != null && !p.isloading
@@ -394,7 +424,7 @@ class _FreezingRequestScreenState extends State<FreezingRequestScreen> {
                 ? const CircularProgressIndicator(color: Colors.white)
                 : const Text("Submit", style: TextStyle(color: Colors.black)),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 15.h),
         ],
       ),
     );

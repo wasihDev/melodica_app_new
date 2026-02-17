@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
@@ -23,7 +25,11 @@ final GlobalKey scheduleKey = GlobalKey();
 final GlobalKey onlinestore = GlobalKey();
 final GlobalKey notificationKey = GlobalKey();
 final GlobalKey packageKey = GlobalKey();
+final GlobalKey dancekey = GlobalKey();
+final GlobalKey selectStudent = GlobalKey();
 
+// final GlobalKey dancekey=GlobalKey();
+// final GlobalKey dancekey=GlobalKey();
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -84,16 +90,96 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final bool isFirstTime = prefs.getBool('melodica_showcases') ?? true;
 
     if (isFirstTime) {
-      ShowCaseWidget.of(navigatorKey.currentContext!).startShowCase([
-        bookClassKey,
-        packageKey,
-        onlinestore,
-        notificationKey,
-        scheduleKey,
-      ]);
+      ShowcaseView.register(
+        autoPlay: true,
+        hideFloatingActionWidgetForShowcase: [scheduleKey],
+        globalFloatingActionWidget: (showcaseContext) => FloatingActionWidget(
+          left: 16,
+          bottom: 16,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () => ShowcaseView.get().dismiss(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xffEE5366),
+              ),
+              child: const Text(
+                'Skip',
+                style: TextStyle(color: Colors.white, fontSize: 15),
+              ),
+            ),
+          ),
+        ),
+        onStart: (index, key) {
+          log('onStart: $index, $key');
+        },
+        onComplete: (index, key) {
+          log('onComplete: $index, $key');
+          if (index == 4) {
+            SystemChrome.setSystemUIOverlayStyle(
+              SystemUiOverlayStyle.light.copyWith(
+                statusBarIconBrightness: Brightness.dark,
+                statusBarColor: Colors.white,
+              ),
+            );
+          }
+        },
+        blurValue: 1,
+        autoPlayDelay: const Duration(seconds: 3),
+        globalTooltipActionConfig: const TooltipActionConfig(
+          position: TooltipActionPosition.inside,
+          alignment: MainAxisAlignment.spaceBetween,
+          actionGap: 20,
+        ),
+        globalTooltipActions: [
+          // Here we don't need previous action for the first showcase widget
+          // so we hide this action for the first showcase widget
+          TooltipActionButton(
+            type: TooltipDefaultActionType.previous,
+            textStyle: const TextStyle(color: Colors.white),
+            hideActionWidgetForShowcase: [selectStudent],
+          ),
+          // Here we don't need next action for the last showcase widget so we
+          // hide this action for the last showcase widget
+          TooltipActionButton(
+            type: TooltipDefaultActionType.next,
+            textStyle: const TextStyle(color: Colors.white),
+            hideActionWidgetForShowcase: [scheduleKey],
+          ),
+        ],
+        onDismiss: (key) {
+          debugPrint('Dismissed at $key');
+        },
+      );
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => ShowcaseView.get().startShowCase([
+          selectStudent,
+          notificationKey,
+          bookClassKey,
+          dancekey,
+          packageKey,
+          onlinestore,
+          scheduleKey,
+        ]),
+      );
+      // ShowCaseWidget.of(navigatorKey.currentContext!).startShowCase([
+      // selectStudent,
+      // notificationKey,
+      // bookClassKey,
+      // dancekey,
+      // packageKey,
+      // onlinestore,
+      // scheduleKey,
+      // ]);
 
       prefs.setBool('melodica_showcases', false);
     }
+  }
+
+  @override
+  void dispose() {
+    ShowcaseView.get().unregister();
+    super.dispose();
   }
 
   final List<Widget> _pages = [
@@ -112,13 +198,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       floatingActionButton: SafeArea(
         bottom: Platform.isIOS ? false : true,
         child: Container(
-          height: 75.h,
+          height: 90.h,
           margin: EdgeInsets.only(
             left: 16.w,
             right: 16.w,
-            bottom: Platform.isIOS ? 0 : 10,
+            bottom: Platform.isIOS ? 10 : 10,
           ),
           decoration: BoxDecoration(
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Color(0xffE2E2E2)),
           ),
@@ -162,10 +249,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     key: scheduleKey,
                     title: "Schedule",
                     description:
-                        "Keep track of your classes and make changes anytime. Reschedule or cancel with ease.",
+                        "View and manage your classes — reschedule or cancel with ease",
                     onBarrierClick: () {
                       ShowCaseWidget.of(context).next();
                     },
+                    tooltipActionConfig: const TooltipActionConfig(
+                      alignment: MainAxisAlignment.spaceBetween,
+                      gapBetweenContentAndAction: 10,
+                      position: TooltipActionPosition.outside,
+                    ),
+
+                    titleAlignment: Alignment.topLeft,
+                    titleTextStyle: TextStyle(
+                      fontSize: 16.fSize,
+                      fontWeight: FontWeight.w700,
+                    ),
+
+                    descTextStyle: TextStyle(color: Colors.grey[700]),
+                    tooltipActions: const [
+                      TooltipActionButton(
+                        backgroundColor: Colors.transparent,
+                        type: TooltipDefaultActionType.previous,
+                        padding: EdgeInsets.symmetric(vertical: 4),
+                        textStyle: TextStyle(color: Colors.white),
+                      ),
+                      TooltipActionButton(
+                        type: TooltipDefaultActionType.next,
+                        backgroundColor: AppColors.primary,
+                        textStyle: TextStyle(color: Colors.black),
+                      ),
+                    ],
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 18.w,
@@ -180,6 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: SvgPicture.asset('assets/svg/schedule.svg'),
                     ),
                   ),
+
                   label: 'Schedule',
                 ),
 
