@@ -1,27 +1,50 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
 import 'package:melodica_app_new/models/packages_model.dart';
+import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/views/profile/packages/freez_screen.dart';
 import 'package:melodica_app_new/views/profile/packages/widget/tabbar_view_package_widget.dart';
+import 'package:provider/provider.dart';
 
-class PackageDetailScreen extends StatelessWidget {
+class PackageDetailScreen extends StatefulWidget {
   final Package package;
 
   const PackageDetailScreen({super.key, required this.package});
 
   @override
+  State<PackageDetailScreen> createState() => _PackageDetailScreenState();
+}
+
+class _PackageDetailScreenState extends State<PackageDetailScreen> {
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((va) async {
+      final provider = context.read<PackageProvider>();
+      //"893979",
+      //"100314131",
+      await provider.fetchRescheduleRequests(
+        clientId: widget.package.clientId,
+        packageId: widget.package.paymentRef,
+      );
+      print('api hit =======>>>');
+    });
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final remainingFreezes =
-        package.totalAllowedFreezings - package.totalFreezingTaken;
+        widget.package.totalAllowedFreezings -
+        widget.package.totalFreezingTaken;
 
-    // print(' package.totalFreezingTaken ${package.totalFreezingTaken}');
-    // print('package ${package.cl}')
-    final unbookedClasses = package.totalClasses - package.totalBooked;
+    final unbookedClasses =
+        widget.package.totalClasses - widget.package.totalBooked;
 
-    print("unbookedClasses ${unbookedClasses.isNegative}");
+    // print("unbookedClasses ${unbookedClasses.isNegative}");
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -48,15 +71,15 @@ class PackageDetailScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        package.serviceandproduct,
+                        widget.package.serviceandproduct,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    package.packageStatus.contains('Active') ||
-                            package.packageStatus.contains('On Going')
+                    widget.package.packageStatus.contains('Active') ||
+                            widget.package.packageStatus.contains('On Going')
                         ? Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -79,80 +102,84 @@ class PackageDetailScreen extends StatelessWidget {
                   ],
                 ),
 
-                // const SizedBox(height: 6),
-                // Text("${package.subject}", style: TextStyle(color: Colors.grey)),
                 const SizedBox(height: 12),
 
                 /// Chips Row
                 Wrap(
                   spacing: 8,
                   children: [
-                    _chip(package.locationName),
-                    package.subject == "Dance Classes"
-                        ? SizedBox()
-                        : _chip(package.classFrequency),
-                    package.subject == "Dance Classes"
-                        ? SizedBox()
-                        : _chip(package.classDuration),
+                    _chip(widget.package.locationName),
+                    Visibility(
+                      visible: widget.package.subject != "Dance Classes",
+                      child: _chip(widget.package.classFrequency),
+                    ),
+                    Visibility(
+                      visible: widget.package.subject != "Dance Classes",
+                      child: _chip(widget.package.classDuration),
+                    ),
                   ],
                 ),
-
-                package.subject == "Dance Classes"
-                    ? SizedBox()
-                    : Column(
-                        children: [
-                          SizedBox(height: 16.h),
-                          const Divider(color: Color(0xffE2E2E2)),
-                        ],
-                      ),
+                Visibility(
+                  visible: widget.package.subject != "Dance Classes",
+                  child: Column(
+                    children: [
+                      SizedBox(height: 16.h),
+                      const Divider(color: Color(0xffE2E2E2)),
+                    ],
+                  ),
+                ),
                 //
 
                 /// Remaining Sessions
-                package.subject == "Dance Classes"
-                    ? SizedBox()
-                    : const Text(
-                        "Remaining Classes:",
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                package.subject == "Dance Classes"
-                    ? SizedBox()
-                    : const SizedBox(height: 8),
+                Visibility(
+                  visible: widget.package.subject != "Dance Classes",
+                  child: const Text(
+                    "Remaining Classes:",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+                Visibility(
+                  visible: widget.package.subject != "Dance Classes",
+                  child: const SizedBox(height: 8),
+                ),
 
-                package.subject == "Dance Classes"
-                    ? SizedBox()
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: package.totalClasses > 0
-                              ? (package.remainingSessions /
-                                        package.totalClasses)
-                                    .clamp(0.0, 1.0)
-                              : 0.0,
-                          minHeight: 8,
-                          backgroundColor: Colors.grey.shade300,
-                          valueColor: const AlwaysStoppedAnimation(
-                            Color(0xFFF5C542),
-                          ),
-                        ),
+                Visibility(
+                  visible: widget.package.subject != "Dance Classes",
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: widget.package.totalClasses > 0
+                          ? (widget.package.remainingSessions /
+                                    widget.package.totalClasses)
+                                .clamp(0.0, 1.0)
+                          : 0.0,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey.shade300,
+                      valueColor: const AlwaysStoppedAnimation(
+                        Color(0xFFF5C542),
                       ),
+                    ),
+                  ),
+                ),
 
-                package.subject == "Dance Classes"
-                    ? SizedBox()
-                    : const SizedBox(height: 20),
+                Visibility(
+                  visible: widget.package.subject != "Dance Classes",
+                  child: const SizedBox(height: 20),
+                ),
 
                 /// Stats Cards
-                package.subject == "Dance Classes"
+                widget.package.subject == "Dance Classes"
                     ? SizedBox()
                     : Row(
                         children: [
                           _statCard(
                             "Total Classes",
-                            package.totalClasses.toString(),
+                            widget.package.totalClasses.toString(),
                           ),
                           const SizedBox(width: 12),
                           _statCard(
                             "Remaining Classes",
-                            package.remainingSessions
+                            widget.package.remainingSessions
                                 .toString()
                                 .split(".")
                                 .first,
@@ -164,29 +191,36 @@ class PackageDetailScreen extends StatelessWidget {
                 const Divider(color: Color(0xffE2E2E2)),
 
                 /// Details
-                _detail("Teacher:", package.teacherName),
-                _detail("Location:", package.locationName),
+                _detail("Teacher:", widget.package.teacherName),
+                _detail("Location:", widget.package.locationName),
 
-                package.subject == "Dance Classes" ||
-                        package.remainingCancellations <= 0
-                    ? SizedBox()
-                    : _detail(
-                        "Remaining Cancellation (Classes):",
-                        "${package.remainingCancellations}/${package.totalAllowedCancellation}",
-                      ),
-                package.subject == "Dance Classes" || remainingFreezes <= 0
+                Visibility(
+                  visible:
+                      widget.package.subject != "Dance Classes" ||
+                      widget.package.remainingCancellations <= 0,
+                  child: _detail(
+                    "Remaining Cancellation (Classes):",
+                    "${widget.package.remainingCancellations}/${widget.package.totalAllowedCancellation}",
+                  ),
+                ),
+                widget.package.subject == "Dance Classes" ||
+                        remainingFreezes <= 0
                     ? SizedBox()
                     : _detail(
                         "Remaining Freezing (Weeks):",
-                        "${remainingFreezes}/${package.totalAllowedFreezings}",
+                        "${remainingFreezes}/${widget.package.totalAllowedFreezings}",
                       ),
                 unbookedClasses.isNegative
                     ? SizedBox()
                     : _detail("Unscheduled Classes:", "${unbookedClasses}"),
+                _detail(
+                  "Package Expiry:",
+                  "${DateFormat('d MMM yyyy').format(DateTime.parse(widget.package.packageExpiry))}",
+                ),
                 SizedBox(height: 10.h),
                 const Divider(color: Color(0xffE2E2E2)),
                 SizedBox(height: 10.h),
-                PackageScheduleTabs(package: package),
+                PackageScheduleTabs(package: widget.package),
               ],
             ),
           ),
@@ -194,17 +228,22 @@ class PackageDetailScreen extends StatelessWidget {
       ),
 
       /// Bottom Buttons
-      bottomNavigationBar: SafeArea(
-        bottom: true,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              package.packageStatus != "Active" &&
-                      package.packageStatus != 'On Going'
-                  ? SizedBox()
-                  : ElevatedButton(
+      bottomNavigationBar:
+          widget.package.packageStatus != "Active" &&
+              widget.package.packageStatus != 'On Going'
+          ? SizedBox()
+          : SafeArea(
+              bottom: true,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16.w,
+                  right: 16.w,
+                  bottom: Platform.isIOS ? 0 : 16.w,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         minimumSize: Size(double.infinity, 45.h),
@@ -213,11 +252,12 @@ class PackageDetailScreen extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
+                        context.read<PackageProvider>().resetEndDate();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) =>
-                                FreezingRequestScreen(package: package),
+                                FreezingRequestScreen(package: widget.package),
                           ),
                         );
                       },
@@ -226,30 +266,30 @@ class PackageDetailScreen extends StatelessWidget {
                         style: TextStyle(color: Colors.black),
                       ),
                     ),
-              // package.packageStatus == "Completed"
-              //     ? SizedBox()
-              //     : OutlinedButton(
-              //         style: OutlinedButton.styleFrom(
-              //           minimumSize: const Size(double.infinity, 48),
-              //           shape: RoundedRectangleBorder(
-              //             borderRadius: BorderRadius.circular(30),
-              //           ),
-              //         ),
-              //         onPressed: () {
-              //           showFreezingDialog(
-              //             context,
-              //             onYes: () {
-              //               Navigator.pop(context);
-              //               Navigator.pop(context);
-              //             },
-              //           );
-              //         },
-              //         child: const Text("Convert"),
-              //       ),
-            ],
-          ),
-        ),
-      ),
+                    // package.packageStatus == "Completed"
+                    //     ? SizedBox()
+                    //     : OutlinedButton(
+                    //         style: OutlinedButton.styleFrom(
+                    //           minimumSize: const Size(double.infinity, 48),
+                    //           shape: RoundedRectangleBorder(
+                    //             borderRadius: BorderRadius.circular(30),
+                    //           ),
+                    //         ),
+                    //         onPressed: () {
+                    //           showFreezingDialog(
+                    //             context,
+                    //             onYes: () {
+                    //               Navigator.pop(context);
+                    //               Navigator.pop(context);
+                    //             },
+                    //           );
+                    //         },
+                    //         child: const Text("Convert"),
+                    //       ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 

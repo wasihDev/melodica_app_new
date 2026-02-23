@@ -2,11 +2,12 @@ import 'package:app_links/app_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
-import 'package:melodica_app_new/models/dance_data_model.dart';
-import 'package:melodica_app_new/models/services_model.dart';
+import 'package:melodica_app_new/models/dance_and_piano_model.dart';
 import 'dart:convert';
+import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:melodica_app_new/models/student_models.dart';
 import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
@@ -51,8 +52,8 @@ class ServicesProvider extends ChangeNotifier {
   List<ServiceModel> _all = [];
   List<ServiceModel> get all => _all;
 
-  List<DanceDataModel> _alldanceList = [];
-  List<DanceDataModel> get alldanceList => List.unmodifiable(_alldanceList);
+  List<ServiceModel> _alldanceList = [];
+  List<ServiceModel> get alldanceList => List.unmodifiable(_alldanceList);
   // UI state
   String _tab = 'Music'; // or 'Dance'
   String get tab => _tab;
@@ -64,11 +65,16 @@ class ServicesProvider extends ChangeNotifier {
   String? get selectedServiceName => _selectedServiceName;
   int? get selectedDuration => _selectedDuration;
   String? get selectedPriceId => _selectedPriceId;
-  List<dynamic> _selectedPackages = [];
+  List<SelectedPackageItem> _selectedPackages = [];
   bool _initialized = false;
 
-  List<dynamic> get selectedPackages => List.unmodifiable(_selectedPackages);
+  List<SelectedPackageItem> get selectedPackages =>
+      List.unmodifiable(_selectedPackages);
   final AppLinks _appLinks = AppLinks();
+  final List<ServiceModel> _selectedPackagesTemp = [];
+
+  List<ServiceModel> get selectedPackagesTemp =>
+      List.unmodifiable(_selectedPackagesTemp);
 
   /// Call ONCE
   void init(BuildContext context) {
@@ -125,6 +131,7 @@ class ServicesProvider extends ChangeNotifier {
                 paymentMethod: 'Network International',
                 status: 'success',
                 date: DateTime.now(),
+                isSchedule: false,
                 //  package: Package,
               ),
             ),
@@ -158,6 +165,7 @@ class ServicesProvider extends ChangeNotifier {
               paymentMethod: 'Network International',
               status: 'success',
               date: DateTime.now(),
+              isSchedule: true,
             ),
           ),
         );
@@ -194,27 +202,67 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   /// Add package (prevent duplicates)
-  void addPackage(dynamic package, int index) {
-    if (_selectedPackages.any((e) => e.priceid == package.priceid)) {
-      _selectedPackages.remove(package);
+  // void addPackage(Ser package, int index) {
+  //   if (_selectedPackages.any((e) => e.priceId == package.priceId)) {
+  //     _selectedPackages.remove(package);
+  //   } else {
+  //     _selectedPackages.add(package);
+  //   }
+  //   notifyListeners();
+  // }
+  void addPackageForStudent(ServiceModel package, Student student) {
+    final exists = _selectedPackages.any(
+      (e) =>
+          e.package.priceId == package.priceId &&
+          e.student.mbId == student.mbId,
+    );
+
+    if (exists) {
+      // Optional: show message
+      debugPrint("Package already added for this student");
+      return;
+    }
+
+    _selectedPackages.add(
+      SelectedPackageItem(package: package, student: student),
+    );
+
+    notifyListeners();
+  }
+
+  bool isSelected(ServiceModel package) {
+    return _selectedPackagesTemp.any((e) => e.priceId == package.priceId);
+  }
+
+  //// add packages for dance///
+  ////
+  void togglePackageSelection(ServiceModel package) {
+    final exists = _selectedPackagesTemp.any(
+      (e) => e.priceId == package.priceId,
+    );
+
+    if (exists) {
+      _selectedPackagesTemp.removeWhere((e) => e.priceId == package.priceId);
     } else {
-      _selectedPackages.add(package);
+      _selectedPackagesTemp.add(package);
     }
 
     notifyListeners();
   }
 
-  bool isSelected(dynamic package) {
-    return _selectedPackages.any((e) => e.priceid == package.priceid);
+  void removeSelectpackageSelection() {
+    _selectedPackagesTemp.clear();
+    notifyListeners();
   }
-
-  //// add packages for dance///
-  ////
 
   //////
   /// Remove package
-  void removePackage(ServiceModel package) {
-    _selectedPackages.removeWhere((e) => e.priceid == package.priceid);
+  // void removePackage(ServiceModel package) {
+  //   _selectedPackages.removeWhere((e) => e.priceId == package.priceId);
+  //   notifyListeners();
+  // }
+  void removePackageAt(int index) {
+    _selectedPackages.removeAt(index);
     notifyListeners();
   }
 
@@ -231,14 +279,14 @@ class ServicesProvider extends ChangeNotifier {
 
   /// TOTAL PRICE
   double get totalPrice {
-    return _selectedPackages.fold(0.0, (sum, item) => sum + item.price);
+    return _selectedPackages.fold(0.0, (sum, item) => sum + item.package.price);
   }
 
   /// TOTAL DISCOUNT (10%)
   double get totalDiscount {
     return _selectedPackages.fold(0.0, (sum, item) {
-      final discountPercent = double.tryParse(item.discount ?? '0') ?? 0.0;
-      final discountAmount = item.price * (discountPercent / 100);
+      final discountPercent = item.package.discount;
+      final discountAmount = item.package.price * (discountPercent / 100);
       // print('discountAmount ${discountAmount}');
       return sum + discountAmount;
     });
@@ -267,6 +315,18 @@ class ServicesProvider extends ChangeNotifier {
   set isStudentNew(bool value) {
     _isStudentNew = value;
     notifyListeners();
+  }
+
+  Map<String, List<SelectedPackageItem>> get packagesGroupedByStudent {
+    final Map<String, List<SelectedPackageItem>> grouped = {};
+
+    for (var item in _selectedPackages) {
+      final studentId = item.student.fullName.toString(); // 🔴 force String
+      print('studentId ====>>> $studentId');
+      grouped.putIfAbsent(studentId, () => []).add(item);
+    }
+
+    return grouped;
   }
 
   // music list package
@@ -304,7 +364,7 @@ class ServicesProvider extends ChangeNotifier {
         // print('_all2 ${_all.map((e) => e.price)} ');
         // set defaults if nothing selected
         if (_selectedServiceName == null && _all.isNotEmpty) {
-          _selectedServiceName = _all.first.service;
+          _selectedServiceName = _all.first.serviceName;
           print('_selectedServiceName ${_selectedServiceName} ');
           notifyListeners();
         }
@@ -328,10 +388,10 @@ class ServicesProvider extends ChangeNotifier {
     }
   }
 
-  void removePackageAt(int index) {
-    _selectedPackages.removeAt(index);
-    notifyListeners();
-  }
+  // void removePackageAt(int index) {
+  //   _selectedPackages.removeAt(index);
+  //   notifyListeners();
+  // }
 
   // dance list package
   Future<void> fetchDancePackages() async {
@@ -358,9 +418,12 @@ class ServicesProvider extends ChangeNotifier {
 
       _alldanceList.clear();
       if (arr != null) {
-        _alldanceList.addAll(
-          arr.map((e) => DanceDataModel.fromJson(e as Map<String, dynamic>)),
-        );
+        // _alldanceList.addAll(
+        //   arr.map((e) => DanceDataModel.fromJson(e as Map<String, dynamic>)),
+        // );
+        _alldanceList = arr
+            .map((e) => ServiceModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       } else {
         _alldanceList = [];
         // SnackbarUtils.showError(context, "N")
@@ -391,7 +454,7 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   String get selectedProductNames {
-    final selected = _all.where((e) => e.priceid == _selectedPriceId).toList();
+    final selected = _all.where((e) => e.priceId == _selectedPriceId).toList();
 
     return selected.map((e) => e.packageName).join(', ');
   }
@@ -415,7 +478,7 @@ class ServicesProvider extends ChangeNotifier {
   // helper getters to produce lists for UI
   List<String> get uniqueServices {
     final set = <String>{};
-    for (var s in _all) set.add(s.service);
+    for (var s in _all) set.add(s.serviceName);
     return set.toList();
   }
 
@@ -423,7 +486,7 @@ class ServicesProvider extends ChangeNotifier {
     if (serviceName == null) return [];
     final set = <int>{};
     for (var s in _all) {
-      if (s.service == serviceName) set.add(s.duration);
+      if (s.serviceName == serviceName) set.add(s.duration);
     }
     final list = set.toList()..sort();
     return list;
@@ -436,7 +499,7 @@ class ServicesProvider extends ChangeNotifier {
     final filtered = _all.where((s) {
       final okService = _selectedServiceName == null
           ? true
-          : s.service == _selectedServiceName;
+          : s.serviceName == _selectedServiceName;
 
       final okDuration = _selectedDuration == null
           ? true
@@ -444,7 +507,7 @@ class ServicesProvider extends ChangeNotifier {
 
       final okFrequency = _selectedFrequency == null
           ? true
-          : mapFrequencyText(s.frequencytext) == _selectedFrequency;
+          : mapFrequencyText(s.frequencyText) == _selectedFrequency;
 
       return okService && okDuration && okFrequency;
     });
@@ -452,7 +515,8 @@ class ServicesProvider extends ChangeNotifier {
     final seen = <String>{};
 
     return filtered.where((s) {
-      final key = '${s.sessions}_${s.duration}_${s.service}_${s.frequencytext}';
+      final key =
+          '${s.sessions}_${s.duration}_${s.serviceName}_${s.frequencyText}';
       if (seen.contains(key)) return false;
       seen.add(key);
       return true;
@@ -484,7 +548,7 @@ class ServicesProvider extends ChangeNotifier {
     final set = <String>{};
 
     for (final s in _all) {
-      set.add(mapFrequencyText(s.frequencytext));
+      set.add(mapFrequencyText(s.frequencyText));
     }
 
     return set.toList();
@@ -496,108 +560,27 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearPaymentData() {
+    _paymentUrl = null;
+    _orderReference = null;
+    _orderId = null;
+    notifyListeners();
+  }
+
   String? _paymentUrl;
   String? get paymentUrl => _paymentUrl;
   String? _orderReference;
   String? get orderReference => _orderReference;
-
   String? _orderId;
   String? get orderId => _orderId;
-
-  // Future<String?> _getAccessToken() async {
-  //   try {
-  //     const apiKey =
-  //         'M2Q4M2JiOWQtNWI3Ni00OGNjLTk1NWEtZDUyYWI3M2M0ZTFhOjVmZjg5MzY0LThiMjEtNGYyYi1hY2E3LTg4ZWYzMjJjYWM4Yw==';
-
-  //     final response = await http.post(
-  //       Uri.parse(
-  //         "https://api-gateway.sandbox.ngenius-payments.com/identity/auth/access-token",
-  //       ),
-  //       headers: {
-  //         "Content-Type": "application/vnd.ni-identity.v1+json",
-  //         "Authorization": "Basic $apiKey",
-  //       },
-  //     );
-
-  //     if (response.statusCode == 200) {
-  //       return jsonDecode(response.body)["access_token"];
-  //     } else {
-  //       throw Exception(response.body);
-  //     }
-  //   } catch (e) {
-  //     _error = e.toString();
-  //     return null;
-  //   }
-  // }
-
-  // /// Converts a double amount in major units to an integer amount in minor units.
-  // ///
-  // /// For example, if the amount is 10.00, this function will return 1000.
-  // ///
-  // /// @param amount The amount in major units.
-  // /// @return The amount in minor units.
-  // int toMinorUnits(double amount) {
-  //   return (amount * 100).toInt();
-  // }
-
-  // Future<bool> startCheckout(
-  //   BuildContext context, {
-  //   required int amount, // e.g. 1000 = 10.00 AED
-  //   required String redirectUrl,
-  // }) async {
-  //   showLoadingDialog(context);
-  //   print('amount $amount');
-  //   print('redirectUrl $redirectUrl');
-  //   try {
-  //     final token = await _getAccessToken();
-  //     if (token == null) return false;
-
-  //     const outletId = "f05267d0-5b94-438a-a839-992702929316";
-
-  //     final response = await http.post(
-  //       Uri.parse(
-  //         "https://api-gateway.sandbox.ngenius-payments.com/transactions/outlets/$outletId/orders",
-  //       ),
-  //       headers: {
-  //         "Authorization": "Bearer $token",
-  //         "Content-Type": "application/vnd.ni-payment.v2+json",
-  //         "Accept": "application/vnd.ni-payment.v2+json",
-  //       },
-  //       body: jsonEncode({
-  //         "action": "SALE",
-  //         "amount": {
-  //           "currencyCode": "AED",
-  //           "value": toMinorUnits(amount.toDouble()),
-  //         },
-  //         "merchantAttributes": {"redirectUrl": redirectUrl},
-  //       }),
-  //     );
-  //     print('status ${response.statusCode}');
-  //     if (response.statusCode == 201) {
-  //       final data = jsonDecode(response.body);
-  //       _paymentUrl = data["_links"]["payment"]["href"];
-  //       print('_paymentUrl ${_paymentUrl}');
-
-  //       return true;
-  //     } else {
-  //       throw Exception(response.body);
-  //     }
-  //   } catch (e) {
-  //     print('error $e');
-  //     _error = e.toString();
-  //     return false;
-  //   } finally {
-  //     hideLoadingDialog(context);
-  //     _setLoading(false);
-  //   }
-
-  // }
 
   Future<bool> startCheckout(
     BuildContext context, {
     // required String branchId,
     required num amount, // major units (10.0)
   }) async {
+    clearPaymentData();
+
     showLoadingDialog(context);
     print('amount ${customerController.selectedBranch}');
     print('amoutn2 ${amount}');
@@ -696,7 +679,7 @@ class ServicesProvider extends ChangeNotifier {
       final url = ApiConfigService.endpoints.installPackage;
       print('_orderReference ${_orderReference}');
       print('signatureBase64 $signatureBase64');
-      var isAdmissionAdded = false;
+      // var isAdmissionAdded = false;
 
       final body = {
         "firstname": customerController.customer?.firstName,
@@ -712,15 +695,16 @@ class ServicesProvider extends ChangeNotifier {
         "paymentmethod": "Network International",
         "orderdetails": _selectedPackages.asMap().entries.map((entry) {
           int index = entry.key; // Get the current index
-          var e = entry.value; // Get the package data
+          var item = entry.value;
+          var e = item.package;
+          var student = item.student;
+
           final bool isFirstItem = index == 0;
           final bool chargeAdmission =
               isFirstItem &&
-              (_isStudentNew == true ||
-                  customerController.selectedStudent?.isregistred != 'Yes');
+              (_isStudentNew == true || student.isregistred != 'Yes');
           final bool displayNewDetails =
-              (_isStudentNew == true ||
-              customerController.selectedStudent?.isregistred != 'Yes');
+              (_isStudentNew == true || student.isregistred != 'Yes');
           print('chargeAdmission $chargeAdmission');
           final double admissionValue = chargeAdmission ? 150.0 : 0.0;
           final double discountPercent =
@@ -740,17 +724,15 @@ class ServicesProvider extends ChangeNotifier {
           print('totalValue $totalValue');
 
           return {
-            "priceid": "${e.priceid}",
+            "priceid": "${e.priceId}",
             "type": "${_tab}", // Ensure this is "Dance" or "Music"
-            "studentid": displayNewDetails
-                ? ""
-                : "${customerController.selectedStudent?.mbId}",
+            "studentid": displayNewDetails ? "" : "${student.mbId}",
             "studentname": displayNewDetails
-                ? "${customerController.firstNameCtrl.text}"
-                : customerController.selectedStudent?.firstName,
+                ? "${customerController.firstNameCtrl.text == "" ? student.firstName : customerController.firstNameCtrl.text}"
+                : student.firstName,
             "studentlastname": displayNewDetails
-                ? "${customerController.lastNameCtrl.text}"
-                : customerController.selectedStudent?.lastName,
+                ? "${customerController.lastNameCtrl.text == "" ? student.lastName : customerController.lastNameCtrl.text}"
+                : student.lastName,
             "details": "${e.packageName}",
             "coupon": "",
             "admission": chargeAdmission ? "150" : "",
@@ -774,6 +756,9 @@ class ServicesProvider extends ChangeNotifier {
         body: jsonEncode(body),
       );
       print('response ===>> ${response.statusCode}');
+      print("API BODY:");
+      dev.log(const JsonEncoder.withIndent('  ').convert(body));
+
       if (response.statusCode != 200) {
         throw Exception(response.body);
       }

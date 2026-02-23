@@ -282,7 +282,6 @@ class ScheduleProvider extends ChangeNotifier {
         .where((s) {
           final dt = s.bookingDateTime;
           if (dt == null) return false;
-          print('s.bookingDateTime; ${s.bookingDateTime}');
           // ✅ Filter by subject
           if (s.subject != subject) return false;
 
@@ -293,11 +292,35 @@ class ScheduleProvider extends ChangeNotifier {
         .map(
           (s) => {
             "bookingid": s.bookingId,
-            // ✅ Standard ISO8601 string without forcing UTC
+            "Subject": s.subject,
             "bookingstart": s.bookingDateTime!.toIso8601String(),
+            "BookingDate": s.BookingDate,
           },
         )
         .toList();
+  }
+
+  DateTime? getNextClassAfterEndDate({
+    required DateTime endDate,
+    required String subject,
+  }) {
+    final upcomingClasses = schedules
+        .where(
+          (s) =>
+              s.subject == subject &&
+              s.bookingDateTime != null &&
+              s.bookingDateTime!.isAfter(endDate),
+        )
+        .map((s) => s.bookingDateTime!)
+        .toList();
+
+    if (upcomingClasses.isEmpty) return null;
+
+    // sorrt the list in ascending
+    upcomingClasses.sort();
+
+    // First upcoming class after endDate
+    return upcomingClasses.first;
   }
 
   Future<bool> submitScheduleRequest({
@@ -359,6 +382,8 @@ class ScheduleProvider extends ChangeNotifier {
         print('=statcut =====?? ${status}');
         if (status == false) {
           final String message = decoded['response']['message'];
+          String newmsg;
+
           hideLoadingDialog(navigatorKey.currentContext!); // show message
           showDialog(
             context: navigatorKey.currentContext!,
@@ -372,12 +397,16 @@ class ScheduleProvider extends ChangeNotifier {
                 vertical: 30,
                 horizontal: 24,
               ),
+              actionsAlignment: MainAxisAlignment.center,
               actions: [
                 ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStatePropertyAll(AppColors.primary),
+                  ),
                   onPressed: () {
                     Navigator.pop(navigatorKey.currentContext!);
                   },
-                  child: Text('Okay'),
+                  child: Text('Okay', style: TextStyle(color: Colors.black)),
                 ),
               ],
               content: Column(
@@ -390,6 +419,14 @@ class ScheduleProvider extends ChangeNotifier {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14.fSize),
                   ),
+                  Visibility(
+                    visible: message.contains('already submitted'),
+                    child: Text(
+                      'Your schedule may take up to 2 hours to reflect the changes',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14.fSize),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -399,6 +436,7 @@ class ScheduleProvider extends ChangeNotifier {
         return false;
       }
     } catch (e) {
+      hideLoadingDialog(navigatorKey.currentContext!); // show message
       print('error submist reqeust $e');
       return false;
     } finally {
@@ -529,6 +567,37 @@ class ScheduleProvider extends ChangeNotifier {
     startTime = start;
     endTime = end;
     notifyListeners();
+  }
+
+  DateTime? getNextClassDateAfterEnd({
+    required DateTime endDate,
+    required String subject,
+  }) {
+    // Normalize end date (ignore time)
+    final end = DateTime(endDate.year, endDate.month, endDate.day);
+
+    final upcomingClasses = schedules.where((s) {
+      if (s.bookingDateTime == null) return false;
+      if (s.subject != subject) return false;
+
+      final classDate = DateTime(
+        s.bookingDateTime!.year,
+        s.bookingDateTime!.month,
+        s.bookingDateTime!.day,
+      );
+
+      // Only classes AFTER freeze end date
+      return classDate.isAfter(end);
+    }).toList();
+
+    if (upcomingClasses.isEmpty) return null;
+
+    // Sort by date
+    upcomingClasses.sort(
+      (a, b) => a.bookingDateTime!.compareTo(b.bookingDateTime!),
+    );
+
+    return upcomingClasses.first.bookingDateTime;
   }
 
   // loading

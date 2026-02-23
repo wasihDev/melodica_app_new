@@ -16,6 +16,7 @@ class AssetLottie {
 
 class AssetSvg {
 	static const String apple = 'assets/svg/apple.svg';
+	static const String calendarMonth = 'assets/svg/calendar_month.svg';
 	static const String check = 'assets/svg/check.svg';
 	static const String danceClass = 'assets/svg/dance_class.svg';
 	static const String dirham = 'assets/svg/dirham.svg';

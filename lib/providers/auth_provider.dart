@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:melodica_app_new/helper/shared_pref_helper.dart';
 import 'package:melodica_app_new/models/user_model.dart';
@@ -33,6 +34,7 @@ class AuthProviders extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isLoadingGoogle = false;
+  bool _isLoadingFacebook = false;
   bool _isLoadingApple = false;
   bool _isDeleting = false;
   AuthService _authService = AuthService();
@@ -45,6 +47,7 @@ class AuthProviders extends ChangeNotifier {
   // getters
   UserModel get userModel => _userModel!;
   bool get isLoading => _isLoading;
+  bool get isLoadingFacebook => _isLoadingFacebook;
   bool get isDeleting => _isDeleting;
   bool get isLoadingGoogle => _isLoadingGoogle;
   bool get isLoadingApple => _isLoadingApple;
@@ -188,6 +191,88 @@ class AuthProviders extends ChangeNotifier {
       SnackbarUtils.showError(context, 'error $e');
     } finally {
       _isLoadingGoogle = false;
+      notifyListeners();
+    }
+  }
+
+  /// Facebook login
+  Future<void> signInWithFacebook(BuildContext context) async {
+    try {
+      _isLoadingFacebook = true;
+      notifyListeners();
+
+      // 1. Login with Facebook
+      final LoginResult result = await FacebookAuth.instance.login(
+        permissions: ['email', 'public_profile'],
+      );
+
+      if (result.status != LoginStatus.success) {
+        SnackbarUtils.showError(context, "Facebook login cancelled");
+        return;
+      }
+
+      final AccessToken accessToken = result.accessToken!;
+
+      // 2. Create Firebase credential
+      final OAuthCredential credential = FacebookAuthProvider.credential(
+        accessToken.tokenString,
+      );
+
+      // 3. Firebase Sign In
+      final UserCredential userCredential = await auth.signInWithCredential(
+        credential,
+      );
+
+      final user = userCredential.user!;
+      final uid = user.uid;
+
+      // 4. Check Firestore user
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+
+      if (!userDoc.exists) {
+        _userModel = UserModel(
+          uid: user.uid,
+          email: user.email ?? "",
+          firstName: user.displayName ?? "Facebook User",
+          tokenId: await user.getIdToken(),
+          image:
+              user.photoURL ??
+              'https://cdn4.iconfinder.com/data/icons/mixed-set-1-1/128/28-512.png',
+        );
+
+        // Save new user
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .set(_userModel!.toJson(), SetOptions(merge: true));
+      } else {
+        _userModel = UserModel.fromJson(userDoc.data()!);
+      }
+
+      // 5. Save Token
+      if (_userModel != null) {
+        await LocalStorageService.saveAuthToken(_userModel!.tokenId!);
+
+        _userModel = await Provider.of<UserprofileProvider>(
+          context,
+          listen: false,
+        ).fetchUserData();
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.dashboard,
+          (route) => false,
+        );
+
+        SnackbarUtils.showSuccess(context, "Successfully login via Facebook");
+      }
+    } on FirebaseAuthException catch (e) {
+      final errorMsg = AuthExceptionHandler.handleAuthException(e);
+      SnackbarUtils.showError(context, errorMsg);
+    } catch (e) {
+      print('Facebook error: $e');
+    } finally {
+      _isLoadingFacebook = false;
       notifyListeners();
     }
   }

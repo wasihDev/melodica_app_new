@@ -27,3 +27,29 @@ Future<void> openWhatsApp(String productNames) async {
     // O
   }
 }
+
+Future<void> launchWhatsApp(String topicName) async {
+  final phone = '97145591000';
+  final message =
+      'Hello, I need assistance. Kindly help me regarding my query.\n\n'
+      'Topic: $topicName';
+  final encodedMessage = Uri.encodeComponent(message);
+
+  Uri url;
+
+  if (Platform.isAndroid) {
+    url = Uri.parse('whatsapp://send?phone=$phone&text=$encodedMessage');
+  } else {
+    // Web or unsupported platform
+    url = Uri.parse(
+      'https://api.whatsapp.com/send?phone=$phone&text=$encodedMessage',
+    );
+  }
+
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  } else {
+    debugPrint('Could not launch WhatsApp. Make sure the app is installed.');
+    // Optional: show alert to user
+  }
+}

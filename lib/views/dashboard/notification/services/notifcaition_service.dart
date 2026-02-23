@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:melodica_app_new/constants/global_variables.dart';
 import 'package:melodica_app_new/firebase_options.dart';
 import 'package:melodica_app_new/providers/notification_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
@@ -96,7 +97,7 @@ class FirebaseMessagingService {
   }
 
   /// Handles messages received while the app is in the foreground
-  void _onForegroundMessage(RemoteMessage message) {
+  Future<void> _onForegroundMessage(RemoteMessage message) async {
     print('Foreground message received: ${message.data.toString()}');
 
     final notificationData = message.notification;
@@ -108,6 +109,18 @@ class FirebaseMessagingService {
         message.data.toString(),
       );
     }
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final provider = Provider.of<NotificationProvider>(context, listen: false);
+    final ctrl = Provider.of<CustomerController>(context, listen: false);
+    print('provider.all.isEmpty ${provider.all.isEmpty}');
+    // Ensure data is loaded
+    await ctrl.fetchCustomerData();
+    await provider.fetchNotifications();
+    // call notificaiton here
   }
 
   /// Handles notification taps when app is opened from the background or terminated state
@@ -123,9 +136,10 @@ class FirebaseMessagingService {
   void _handleInitialNavigation(RemoteMessage message) async {
     final notificationId = message.data['id'];
     if (notificationId == null) return;
+    openedFromNotification = true; // 🔴 Important
 
     // Wait until app + providers are ready
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(seconds: 1));
 
     final context = navigatorKey.currentContext;
     if (context == null) return;
@@ -140,8 +154,7 @@ class FirebaseMessagingService {
     final notification = provider.all.firstWhere(
       (n) => n.notificationId == notificationId,
     );
-
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => NotificationDetailScreen(notification: notification),
@@ -182,20 +195,4 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   //     .fetchNotifications();
 
   print('Background message received: ${message.data.toString()}');
-  // final provider = Provider.of<NotificationProvider>(
-  //   navigatorKey.currentContext!,
-  //   listen: false,
-  // );
-
-  /////// same navaigtion
-  // Navigator.push(
-  //   navigatorKey.currentContext!,
-  //   MaterialPageRoute(
-  //     builder: (_) => NotificationDetailScreen(
-  //       notification: provider.all.singleWhere(
-  //         (n) => n.notificationId == message.data['id'],
-  //       ),
-  //     ),
-  //   ),
-  // );
 }

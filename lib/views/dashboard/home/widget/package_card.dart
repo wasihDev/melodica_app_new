@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
-import 'package:melodica_app_new/models/services_model.dart';
+import 'package:melodica_app_new/models/dance_and_piano_model.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 
 class PackageCard extends StatelessWidget {
@@ -18,14 +18,7 @@ class PackageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The main display text for the package (e.g., "12 Classes" or "7 Weeks")
-    final packageDisplay = package.sessionstext;
-    // print(
-    //   '${package.price / package.sessions} package.sessions ${package.sessions}',
-    // );
-    // final perClassCost =
-    //     ((package.price - int.parse(package.discount)) / package.sessions)
-    //         .toStringAsFixed(0);
+    final packageDisplay = package.sessionsText;
     final double discountedPrice = double.parse(package.discount.toString());
     final double sessions = package.sessions.toDouble();
     final discountedAmount = package.price * (discountedPrice / 100);
@@ -54,14 +47,6 @@ class PackageCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 15),
-                  // Text(
-                  //   "",
-                  //   // package.packageName
-                  //   style: const TextStyle(
-                  //     fontSize: 16,
-                  //     fontWeight: FontWeight.bold,
-                  //   ),
-                  // ),
                   Text(
                     packageDisplay,
                     style: TextStyle(
@@ -98,24 +83,6 @@ class PackageCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Discount Tag
-                      // CustomRibbonTag(
-                      //   text: '20% OFF',
-                      //   color: Theme.of(context).colorScheme.primary,
-                      // ),
-                      // Container(
-                      //   height: 40,
-                      //   width: 40,
-                      //   decoration: BoxDecoration(
-                      //     // color: Colors.red,
-                      //     image: DecorationImage(
-                      //       scale: 2.5,
-                      //       invertColors: false,
-                      //       image: AssetImage('assets/images/off.png'),
-                      //     ),
-                      //   ),
-                      //   child: Text('sad'),
-                      // ),
                       Stack(
                         children: [
                           Image.asset(
@@ -132,9 +99,10 @@ class PackageCard extends StatelessWidget {
                               child: Column(
                                 children: [
                                   Text(
-                                    "${package.discount}%",
+                                    "${package.discount.toStringAsFixed(0)}%",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 12.fSize,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -142,6 +110,7 @@ class PackageCard extends StatelessWidget {
                                     "OFF",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 12.fSize,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -175,8 +144,6 @@ class PackageCard extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 16.0),
 
                     child: Column(
-                      // mainAxisAlignment: MainAxisAlignment.end,
-                      // crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         SizedBox(height: 8.h),
                         Row(

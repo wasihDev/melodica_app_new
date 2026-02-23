@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:melodica_app_new/constants/app_colors.dart';
+import 'package:melodica_app_new/models/get_cancellation_model.dart';
 import 'package:melodica_app_new/models/packages_model.dart';
 import 'package:melodica_app_new/models/schedule_model.dart';
 import 'package:melodica_app_new/providers/pacakge_provider.dart';
@@ -8,10 +8,12 @@ import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/utils/date_format.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:melodica_app_new/views/dashboard/home/widget/home_shimmer.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/reschedule_screen.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_service.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_widgets.dart';
 import 'package:melodica_app_new/widgets/appointment_card.dart';
+import 'package:melodica_app_new/widgets/please_note_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -46,6 +48,7 @@ class PackageScheduleTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     // Watch the provider to rebuild when data is fetched
     final provider = context.watch<ScheduleProvider>();
+    final pkgprovider = context.watch<PackageProvider>();
 
     return DefaultTabController(
       length: 3,
@@ -103,15 +106,12 @@ class PackageScheduleTabs extends StatelessWidget {
                       );
                       break;
                     case 2:
-                      currentList = _buildFilteredList(
+                      currentList = _buildCancelledList(
                         context,
-                        allSchedules: provider.cancelledSchedules,
-                        reasonFilter: (s) => true,
-                        useFilter: false,
-                        // reasonFilter: (s) => s.cancellation_status != "",
-                        borderColor: const Color(0xFF448AFF),
-                        value: tabController,
+                        pkgprovider.requests,
+                        pkgprovider,
                       );
+
                       break;
                     default:
                       currentList = const SizedBox();
@@ -128,32 +128,19 @@ class PackageScheduleTabs extends StatelessWidget {
 
   Widget _buildFilteredList(
     BuildContext context, {
-
     required List<ScheduleModel> allSchedules,
     required bool Function(ScheduleModel) reasonFilter,
     required Color borderColor,
     required TabController value,
     bool useFilter = true, // Add this flag
   }) {
-    // 1. Filter the raw list first
-    // final filteredList = allSchedules.where(reasonFilter).toList();
-    // 1. Filter by BOTH the statusReason AND the Package ID/Code
     final filteredList = allSchedules.where((s) {
-      // Check if it matches the tab's status (Upcoming, Completed, etc.)
-      // bool matchesReason = reasonFilter(s);
-
-      // Check if it belongs to the package passed to this widget
-      // Use s.PackageCode or s.packageId depending on your model field
       bool matchesPackage = s.PackageCode == package.paymentRef;
       bool matchesReason = useFilter ? reasonFilter(s) : true;
       return matchesReason && matchesPackage;
     }).toList();
-    // 2. Group the filtered items by Date (YYYY-MM-DD)
     final Map<String, List<ScheduleModel>> grouped = {};
     for (var item in filteredList) {
-      // final dateStr =
-      //     item.bookingDateStartTime; // Ensure this matches your model parsing
-      // If your model has a DateTime getter, use that to normalize keys
       final dateKey = item.bookingDateTime != null
           ? DateFormat('yyyy-MM-dd').format(item.bookingDateTime!)
           : "Unknown";
@@ -183,16 +170,6 @@ class PackageScheduleTabs extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(vertical: 8),
-            // Text(
-            //   '${items.first.statusReason}',
-            //   style: const TextStyle(
-            //     fontWeight: FontWeight.w500,
-            //     color: Colors.grey,
-            //   ),
-            // ),
-            // ),
             ...items.map(
               (s) => AppointmentCard(
                 dayOfWeek: s.bookingDay,
@@ -349,39 +326,18 @@ class PackageScheduleTabs extends StatelessWidget {
 
                 // Note Box
                 // Note Box
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7EC), // Light cream background
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PLEASE NOTE',
-                        style: TextStyle(
-                          color: Color(0xFFE67E22), // Orange text
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(height: 8),
+                PleaseNoteWidget(
+                  title: today == scheduledDay
+                      ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
+                      : s.RemainingCancellations <= 0
+                      ? "You don't have allowable cancellations left. Reschedule before ${removingTimeFromDate(s.bookingDateStartTime)} or pay AED 50 to reschedule it to a later date."
+                      : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
 
-                      // DateFormat('dd/MM/yyyy hh:mm a').parse(PackageExpiry);
-                      Text(
-                        today == scheduledDay
-                            ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
-                            : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
+                  // title: today == scheduledDay
+                  //     ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
+                  // : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
                 ),
+
                 const SizedBox(height: 24),
 
                 // Action Buttons
@@ -603,6 +559,192 @@ class PackageScheduleTabs extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCancelledList(
+    BuildContext context,
+    List<GetCancellationModel> list,
+    PackageProvider pkg,
+  ) {
+    if (pkg.isloading) {
+      return HomeShimmer();
+    }
+    if (list.isEmpty) {
+      return const Center(child: Text("No cancelled classes"));
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        final c = list[index];
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.09),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: c.newClassDateTime == null
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Class: ${c.className}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${c.catStatus}',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 10.fSize,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'Date: ${DateFormat('d MMM yyyy').format(c.classDateTime!)}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12.fSize,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    /// Left: Request Pending
+                    Expanded(
+                      child: _statusBlock(
+                        isShowStatus: true,
+                        title: "${c.catStatus}",
+                        titleColor: Colors.red,
+                        className: "Class: ${c.className}",
+                        date: c.classDateTime == null
+                            ? ""
+                            : "Date: ${DateFormat('d MMM yyyy').format(c.classDateTime!)}", // e.g. Mon, Oct 26
+                        time: "Time: ${c.time}", // e.g. 6:00 PM
+                      ),
+                    ),
+
+                    /// Arrow
+                    Container(
+                      margin: EdgeInsets.only(right: 15.w),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+
+                    /// Right: New Booking
+                    Expanded(
+                      child: _statusBlock(
+                        isShowStatus: false,
+                        title: "",
+                        titleColor: Colors.transparent,
+                        className: "Class: ${c.className}",
+                        date: c.newClassDateTime == null
+                            ? ""
+                            : "Date: ${DateFormat('d MMM yyyy').format(c.newClassDateTime!)}", // e.g. Mon, Oct 26
+                        time: c.newClassDateTime == null
+                            ? ""
+                            : "Time: ${DateFormat('h:mm a').format(c.newClassDateTime!)}",
+                      ),
+                    ),
+                  ],
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _statusBlock({
+    required bool isShowStatus,
+    required String title,
+    required Color titleColor,
+    required String className,
+    required String date,
+    required String time,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        isShowStatus
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: titleColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 10.fSize,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
+            : Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  '',
+                  style: TextStyle(
+                    color: Colors.transparent,
+                    fontSize: 10.fSize,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+        const SizedBox(height: 6),
+        Text(
+          "$className",
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          "$date",
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+        Text(
+          "$time",
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+      ],
     );
   }
 }

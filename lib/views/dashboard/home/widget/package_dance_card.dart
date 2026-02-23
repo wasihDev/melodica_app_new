@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
-import 'package:melodica_app_new/models/dance_data_model.dart';
+import 'package:melodica_app_new/models/dance_and_piano_model.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 
 class PackageWidgetCard extends StatelessWidget {
-  final DanceDataModel package;
+  final ServiceModel package;
   bool isSelected;
   void Function()? onTap;
   PackageWidgetCard({
@@ -18,7 +18,7 @@ class PackageWidgetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // The main display text for the package (e.g., "12 Classes" or "7 Weeks")
-    final packageDisplay = package.sessionstext;
+    final packageDisplay = package.sessionsText;
     // print(
     //   '${package.price / package.sessions} package.sessions ${package.sessions}',
     // );
@@ -56,7 +56,7 @@ class PackageWidgetCard extends StatelessWidget {
                   Text(
                     packageDisplay,
                     style: TextStyle(
-                      fontSize: 24.fSize,
+                      fontSize: 22.fSize,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -64,14 +64,14 @@ class PackageWidgetCard extends StatelessWidget {
                   Text(
                     "Cancellation: ${package.cancellations == null ? 0 : package.cancellations}Times",
                     style: TextStyle(
-                      fontSize: 14.fSize,
+                      fontSize: 12.fSize,
                       color: Colors.grey[600]!,
                     ),
                   ),
                   Text(
                     "Freezing: ${package.freezings == null ? 0 : package.freezings}",
                     style: TextStyle(
-                      fontSize: 14.fSize,
+                      fontSize: 12.fSize,
                       color: Colors.grey[600]!,
                     ),
                   ),
@@ -110,9 +110,10 @@ class PackageWidgetCard extends StatelessWidget {
                               child: Column(
                                 children: [
                                   Text(
-                                    "${package.discount.isEmpty ? 0 : package.discount}%",
+                                    "${package.discount == 0.0 ? 0 : package.discount.toStringAsFixed(0)}%",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 12.fSize,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -120,7 +121,7 @@ class PackageWidgetCard extends StatelessWidget {
                                     "OFF",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16.fSize,
+                                      fontSize: 12.fSize,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

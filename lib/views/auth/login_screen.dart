@@ -192,16 +192,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               IconButton(
                                 onPressed: () async {
+                                  await provider.signInWithFacebook(context);
+                                },
+                                icon: provider.isLoadingFacebook
+                                    ? LoadingIndicatorWideget()
+                                    : SvgPicture.asset(
+                                        'assets/svg/facebook.svg',
+                                      ),
+                              ),
+
+                              IconButton(
+                                onPressed: () async {
                                   await provider.signInWithGoogle(context);
                                 },
                                 icon: provider.isLoadingGoogle
                                     ? LoadingIndicatorWideget()
                                     : SvgPicture.asset('assets/svg/google.svg'),
                               ),
-                              // IconButton(
-                              //   onPressed: () {},
-                              //   icon: SvgPicture.asset('assets/svg/facebook.svg'),
-                              // ),
+
                               Platform.isIOS
                                   ? IconButton(
                                       onPressed: () async {

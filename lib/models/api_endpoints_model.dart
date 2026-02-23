@@ -19,6 +19,8 @@ class ApiEndpoints {
   final String collectPayment;
   final String freezingRequest;
   final String displayDance;
+  final String getCancellation;
+  final String freezingSeasons;
 
   ApiEndpoints({
     required this.upsertProfile,
@@ -41,6 +43,8 @@ class ApiEndpoints {
     required this.collectPayment,
     required this.freezingRequest,
     required this.displayDance,
+    required this.getCancellation,
+    required this.freezingSeasons,
   });
 
   factory ApiEndpoints.fromJson(Map<String, dynamic> json) {
@@ -65,6 +69,8 @@ class ApiEndpoints {
       collectPayment: json['collect_payment'],
       freezingRequest: json['post_freezing'],
       displayDance: json['display_dance'],
+      getCancellation: json['get_cancellation'],
+      freezingSeasons: json['freeze_period'],
     );
   }
 }

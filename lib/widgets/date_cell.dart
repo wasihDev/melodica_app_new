@@ -110,7 +110,11 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
   Widget _buildDayItem(DateTime day) {
     final scheduleProvider = context.watch<ScheduleProvider>();
 
-    final isSelected = isSameDay(day, _selectedDate);
+    final provider = context.watch<ScheduleProvider>();
+    final selected = provider.selectedDate ?? _selectedDate;
+
+    final isSelected = isSameDay(day, selected);
+
     final isAvailable = scheduleProvider.availableDates.any(
       (d) => isSameDay(d, day),
     );
@@ -174,11 +178,23 @@ class _CustomWeeklyDatePickerState extends State<CustomWeeklyDatePicker> {
     );
   }
 
+  // void _changeWeek(int offset) {
+  //   setState(() {
+  //     _focusedDate = _focusedDate.add(Duration(days: offset * 7));
+  //     _isBrowsing = true;
+  //   });
+  // }
+
   void _changeWeek(int offset) {
+    final scheduleProvider = context.read<ScheduleProvider>();
+
     setState(() {
       _focusedDate = _focusedDate.add(Duration(days: offset * 7));
+      _selectedDate = _focusedDate;
       _isBrowsing = true;
     });
+
+    scheduleProvider.selectDate(_selectedDate);
   }
 
   bool isPast(DateTime day) {

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
+import 'package:melodica_app_new/constants/global_variables.dart';
 // import 'package:melodica_app_new/melodica_flutter_main.dart';
 import 'package:melodica_app_new/providers/appstate_provider.dart';
 import 'package:melodica_app_new/providers/notification_provider.dart';
@@ -63,6 +64,11 @@ class _SplashScreenState extends State<SplashScreen>
       await cusprovider.fetchCustomerData();
       context.read<NotificationProvider>().fetchNotifications();
       FirebaseAuth.instance.authStateChanges().listen((User? user) {
+        // 🔴 IMPORTANT: If opened from notification, do nothing
+        if (openedFromNotification) {
+          print("App opened from notification → skip splash navigation");
+          return;
+        }
         if (mounted) {
           if (provider.isFirstLaunch) {
             Navigator.pushNamedAndRemoveUntil(

@@ -29,7 +29,7 @@ class UpdateService {
       print('currentVersion $currentVersion');
 
       // 2. Compare versions
-      // TODO:: fix the verison
+
       if (latestVersion.isNotEmpty &&
           _isUpdateAvailable(currentVersion, latestVersion)) {
         _showUpdateDialog(context, latestVersion);
@@ -74,10 +74,8 @@ class UpdateService {
   // VERSION COMPARISON LOGIC
   static bool _isUpdateAvailable(String current, String latest) {
     List<int> currentParts = current.split('.').map(int.parse).toList();
-    print('currentParts $currentParts');
 
     List<int> latestParts = latest.split('.').map(int.parse).toList();
-    print('latestParts $latestParts');
 
     for (int i = 0; i < latestParts.length; i++) {
       if (i >= currentParts.length || latestParts[i] > currentParts[i])

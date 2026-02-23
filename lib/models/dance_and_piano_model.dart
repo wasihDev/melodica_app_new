@@ -1,3 +1,12 @@
+import 'package:melodica_app_new/models/student_models.dart';
+
+class SelectedPackageItem {
+  final ServiceModel package;
+  final Student student;
+
+  SelectedPackageItem({required this.package, required this.student});
+}
+
 class ServiceModel {
   final String sharedServiceId;
   final String serviceId;
@@ -26,7 +35,7 @@ class ServiceModel {
   final int duration;
   final String durationText;
 
-  final String subjects; // Dance only
+  final String subject; // Dance only
   final bool isDance;
 
   ServiceModel({
@@ -49,7 +58,7 @@ class ServiceModel {
     required this.frequencyText,
     required this.duration,
     required this.durationText,
-    required this.subjects,
+    required this.subject,
     required this.isDance,
   });
 
@@ -98,7 +107,7 @@ class ServiceModel {
       duration: int.tryParse(json['duration'].toString()) ?? 0,
       durationText: json['durationtext'] ?? '',
 
-      subjects: json['subjects'] ?? '',
+      subject: json['subjects'] ?? '',
       isDance: isDanceService,
     );
   }

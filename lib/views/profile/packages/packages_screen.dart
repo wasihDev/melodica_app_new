@@ -17,22 +17,12 @@ class PackageListScreen extends StatefulWidget {
 
 class _PackageListScreenState extends State<PackageListScreen>
     with SingleTickerProviderStateMixin {
-  // late Future<List<Package>> _packagesFuture;
   late TabController _tabController;
-  // final ApiService _apiService = ApiService();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
-    // WidgetsBinding.instance.addPostFrameCallback((asy) async {
-    //   final provider = context.read<PackageProvider>();
-    //   // if (provider.packages.isEmpty) {
-    //   await provider.fetchPackages(context);
-    //   setState(() {});
-    //   // }
-    // });
   }
 
   @override
@@ -76,14 +66,6 @@ class _PackageListScreenState extends State<PackageListScreen>
                 return const Center(child: Text('Please wait....'));
               }
 
-              // if (snapshot.connectionState == ConnectionState.waiting) {
-              //   return const Center(child: CircularProgressIndicator());
-              // } else if (snapshot.hasError) {
-              //   return Center(child: Text('Error: ${snapshot.error}'));
-              // } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              //   return const Center(child: Text('No packages found.'));
-              // }
-
               final activePackages = provider.packages
                   .where(
                     (p) =>
@@ -98,7 +80,6 @@ class _PackageListScreenState extends State<PackageListScreen>
                         p.packageStatus != "On Going",
                   )
                   .toList();
-              print('provider ${provider.servicesProvider.currentPaymentType}');
               return TabBarView(
                 controller: _tabController,
                 children: [
@@ -135,6 +116,32 @@ class _PackageListView extends StatelessWidget {
     }
   }
 
+  Widget _statCard(String label, String value) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(label, style: const TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
@@ -142,12 +149,7 @@ class _PackageListView extends StatelessWidget {
       separatorBuilder: (context, index) => SizedBox(height: 15),
       itemBuilder: (context, index) {
         final package = packages[index];
-        // print('package.subject ${package.subject}');
-        // final remainingFreezes =
-        //     package.totalAllowedFreezings - package.totalFreezingTaken;
         final unbookedClasses = package.totalClasses - package.totalBooked;
-
-        // print('package.packageExpiry ${package.packageExpiry}');
         return InkWell(
           onTap: () {
             Navigator.push(
@@ -158,7 +160,7 @@ class _PackageListView extends StatelessWidget {
             );
           },
           child: Container(
-            height: package.danceOrMusic == "Dance Classes" ? 300.h : 425.h,
+            height: package.danceOrMusic == "Dance Classes" ? 320.h : 435.h,
             width: double.infinity,
             padding: EdgeInsets.all(12.adaptSize),
             margin: EdgeInsets.symmetric(horizontal: 12),
@@ -181,79 +183,24 @@ class _PackageListView extends StatelessWidget {
                     ),
                   ),
                   subtitle: Text(package.locationName),
-                  // trailing: Text(
-                  //   '${package.remainingSessions.toString().split('.').first}/${package.totalClasses}',
-                  //   style: const TextStyle(fontWeight: FontWeight.bold),
-                  // ),
                 ),
-                package.danceOrMusic == "Dance Classes"
-                    ? SizedBox()
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 80.h,
-                              width: double.infinity,
-                              padding: EdgeInsets.only(top: 8, left: 14),
-                              // alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                color: Colors.white,
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Total Classes'),
-                                  SizedBox(height: 5.h),
-                                  Text(
-                                    package.totalClasses.toString(),
-                                    style: TextStyle(
-                                      fontSize: 22.fSize,
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Container(
-                              height: 80.h,
-
-                              width: double.infinity,
-                              padding: EdgeInsets.only(top: 8, left: 14),
-                              // alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey[300]!),
-                                borderRadius: BorderRadius.circular(12),
-                                color: Colors.white,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Remaining Classes'),
-                                  SizedBox(height: 5.h),
-                                  Text(
-                                    package.remainingSessions
-                                        .toString()
-                                        .split('.')
-                                        .first,
-                                    style: TextStyle(
-                                      fontSize: 22.fSize,
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                Visibility(
+                  visible: package.danceOrMusic != "Dance Classes",
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _statCard(
+                        'Total Classes',
+                        "${package.totalClasses.toString()}",
                       ),
+                      SizedBox(width: 10),
+                      _statCard(
+                        'Remaining Classes',
+                        "${package.remainingSessions.toString().split('.').first}",
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 10.h),
                 Divider(color: Color(0xffE2E2E2)),
                 SizedBox(height: 10.h),
@@ -294,30 +241,33 @@ class _PackageListView extends StatelessWidget {
                     ),
                   ],
                 ),
-                package.danceOrMusic == "Dance Classes"
-                    ? SizedBox()
-                    : SizedBox(height: 10.h),
-                package.danceOrMusic == "Dance Classes"
-                    ? SizedBox()
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                Visibility(
+                  visible: package.danceOrMusic != "Dance Classes",
+                  child: SizedBox(height: 10.h),
+                ),
+                Visibility(
+                  visible: package.danceOrMusic != "Dance Classes",
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              SvgPicture.asset('assets/svg/remaining.svg'),
-                              SizedBox(width: 5),
-                              Text(
-                                'Remaining Cancellation (Classes):',
-                                style: TextStyle(fontSize: 14.fSize),
-                              ),
-                            ],
-                          ),
+                          SvgPicture.asset('assets/svg/remaining.svg'),
+                          SizedBox(width: 5),
                           Text(
-                            '${package.remainingCancellations}/${package.totalAllowedCancellation}',
+                            'Remaining Cancellation (Classes):',
                             style: TextStyle(fontSize: 14.fSize),
                           ),
                         ],
                       ),
+                      Text(
+                        '${package.remainingCancellations}/${package.totalAllowedCancellation}',
+                        style: TextStyle(fontSize: 14.fSize),
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 10.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -339,32 +289,66 @@ class _PackageListView extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 10.h),
-                package.danceOrMusic == "Dance Classes"
-                    ? SizedBox()
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                Visibility(
+                  visible: package.danceOrMusic != "Dance Classes",
+                  child: SizedBox(height: 10.h),
+                ),
+                Visibility(
+                  visible: package.danceOrMusic != "Dance Classes",
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              SvgPicture.asset('assets/svg/unscheduled.svg'),
-                              SizedBox(width: 5),
-                              Text(
-                                'Unscheduled Count:',
-                                style: TextStyle(fontSize: 14.fSize),
-                              ),
-                            ],
-                          ),
+                          SvgPicture.asset('assets/svg/unscheduled.svg'),
+                          SizedBox(width: 5),
                           Text(
-                            '${unbookedClasses.isNegative ? 0 : unbookedClasses}',
+                            'Unscheduled Count:',
                             style: TextStyle(fontSize: 14.fSize),
                           ),
                         ],
                       ),
+                      Text(
+                        '${unbookedClasses.isNegative ? 0 : unbookedClasses}',
+                        style: TextStyle(fontSize: 14.fSize),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 10.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.exit_to_app_rounded,
+                          size: 16.adaptSize,
+                          color: Colors.red,
+                        ),
+                        SizedBox(width: 3),
+                        Text(
+                          "Package Expiry:",
+                          style: TextStyle(
+                            fontSize: 14.fSize,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
 
+                    Text(
+                      DateFormat(
+                        'd MMM yyyy',
+                      ).format(DateTime.parse(package.packageExpiry)),
+                      style: TextStyle(fontSize: 14.fSize, color: Colors.red),
+                    ),
+                  ],
+                ),
                 package.danceOrMusic == "Dance Classes"
                     ? SizedBox(height: 20.h)
-                    : const Spacer(), // Pushes the link to the bottom
+                    : const Spacer(),
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(

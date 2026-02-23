@@ -16,6 +16,7 @@ import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:showcaseview/showcaseview.dart';
 
+// TODO: Test notifiaciton navigation goal is to stop auto navifation
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 

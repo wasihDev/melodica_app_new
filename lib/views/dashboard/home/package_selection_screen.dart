@@ -5,6 +5,7 @@ import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/views/dashboard/home/checkout/checkout_screen.dart';
+import 'package:melodica_app_new/views/dashboard/home/widget/next_button.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/package_card.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/package_dance_card.dart';
 import 'package:provider/provider.dart';
@@ -236,42 +237,6 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
 
                                   const SizedBox(height: 12),
 
-                                  // DropdownButtonFormField<ServiceModel>(
-                                  //   value:
-                                  //       ctrl.selectedFrequency ??
-                                  //       (ctrl.uniqueFrequencies.isEmpty
-                                  //           ? null
-                                  //           : ctrl.uniqueFrequencies.first),
-                                  //   items: ctrl.uniqueFrequencies.map((f) {
-                                  //     return DropdownMenuItem<ServiceModel>(
-                                  //       value: f,
-                                  //       child: Text(
-                                  //         f.frequencytext ?? '',
-                                  //         style: const TextStyle(fontSize: 16),
-                                  //       ),
-                                  //     );
-                                  //   }).toList(),
-                                  //   onChanged: (v) {
-                                  //     if (v != null) {
-                                  //       // ctrl.setSelectedFrequency(v);
-                                  //     }
-                                  //   },
-                                  //   decoration: InputDecoration(
-                                  //     contentPadding:
-                                  //         const EdgeInsets.symmetric(
-                                  //           horizontal: 16,
-                                  //           vertical: 18,
-                                  //         ),
-                                  //     filled: true,
-                                  //     fillColor: Colors.transparent,
-                                  //     border: OutlineInputBorder(
-                                  //       borderRadius: BorderRadius.circular(12),
-                                  //       borderSide: BorderSide(
-                                  //         color: Colors.grey[200]!,
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ),
                                   SizedBox(
                                     height: 40.h,
                                     child: ListView(
@@ -400,12 +365,14 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                               }
                                               return PackageCard(
                                                 onTap: () {
-                                                  print('object');
+                                                  print('object $selected');
 
-                                                  ctrl.selectPrice(s.priceid);
-                                                  ctrl.addPackage(s, idx);
+                                                  // ctrl.selectPrice(s.priceId);
+                                                  ctrl.togglePackageSelection(
+                                                    s,
+                                                  );
 
-                                                  setState(() {});
+                                                  // setState(() {});
                                                 },
                                                 package: ctrl.filteredList[idx],
                                                 isSelected: selected,
@@ -417,60 +384,52 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                   // Next button
                                   SafeArea(
                                     top: false,
-                                    child: Container(
-                                      width: double.infinity,
-                                      margin: EdgeInsets.only(bottom: 10.h),
-                                      child: ElevatedButton(
-                                        onPressed: ctrl.selectedPackages.isEmpty
-                                            ? null
-                                            : widget.iscomingFromNewStudent ==
-                                                  true
-                                            ? () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        CheckoutScreen(
-                                                          iscomingFromNewStudent:
-                                                              true,
-                                                        ),
-                                                  ),
-                                                );
-                                              }
-                                            : () {
-                                                final selectedPackage =
-                                                    ctrl.selectedPackages;
-                                                if (selectedPackage
-                                                    .isNotEmpty) {
-                                                  // ctrl.addPackage(
-                                                  //   selectedPackage[],
-                                                  // );
-                                                  showStudentPicker(context);
+                                    child: Consumer2<ServicesProvider, CustomerController>(
+                                      builder: (context, pro, cust, child) {
+                                        return NextButton(
+                                          onPressed:
+                                              ctrl.selectedPackagesTemp.isEmpty
+                                              ? null
+                                              : widget.iscomingFromNewStudent ==
+                                                    true
+                                              ? () {
+                                                  for (var pkg
+                                                      in pro
+                                                          .selectedPackagesTemp) {
+                                                    context
+                                                        .read<
+                                                          ServicesProvider
+                                                        >()
+                                                        .addPackageForStudent(
+                                                          pkg,
+                                                          cust.selectedStudent!,
+                                                        );
+                                                  }
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          CheckoutScreen(
+                                                            iscomingFromNewStudent:
+                                                                true,
+                                                          ),
+                                                    ),
+                                                  );
                                                 }
-                                              },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              ctrl.selectedPackages.isEmpty
-                                              ? Colors.grey
-                                              : const Color(0xFFF7CD3C),
-                                          foregroundColor: Colors.black87,
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 18.h,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          'Next',
-                                          style: TextStyle(
-                                            fontSize: 18.fSize,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
+                                              : () {
+                                                  if (ctrl
+                                                      .selectedPackagesTemp
+                                                      .isEmpty) {
+                                                    SnackbarUtils.showError(
+                                                      context,
+                                                      "Please select at least one package",
+                                                    );
+                                                    return;
+                                                  }
+                                                  showStudentPicker(context);
+                                                },
+                                        );
+                                      },
                                     ),
                                   ),
                                 ],
@@ -486,7 +445,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                       'Select Course',
                                       style: TextStyle(
                                         color: Colors.grey.shade700,
-                                        fontSize: 16.fSize,
+                                        fontSize: 14.fSize,
                                       ),
                                     ),
                                   ),
@@ -508,7 +467,7 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                             // 'Ballet, Hip Hop, Contemporary & Belly Dance',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
-                                              fontSize: 16.fSize,
+                                              fontSize: 14.fSize,
                                             ),
                                           ),
                                         );
@@ -553,11 +512,11 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                                   return PackageWidgetCard(
                                                     onTap: () {
                                                       provider.selectPrice(
-                                                        s.priceid,
+                                                        s.priceId,
                                                       );
-                                                      ctrl.addPackage(s, idx);
-
-                                                      setState(() {});
+                                                      ctrl.togglePackageSelection(
+                                                        s,
+                                                      );
                                                     },
                                                     package: provider
                                                         .alldanceList[idx],
@@ -568,80 +527,49 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                                       );
                                     },
                                   ),
-                                  Consumer<ServicesProvider>(
-                                    builder: (context, provider, child) {
-                                      return SafeArea(
-                                        top: false,
-                                        bottom: true,
-                                        child: Container(
-                                          width: double.infinity,
-                                          margin: EdgeInsets.only(bottom: 10.h),
-                                          child: ElevatedButton(
-                                            onPressed:
-                                                widget.iscomingFromNewStudent ==
-                                                    true
-                                                ? () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (_) =>
-                                                            CheckoutScreen(
-                                                              iscomingFromNewStudent:
-                                                                  true,
-                                                            ),
-                                                      ),
-                                                    );
-                                                  }
-                                                : () {
-                                                    // final selected = provider.all
-                                                    //     .firstWhere(
-                                                    //       (e) =>
-                                                    //           e.priceid ==
-                                                    //           provider
-                                                    //               .selectedPriceId,
-                                                    //     );
-                                                    // handle next step — for demo we show a snackbar
-                                                    final selectedPackage =
-                                                        ctrl.selectedPackages;
-                                                    if (selectedPackage
-                                                        .isNotEmpty) {
-                                                      // ctrl.addPackage(
-                                                      //   selectedPackage[],
-                                                      // );
-                                                      // Navigator.push(
-                                                      //   context,
-                                                      //   MaterialPageRoute(
-                                                      //     builder: (_) =>
-                                                      //         StudentsScreen(),
-                                                      //   ),
-                                                      // );
-                                                      showStudentPicker(
-                                                        context,
+                                  Consumer2<
+                                    ServicesProvider,
+                                    CustomerController
+                                  >(
+                                    builder: (context, pro, cust, child) {
+                                      return NextButton(
+                                        onPressed:
+                                            widget.iscomingFromNewStudent ==
+                                                true
+                                            ? () {
+                                                for (var pkg
+                                                    in pro
+                                                        .selectedPackagesTemp) {
+                                                  context
+                                                      .read<ServicesProvider>()
+                                                      .addPackageForStudent(
+                                                        pkg,
+                                                        cust.selectedStudent!,
                                                       );
-                                                    }
-                                                  },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(
-                                                0xFFF7CD3C,
-                                              ),
-                                              foregroundColor: Colors.black87,
-                                              padding: EdgeInsets.symmetric(
-                                                vertical: 18.h,
-                                              ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              'Next',
-                                              style: TextStyle(
-                                                fontSize: 18.fSize,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
+                                                }
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        CheckoutScreen(
+                                                          iscomingFromNewStudent:
+                                                              true,
+                                                        ),
+                                                  ),
+                                                );
+                                              }
+                                            : () {
+                                                if (ctrl
+                                                    .selectedPackagesTemp
+                                                    .isEmpty) {
+                                                  SnackbarUtils.showError(
+                                                    context,
+                                                    "Please select at least one package",
+                                                  );
+                                                  return;
+                                                }
+                                                showStudentPicker(context);
+                                              },
                                       );
                                     },
                                   ),
@@ -660,8 +588,8 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return Consumer<CustomerController>(
-          builder: (context, ctrl, _) {
+        return Consumer2<CustomerController, ServicesProvider>(
+          builder: (context, ctrl, prov, _) {
             return AlertDialog(
               backgroundColor: Colors.white,
               title: const Text('Select Student'),
@@ -697,7 +625,17 @@ class _PackageSelectionScreenState extends State<PackageSelectionScreen> {
                           ? const Icon(Icons.check, color: Colors.green)
                           : null,
                       onTap: () {
-                        ctrl.selectStudent(student);
+                        // ctrl.selectStudent(student);
+                        // context.read<ServicesProvider>().addPackageForStudent(
+                        //   package,
+                        //   student,
+                        // );
+                        for (var pkg in prov.selectedPackagesTemp) {
+                          context.read<ServicesProvider>().addPackageForStudent(
+                            pkg,
+                            student,
+                          );
+                        }
                         Navigator.pop(context);
                         Navigator.push(
                           context,

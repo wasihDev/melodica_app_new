@@ -14,6 +14,7 @@ import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_widgets.
 import 'package:melodica_app_new/widgets/appointment_card.dart';
 import 'package:melodica_app_new/widgets/custom_app_bar.dart';
 import 'package:melodica_app_new/widgets/date_cell.dart' as d;
+import 'package:melodica_app_new/widgets/please_note_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -31,26 +32,27 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     DateTime selectedDate,
     Map<String, List<dynamic>> grouped,
   ) {
-    int index = 0;
+    double offset = 0;
+    const headerHeight = 0.0;
+    const cardHeight = 110.0;
 
     for (final entry in grouped.entries) {
       final date = DateTime.parse(entry.key);
 
       if (DateUtils.isSameDay(date, selectedDate)) {
-        const headerHeight = 40.0;
-        const cardHeight = 110.0;
-
         _scrollController.animateTo(
-          index.toDouble(),
+          offset.toDouble(),
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOut,
         );
         return;
       }
 
-      // Calculate height of this section
-      index += 40; // header
-      index += entry.value.length * 110; // cards
+      // // Calculate height of this section
+      // index += 40; // header
+      // index += entry.value.length * 110; // cards
+      offset += headerHeight;
+      offset += entry.value.length * cardHeight;
     }
   }
 
@@ -275,39 +277,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 SizedBox(height: 20.h),
 
                 // Note Box
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7EC), // Light cream background
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PLEASE NOTE',
-                        style: TextStyle(
-                          color: Color(0xFFE67E22), // Orange text
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14.fSize,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-
-                      Text(
-                        today == scheduledDay
-                            ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
-                            : s.RemainingCancellations <= 0
-                            ? "You don't have allowable cancellations left. Reschedule before ${removingTimeFromDate(s.bookingDateStartTime)} or pay AED 50 to reschedule it to a later date."
-                            : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12.fSize,
-                        ),
-                      ),
-                    ],
-                  ),
+                PleaseNoteWidget(
+                  title: today == scheduledDay
+                      ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
+                      : s.RemainingCancellations <= 0
+                      ? "You don't have allowable cancellations left. Reschedule before ${removingTimeFromDate(s.bookingDateStartTime)} or pay AED 50 to reschedule it to a later date."
+                      : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
                 ),
                 const SizedBox(height: 24),
                 // Action Buttons

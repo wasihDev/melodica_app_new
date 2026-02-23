@@ -5,6 +5,7 @@ import 'package:melodica_app_new/models/schedule_model.dart';
 import 'package:melodica_app_new/providers/pacakge_provider.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:provider/provider.dart' show Consumer, Provider;
 
 class EarlyNoticeDialog extends StatelessWidget {
@@ -166,9 +167,11 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
                     onPressed: _selectedReason == null
                         ? null // Disable button if no reason is selected
                         : () async {
-                            final classdatetime = formatToApiDate(
-                              DateTime.now(),
-                            );
+                            //   widget.s.bookingDateStartTime
+                            // final classdatetime = formatToApiDate(
+                            //   DateTime.now(),
+                            //   // widget.s.bookingDateStartTime,
+                            // );
                             // Show final confirmation dialog
                             final Packageprovider =
                                 Provider.of<PackageProvider>(
@@ -183,11 +186,18 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
                             final noticeType = calculateNoticeType(
                               widget.s.bookingDateStartTime,
                             );
-                            print('notice $noticeType');
+                            print(
+                              'classdatetime ${widget.s.bookingDateStartTime}',
+                            );
+                            print(
+                              'classdatetime ${formatToIso8601(widget.s.bookingDateStartTime)}',
+                            );
                             await provider
                                 .submitScheduleRequest(
                                   subject: widget.s.subject,
-                                  classDateTime: classdatetime,
+                                  classDateTime: formatToIso8601(
+                                    widget.s.bookingDateStartTime,
+                                  ),
                                   action: 'Forfeit',
                                   preferredSlot: "",
                                   reason: "$_selectedReason",
@@ -196,11 +206,18 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
                                   lateNotic: '$noticeType', // late or early
                                 )
                                 .then((val) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) =>
-                                        const ClassStartedDialog(),
-                                  );
+                                  if (val) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) =>
+                                          const ClassStartedDialog(),
+                                    );
+                                  } else {
+                                    SnackbarUtils.showError(
+                                      context,
+                                      "We couldn't process the schedule details. Please contact support if this persists. ",
+                                    );
+                                  }
                                 });
                           },
                     style: ElevatedButton.styleFrom(
@@ -233,6 +250,18 @@ class _CancelLessonBottomSheetState extends State<CancelLessonBottomSheet> {
 
   String formatToApiDate(DateTime date) {
     return date.toUtc().toIso8601String().split('.').first + 'Z';
+  }
+
+  String formatToIso8601(String dateStr) {
+    try {
+      DateFormat inputFormat = DateFormat("dd MMM yyyy h:mm a");
+      DateTime parsedDate = inputFormat.parse(dateStr);
+      String formatted = DateFormat("yyyy-MM-ddTHH:mm:ss").format(parsedDate);
+      return "${formatted}Z";
+    } catch (e) {
+      print("Error parsing date: $e");
+      return "";
+    }
   }
 }
 

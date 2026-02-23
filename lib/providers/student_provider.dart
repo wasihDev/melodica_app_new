@@ -408,7 +408,23 @@ class CustomerController extends ChangeNotifier {
       );
       print("upsertporfile ${response.statusCode}");
       if (response.statusCode == 200) {
-        // throw Exception(response.body);
+        //   final newStudent = Student(
+        //     mbId: '', // API returned id
+        //     firstName: firstname,
+        //     lastName: lastname,
+        //     fullName: "$firstname $lastname",
+        //     email: email,
+        //     isregistred: "No",
+        //     dateOfBirth: '',
+        //     emirateId: '',
+        //     city: '',
+        //     county: '',
+        //     areaId: '',
+        //     overriddenCreatedOn: '',
+        //     statuscode: '',
+        //     gender: '',
+        //     guardianId: '',
+        //   );
         return true;
       }
 

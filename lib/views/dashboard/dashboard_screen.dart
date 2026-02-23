@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodica_app_new/constants/app_colors.dart';
+import 'package:melodica_app_new/constants/global_variables.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
 import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
-import 'package:melodica_app_new/utils/upgrade_custom_dialog.dart';
+import 'package:melodica_app_new/services/upgrade_custom_dialog.dart';
 import 'package:melodica_app_new/views/dashboard/home/faq/help_center.dart';
 import 'package:melodica_app_new/views/dashboard/home/home_screen.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/schedule_screen.dart';
@@ -48,6 +49,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // });
 
     WidgetsBinding.instance.addPostFrameCallback((val) async {
+      final cusprovider = Provider.of<CustomerController>(
+        context,
+        listen: false,
+      );
+
+      if (cusprovider.isCustomerRegistered) {
+        _checkFirstLaunch();
+      }
       await _loadHomeData();
     });
   }
@@ -61,8 +70,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     print(
       'cusprovider.isCustomerRegistered ${cusprovider.isCustomerRegistered}',
     );
-    UpdateService.checkVersion(context);
     print('cusprovider.isShowData ${cusprovider.isShowData}');
+    if (openedFromNotification) {
+      openedFromNotification = false;
+      // this is for notificaiton navigation
+      return; // ❌ Do not navigate
+    }
+    UpdateService.checkVersion(context);
+
     if (cusprovider.isShowData.isEmpty) {
       await provider.fetchUserData();
       await cusprovider.fetchCustomerData();
@@ -188,154 +203,160 @@ class _DashboardScreenState extends State<DashboardScreen> {
     HelpCenter(),
     ProfileScreen(),
   ];
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedIndex],
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.miniCenterDocked,
-      floatingActionButton: SafeArea(
-        bottom: Platform.isIOS ? false : true,
-        child: Container(
-          height: 90.h,
-          margin: EdgeInsets.only(
-            left: 16.w,
-            right: 16.w,
-            bottom: Platform.isIOS ? 10 : 10,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Color(0xffE2E2E2)),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Color(0xffF7F7F7),
-              selectedItemColor: Colors.black,
-              unselectedItemColor: Colors.grey,
-              showSelectedLabels: true,
-              showUnselectedLabels: true,
-              elevation: 0,
-              selectedLabelStyle: TextStyle(fontSize: 14.fSize),
-              unselectedLabelStyle: TextStyle(fontSize: 12.fSize),
-              items: [
-                BottomNavigationBarItem(
-                  icon: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _selectedIndex == 0
-                          ? const Color(0xFFFFC107)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: SvgPicture.asset('assets/svg/home.svg'),
-                  ),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Showcase(
-                    key: scheduleKey,
-                    title: "Schedule",
-                    description:
-                        "View and manage your classes — reschedule or cancel with ease",
-                    onBarrierClick: () {
-                      ShowCaseWidget.of(context).next();
-                    },
-                    tooltipActionConfig: const TooltipActionConfig(
-                      alignment: MainAxisAlignment.spaceBetween,
-                      gapBetweenContentAndAction: 10,
-                      position: TooltipActionPosition.outside,
-                    ),
-
-                    titleAlignment: Alignment.topLeft,
-                    titleTextStyle: TextStyle(
-                      fontSize: 16.fSize,
-                      fontWeight: FontWeight.w700,
-                    ),
-
-                    descTextStyle: TextStyle(color: Colors.grey[700]),
-                    tooltipActions: const [
-                      TooltipActionButton(
-                        backgroundColor: Colors.transparent,
-                        type: TooltipDefaultActionType.previous,
-                        padding: EdgeInsets.symmetric(vertical: 4),
-                        textStyle: TextStyle(color: Colors.white),
+    return ShowCaseWidget(
+      builder: (context) {
+        return Scaffold(
+          body: _pages[_selectedIndex],
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.miniCenterDocked,
+          floatingActionButton: SafeArea(
+            bottom: Platform.isIOS ? false : true,
+            child: Container(
+              height: 90.h,
+              margin: EdgeInsets.only(
+                left: 16.w,
+                right: 16.w,
+                bottom: Platform.isIOS ? 10 : 10,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Color(0xffE2E2E2)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BottomNavigationBar(
+                  currentIndex: _selectedIndex,
+                  onTap: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
+                  type: BottomNavigationBarType.fixed,
+                  backgroundColor: Color(0xffF7F7F7),
+                  selectedItemColor: Colors.black,
+                  unselectedItemColor: Colors.grey,
+                  showSelectedLabels: true,
+                  showUnselectedLabels: true,
+                  elevation: 0,
+                  selectedLabelStyle: TextStyle(fontSize: 14.fSize),
+                  unselectedLabelStyle: TextStyle(fontSize: 12.fSize),
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _selectedIndex == 0
+                              ? const Color(0xFFFFC107)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: SvgPicture.asset('assets/svg/home.svg'),
                       ),
-                      TooltipActionButton(
-                        type: TooltipDefaultActionType.next,
-                        backgroundColor: AppColors.primary,
-                        textStyle: TextStyle(color: Colors.black),
-                      ),
-                    ],
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 18.w,
-                        vertical: 4.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _selectedIndex == 1
-                            ? const Color(0xFFFFC107)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: SvgPicture.asset('assets/svg/schedule.svg'),
+                      label: 'Home',
                     ),
-                  ),
+                    BottomNavigationBarItem(
+                      icon: Showcase(
+                        key: scheduleKey,
+                        title: "Schedule",
+                        description:
+                            "View and manage your classes — reschedule or cancel with ease",
+                        onBarrierClick: () {
+                          ShowCaseWidget.of(context).next();
+                        },
+                        tooltipActionConfig: const TooltipActionConfig(
+                          alignment: MainAxisAlignment.spaceBetween,
+                          gapBetweenContentAndAction: 10,
+                          position: TooltipActionPosition.outside,
+                        ),
 
-                  label: 'Schedule',
-                ),
+                        titleAlignment: Alignment.topLeft,
+                        titleTextStyle: TextStyle(
+                          fontSize: 16.fSize,
+                          fontWeight: FontWeight.w700,
+                        ),
 
-                BottomNavigationBarItem(
-                  icon: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18.w,
-                      vertical: 2.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _selectedIndex == 2
-                          ? const Color(0xFFFFC107)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(Icons.headset_outlined, color: Colors.black),
-                    // SvgPicture.asset('assets/svg/progress.svg'),
-                  ),
-                  label: 'Help',
-                ),
+                        descTextStyle: TextStyle(color: Colors.grey[700]),
+                        tooltipActions: const [
+                          TooltipActionButton(
+                            backgroundColor: Colors.transparent,
+                            type: TooltipDefaultActionType.previous,
+                            padding: EdgeInsets.symmetric(vertical: 4),
+                            textStyle: TextStyle(color: Colors.white),
+                          ),
+                          TooltipActionButton(
+                            type: TooltipDefaultActionType.next,
+                            backgroundColor: AppColors.primary,
+                            textStyle: TextStyle(color: Colors.black),
+                          ),
+                        ],
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 18.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _selectedIndex == 1
+                                ? const Color(0xFFFFC107)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: SvgPicture.asset('assets/svg/schedule.svg'),
+                        ),
+                      ),
 
-                BottomNavigationBarItem(
-                  icon: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18.w,
-                      vertical: 6.h,
+                      label: 'Schedule',
                     ),
-                    decoration: BoxDecoration(
-                      color: _selectedIndex == 3
-                          ? const Color(0xFFFFC107)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
+
+                    BottomNavigationBarItem(
+                      icon: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18.w,
+                          vertical: 2.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _selectedIndex == 2
+                              ? const Color(0xFFFFC107)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.headset_outlined,
+                          color: Colors.black,
+                        ),
+                        // SvgPicture.asset('assets/svg/progress.svg'),
+                      ),
+                      label: 'Help',
                     ),
-                    child: SvgPicture.asset('assets/svg/profile.svg'),
-                  ),
-                  label: 'Profile',
+
+                    BottomNavigationBarItem(
+                      icon: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _selectedIndex == 3
+                              ? const Color(0xFFFFC107)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: SvgPicture.asset('assets/svg/profile.svg'),
+                      ),
+                      label: 'Profile',
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

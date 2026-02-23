@@ -12,11 +12,13 @@ import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/views/dashboard/dashboard_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/package_selection_screen.dart';
+import 'package:melodica_app_new/views/dashboard/home/widget/home_shimmer.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/webview_online_store.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/reschedule_screen.dart';
 import 'package:melodica_app_new/views/dashboard/schedule/widget/dialog_widgets.dart';
 import 'package:melodica_app_new/views/profile/packages/packages_screen.dart';
 import 'package:melodica_app_new/widgets/custom_app_bar.dart';
+import 'package:melodica_app_new/widgets/please_note_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -150,6 +152,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             'assets/svg/music_class.svg',
                             'Add Music',
                             onTap: () {
+                              final provider = context.read<ServicesProvider>();
+                              provider.removeSelectpackageSelection();
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -209,6 +213,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                       borderRadius: BorderRadius.circular(18),
                                       onTap: display
                                           ? () {
+                                              final provider = context
+                                                  .read<ServicesProvider>();
+                                              provider
+                                                  .removeSelectpackageSelection();
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
@@ -415,11 +423,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               if (provider.isLoading) {
                                 return Container(
                                   height: 320.h,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
+                                  padding: EdgeInsets.only(right: 18),
+                                  child: const HomeShimmer(),
                                 );
                               }
                               // print(
@@ -652,40 +657,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
 
                 // Note Box
-                // Note Box
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7EC), // Light cream background
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PLEASE NOTE',
-                        style: TextStyle(
-                          color: Color(0xFFE67E22), // Orange text
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-
-                      // DateFormat('dd/MM/yyyy hh:mm a').parse(PackageExpiry);
-                      Text(
-                        today == scheduledDay
-                            ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
-                            : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
-                        // 'Reschedule before the ${DateFormat('dd MMM yyyy').format(expiryDate)} to avoid using your cancellation.',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
+                PleaseNoteWidget(
+                  title: today == scheduledDay
+                      ? "This is a late notice. Cancelling this class will result in a same-day cancellation fee. Consider rescheduling to a different time on the same day."
+                      : s.RemainingCancellations <= 0
+                      ? "You don't have allowable cancellations left. Reschedule before ${removingTimeFromDate(s.bookingDateStartTime)} or pay AED 50 to reschedule it to a later date."
+                      : "Reschedule before the ${removingTimeFromDate(s.bookingDateStartTime)} to avoid using your cancellation.",
                 ),
                 const SizedBox(height: 24),
 
@@ -748,10 +725,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       print('SCHEDULED =====>>> $bookingdata');
 
                       // Show late notice if now is equal OR after scheduled time
-                      if (today == scheduledDay) {
-                        showLateNoticeDialog(context);
-                        return;
-                      }
+                      // if (today == scheduledDay) {
+                      //   print('coming jere');
+                      //   showLateNoticeDialog(context);
+                      //   return;
+                      // }
                       showDialog(
                         context: context,
                         builder: (context) => EarlyNoticeDialog(s: s),
@@ -852,6 +830,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         contentPadding: const EdgeInsets.all(20),
         content: Column(
@@ -944,8 +923,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       elevation: 0,
                     ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SvgPicture.asset('assets/svg/dirham.svg'),
+                        SvgPicture.asset(
+                          'assets/svg/dirham.svg',
+                          color: Colors.white,
+                        ),
                         const Text(
                           " ${50}",
                           style: TextStyle(

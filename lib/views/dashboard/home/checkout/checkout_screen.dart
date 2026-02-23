@@ -15,7 +15,9 @@ import 'package:melodica_app_new/utils/responsive_sizer.dart';
 import 'package:melodica_app_new/utils/snacbar_utils.dart';
 import 'package:melodica_app_new/views/dashboard/dashboard_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/checkout/signature_pad.dart';
+import 'package:melodica_app_new/views/dashboard/home/package_selection_screen.dart';
 import 'package:melodica_app_new/views/dashboard/home/widget/custom_widget.dart';
+import 'package:melodica_app_new/views/profile/packages/packages_screen.dart';
 import 'package:melodica_app_new/widgets/summary_row.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
@@ -73,16 +75,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             return IconButton(
               icon: const Icon(Icons.arrow_back_ios, color: AppColors.black),
               onPressed: () {
-                if (widget.iscomingFromNewStudent) {
-                  provider.isStudentNew = false;
-                  custPro.clearStudentForm();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => DashboardScreen()),
-                  );
-                } else {
-                  Navigator.pop(context);
-                }
+                Navigator.pop(context);
+                // if (widget.iscomingFromNewStudent) {
+                //   provider.isStudentNew = false;
+                //   custPro.clearStudentForm();
+
+                //   Navigator.pushReplacement(
+                //     context,
+                //     MaterialPageRoute(builder: (context) => DashboardScreen()),
+                //   );
+                // } else {
+                //   Navigator.pop(context);
+                // }
                 // provider.clearList();
               },
             );
@@ -107,6 +111,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget contentWIdget(BuildContext context, ServicesProvider provider) {
+    final grouped = provider.packagesGroupedByStudent;
+
     return SafeArea(
       bottom: Platform.isIOS ? false : true,
       child: SingleChildScrollView(
@@ -118,74 +124,195 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListView.separated(
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: provider.selectedPackages.length,
+                  // list view that has students names
+                  ListView(
                     shrinkWrap: true,
-                    separatorBuilder: (context, index) => SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final double discountedPrice =
-                          double.tryParse(
-                            provider.selectedPackages[index].discount
-                                .toString(),
-                          ) ??
-                          0.0;
-                      final double sessions = provider
-                          .selectedPackages[index]
-                          .sessions
-                          .toDouble();
-                      final discountedAmount =
-                          provider.selectedPackages[index].price *
-                          (discountedPrice / 100);
-                      String perClassCost;
-                      // ((provider.selectedPackages[index].price -
-                      //             discountedAmount) /
-                      //         sessions)
-                      //     .toStringAsFixed(2);
-                      if (provider.tab == "Dance") {
-                        perClassCost =
-                            (provider.selectedPackages[index].price /
-                                    provider.selectedPackages[index].sessions)
-                                .toStringAsFixed(0);
-                      } else {
-                        perClassCost =
-                            ((provider.selectedPackages[index].price -
-                                        discountedAmount) /
-                                    sessions)
-                                .toStringAsFixed(2);
-                      }
-                      return _buildSilverPackageCard(
-                        id: 'provider_package',
-                        title: provider.selectedPackages[index].service,
-                        title2: '',
-                        unit: provider.selectedPackages[index].sessionstext,
-                        duration: provider.tab == "Dance"
-                            ? ""
-                            : "Duration: ${provider.selectedPackages[index].duration} min",
-                        details:
-                            'Freezing Weeks: ${provider.selectedPackages[index].freezings == null ? 0 : provider.selectedPackages[index].freezings}',
-                        price:
-                            '${provider.selectedPackages[index].price.toString().split('.').first}',
-                        pricePerClass:
-                            "$perClassCost per class", // '${(provider.selectedPackages[index].price / provider.selectedPackages[index].sessions).toStringAsFixed(0)} per Class',
-                        discount:
-                            '${provider.selectedPackages[index].discount}',
-                        onDelete: () => provider.removePackageAt(index),
-                        details1:
-                            'Class Cancellations: ${provider.selectedPackages[index].cancellations}',
-                        details2:
-                            provider.selectedPackages[index].frequencytext !=
-                                    null &&
-                                provider
-                                    .selectedPackages[index]
-                                    .frequencytext!
-                                    .isNotEmpty
-                            ? 'Classes: ${formatFrequency(provider.selectedPackages[index].frequencytext)}'
-                            : '',
+                    physics: NeverScrollableScrollPhysics(),
+                    children: grouped.entries.map((entry) {
+                      final student = entry.key;
+                      final packages = entry.value;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Student Header
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            child: Text(
+                              widget.iscomingFromNewStudent
+                                  ? provider
+                                        .customerController
+                                        .firstNameCtrl
+                                        .text
+                                        .toString()
+                                  : student,
+                              style: TextStyle(
+                                fontSize: 14.fSize,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                          // Packages for this student
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: packages.length,
+                            separatorBuilder: (_, __) => SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              final item = packages[index];
+                              final pkg = item.package;
+                              final double discountedPrice =
+                                  double.tryParse(pkg.discount.toString()) ??
+                                  0.0;
+                              final double discountedAmount =
+                                  pkg.price * (discountedPrice / 100);
+                              String perClassCost;
+                              if (provider.tab == "Dance") {
+                                perClassCost = (pkg.price / pkg.sessions)
+                                    .toStringAsFixed(0);
+                              } else {
+                                perClassCost =
+                                    ((pkg.price - discountedAmount) /
+                                            pkg.sessions)
+                                        .toStringAsFixed(2);
+                              }
+                              return _buildSilverPackageCard(
+                                id: 'provider_package',
+                                title: pkg.serviceName,
+                                title2: '',
+                                studentName: "",
+                                unit: pkg.sessionsText,
+                                duration: provider.tab == "Dance"
+                                    ? ""
+                                    : "Duration: ${pkg.duration} min",
+                                details: 'Freezing Weeks: ${pkg.freezings}',
+                                price: pkg.price.toString().split('.').first,
+                                pricePerClass: "$perClassCost per class",
+                                discount: '${pkg.discount}',
+                                onDelete: () {
+                                  final globalIndex = provider.selectedPackages
+                                      .indexOf(item);
+                                  provider.removePackageAt(globalIndex);
+                                },
+                                details1:
+                                    'Class Cancellations: ${pkg.cancellations}',
+                                details2: pkg.frequencyText.isNotEmpty
+                                    ? 'Classes: ${formatFrequency(pkg.frequencyText)}'
+                                    : '',
+                              );
+                            },
+                          ),
+                        ],
                       );
-                    },
+                    }).toList(),
                   ),
 
+                  /// OLd listview
+                  // ListView.separated(
+                  //   physics: NeverScrollableScrollPhysics(),
+                  //   itemCount: provider.selectedPackages.length,
+                  //   shrinkWrap: true,
+                  //   padding: EdgeInsets.all(0),
+                  //   separatorBuilder: (context, index) => SizedBox(height: 10),
+                  //   itemBuilder: (context, index) {
+                  //     final item = provider.selectedPackages[index];
+                  //     final pkg = item.package;
+                  //     final student = item.student;
+                  //     final double discountedPrice =
+                  //         double.tryParse(pkg.discount.toString()) ?? 0.0;
+                  //     final double sessions = provider
+                  //         .selectedPackages[index]
+                  //         .package
+                  //         .sessions
+                  //         .toDouble();
+                  //     final discountedAmount =
+                  //         pkg.price * (discountedPrice / 100);
+                  //     String perClassCost;
+                  //     if (provider.tab == "Dance") {
+                  //       perClassCost =
+                  //           (pkg.price /
+                  //                   provider
+                  //                       .selectedPackages[index]
+                  //                       .package
+                  //                       .sessions)
+                  //               .toStringAsFixed(0);
+                  //     } else {
+                  //       perClassCost =
+                  //           ((pkg.price - discountedAmount) / sessions)
+                  //               .toStringAsFixed(2);
+                  //     }
+                  //     return _buildSilverPackageCard(
+                  //       id: 'provider_package',
+                  //       title: pkg.serviceName,
+                  //       title2: '',
+                  //       studentName: student.firstName,
+                  //       unit: pkg.sessionsText,
+                  //       duration: provider.tab == "Dance"
+                  //           ? ""
+                  //           : "Duration: ${pkg.duration} min",
+                  //       details:
+                  //           'Freezing Weeks: ${pkg.freezings == null ? 0 : pkg.freezings}',
+                  //       price: '${pkg.price.toString().split('.').first}',
+                  //       pricePerClass:
+                  //           "$perClassCost per class", // '${(provider.selectedPackages[index].price / provider.selectedPackages[index].sessions).toStringAsFixed(0)} per Class',
+                  //       discount: '${pkg.discount}',
+                  //       onDelete: () => provider.removePackageAt(index),
+                  //       details1: 'Class Cancellations: ${pkg.cancellations}',
+                  //       details2:
+                  //           pkg.frequencyText != null &&
+                  //               pkg.frequencyText!.isNotEmpty
+                  //           ? 'Classes: ${formatFrequency(pkg.frequencyText)}'
+                  //           : '',
+                  //     );
+                  //   },
+                  // ),
+                  SizedBox(height: 5.h),
+                  widget.iscomingFromNewStudent
+                      ? SizedBox()
+                      : Consumer<ServicesProvider>(
+                          builder: (context, pro, child) {
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 50.h,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  pro.removeSelectpackageSelection();
+                                  if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => PackageSelectionScreen(
+                                          isShowdanceTab: false,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.white,
+
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(color: Colors.black),
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  "+ Add Package for Another Student",
+                                  style: TextStyle(
+                                    fontSize: 14.fSize,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors
+                                        .darkText, // Text color is dark on yellow
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                  SizedBox(height: 10),
                   // --- Terms and Signature ---
                   Row(
                     children: [
@@ -204,7 +331,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           TextSpan(
                             text: 'I agree to the ',
                             style: TextStyle(
-                              fontSize: 14.fSize,
+                              fontSize: 12.fSize,
                               color: AppColors.darkText,
                             ),
                             children: [
@@ -212,7 +339,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 text: 'Privacy Policy',
                                 style: TextStyle(
                                   decoration: TextDecoration.underline,
-                                  fontSize: 16.fSize,
+                                  fontSize: 14.fSize,
                                 ),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
@@ -224,6 +351,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               TextSpan(
                                 text: 'Terms of Use',
                                 style: TextStyle(
+                                  fontSize: 14.fSize,
                                   decoration: TextDecoration.underline,
                                 ),
                                 recognizer: TapGestureRecognizer()
@@ -370,6 +498,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         provider.installOrder(
                           checkOutScreenBase64: '$base64Image',
                         );
+                        provider.removeSelectpackageSelection();
                         await launchUrl(
                           Uri.parse(provider.paymentUrl!),
                           mode: LaunchMode.externalApplication,
@@ -397,6 +526,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     required String price,
     required String pricePerClass,
     required String discount,
+    required String studentName,
     duration,
     required VoidCallback onDelete,
   }) {
@@ -492,7 +622,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '$discount%\nOFF',
+                            '${discount.split('.').first}%\nOFF',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12.fSize,
@@ -531,6 +661,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ],
               ),
               Text(pricePerClass, style: TextStyle(fontSize: 16.fSize)),
+              // Text(
+              //   "Student: $studentName",
+              //   style: TextStyle(
+              //     fontSize: 12.fSize,
+              //     fontWeight: FontWeight.w600,
+              //     color: AppColors.redError,
+              //   ),
+              // ),
             ],
           ),
         ],
@@ -593,8 +731,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             pw.SizedBox(height: 10),
             // 1. LISTVIEW CONTENT (The Packages)
-            ...provider.selectedPackages.map((pkg) {
+            ...provider.selectedPackages.map((item) {
               // Logic mirrored from your itemBuilder
+              final pkg = item.package;
+              final student = item.student;
+
               final double discountedPrice =
                   double.tryParse(pkg.discount.toString()) ?? 0.0;
               // final double sessions = pkg.sessions.toDouble();
@@ -624,9 +765,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 perClassCost = (finalItemPrice / sessions).toStringAsFixed(2);
               }
               final bool chargeAdmission =
-                  provider.isStudentNew == true ||
-                  provider.customerController.selectedStudent?.isregistred !=
-                      'Yes';
+                  provider.isStudentNew == true || student.isregistred != 'Yes';
 
               return pw.Container(
                 margin: const pw.EdgeInsets.only(bottom: 15),
@@ -643,14 +782,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           pw.Text(
-                            pkg.service,
+                            pkg.serviceName,
                             style: pw.TextStyle(
                               fontWeight: pw.FontWeight.bold,
                               fontSize: 14,
                             ),
                           ),
                           pw.Text(
-                            pkg.sessionstext,
+                            pkg.sessionsText,
                             style: const pw.TextStyle(fontSize: 10),
                           ),
                           pw.SizedBox(height: 4),
@@ -662,10 +801,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             "Class Cancellations: ${pkg.cancellations}",
                             style: const pw.TextStyle(fontSize: 9),
                           ),
-                          if (pkg.frequencytext != null &&
-                              pkg.frequencytext!.isNotEmpty)
+                          if (pkg.frequencyText != null &&
+                              pkg.frequencyText!.isNotEmpty)
                             pw.Text(
-                              "Classes: ${pkg.frequencytext}",
+                              "Classes: ${pkg.frequencyText}",
                               style: const pw.TextStyle(fontSize: 9),
                             ),
                           if (provider.tab != "Dance")
@@ -680,16 +819,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               pw.Text(
                                 'Student Name:  ${chargeAdmission
                                     ? "${provider.customerController.firstNameCtrl.text}"
-                                    : provider.customerController.selectedStudent!.isregistred == 'Yes'
-                                    ? provider.customerController.selectedStudent?.fullName
-                                    : provider.customerController.selectedStudent?.fullName}',
+                                    : student.isregistred == 'Yes'
+                                    ? student.fullName
+                                    : student.fullName}',
                               ),
                               pw.Text(
                                 'Student Email: ${chargeAdmission
                                     ? "${provider.customerController.emailCtrl.text}"
-                                    : provider.customerController.selectedStudent!.isregistred == 'Yes'
-                                    ? provider.customerController.selectedStudent?.email
-                                    : provider.customerController.selectedStudent?.email}}',
+                                    : student.isregistred == 'Yes'
+                                    ? student.email
+                                    : student.email}}',
                               ),
                             ],
                           ),

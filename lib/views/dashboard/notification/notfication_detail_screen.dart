@@ -1,9 +1,22 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:melodica_app_new/constants/global_variables.dart';
 import 'package:melodica_app_new/models/notification_model.dart';
 import 'package:melodica_app_new/providers/notification_provider.dart';
+import 'package:melodica_app_new/providers/pacakge_provider.dart';
+import 'package:melodica_app_new/providers/schedule_provider.dart';
+import 'package:melodica_app_new/providers/services_provider.dart';
+import 'package:melodica_app_new/providers/student_provider.dart';
+import 'package:melodica_app_new/providers/user_profile_provider.dart';
 import 'package:melodica_app_new/utils/responsive_sizer.dart';
+// import 'package:melodica_app_new/utils/upgrade_custom_dialog.dart';
+import 'package:melodica_app_new/views/dashboard/dashboard_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class NotificationDetailScreen extends StatefulWidget {
@@ -81,12 +94,62 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
     }
   }
 
+  Future<void> _loadHomeData() async {
+    // final context = context;
+    final provider = Provider.of<UserprofileProvider>(context, listen: false);
+    final schedule = Provider.of<ScheduleProvider>(context, listen: false);
+    final cusprovider = Provider.of<CustomerController>(context, listen: false);
+    final package = Provider.of<PackageProvider>(context, listen: false);
+    print(
+      'cusprovider.isCustomerRegistered ${cusprovider.isCustomerRegistered}',
+    );
+    // UpdateService.checkVersion(context);
+    print('cusprovider.isShowData ${cusprovider.isShowData}');
+
+    if (cusprovider.isShowData.isEmpty) {
+      await provider.fetchUserData();
+      await cusprovider.fetchCustomerData();
+      await cusprovider.upsertCustomer();
+
+      await package.fetchPackages(context);
+      await context.read<ServicesProvider>().fetchDancePackages();
+      await cusprovider.getDisplayDance(
+        cusprovider.selectedBranch ?? cusprovider.customer!.territoryid,
+      );
+      await provider.loadImageFromPrefs();
+      await schedule.fetchSchedule(context);
+      await cusprovider.fetchPhoneMeta();
+
+      context.read<NotificationProvider>().fetchNotifications();
+    } else {
+      context.read<NotificationProvider>().fetchNotifications();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: const Text('Notifications'),
+        leading: InkWell(
+          onTap: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+              print('=========>> caling if');
+            } else {
+              _loadHomeData();
+              openedFromNotification = false;
+
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                (route) => false,
+              );
+            }
+          },
+          child: Icon(Icons.arrow_back_ios),
+        ),
       ),
       body: SafeArea(
         bottom: true,
@@ -108,7 +171,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
               //   style: const TextStyle(fontSize: 16),
               // ),
               // const Spacer(),
-              widget.notification.messageRich != null &&
+              widget.notification.messageRich != '' &&
                       widget.notification.messageRich.isNotEmpty
                   ? MarkdownBody(
                       data: widget.notification.messageRich,
@@ -174,8 +237,6 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                                 action,
                                 widget.notification.notificationId,
                               );
-                              // provider.markAsRead(notification.notificationId);
-                              // Navigator.pop(context);
                             },
                       child: Text(
                         action.label,
@@ -185,16 +246,6 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                   ),
                 ),
               ),
-              // OutlinedButton(
-              //   onPressed: () {
-
-              //     Navigator.pop(context);
-              //   },
-              //   child: const Text(
-              //     'Mark as read',
-              //     style: TextStyle(color: Colors.black),
-              //   ),
-              // ),
             ],
           ),
         ),

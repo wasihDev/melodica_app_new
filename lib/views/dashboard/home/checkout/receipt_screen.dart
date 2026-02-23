@@ -137,11 +137,13 @@ class ReceiptScreen extends StatelessWidget {
         bottom: true,
         child: Consumer<ServicesProvider>(
           builder: (context, ctrl, child) {
+            final grouped = ctrl.packagesGroupedByStudent;
+
             return Column(
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -172,21 +174,72 @@ class ReceiptScreen extends StatelessWidget {
                             color: AppColors.secondaryText,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        ListView.separated(
-                          padding: EdgeInsets.zero, // ✅ IMPORTANT
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: ctrl.selectedPackages.length,
-                          shrinkWrap: true,
-                          separatorBuilder: (context, index) =>
-                              SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            return _buildProductDetail(
-                              '${ctrl.selectedPackages[index].service}',
-                              '${ctrl.selectedPackages[index].sessionstext} -  ${ctrl.selectedPackages[index].service == "Dance Membership" ? "" : ctrl.selectedPackages[index].durationtext}',
-                              "${ctrl.selectedPackages[index].price}",
+                        const SizedBox(height: 2),
+
+                        // ListView.separated(
+                        //   padding: EdgeInsets.zero, // ✅ IMPORTANT
+                        //   physics: NeverScrollableScrollPhysics(),
+                        //   itemCount: ctrl.selectedPackages.length,
+                        //   shrinkWrap: true,
+                        //   separatorBuilder: (context, index) =>
+                        //       SizedBox(height: 10),
+                        //   itemBuilder: (context, index) {
+                        //     return _buildProductDetail(
+                        //       '${ctrl.selectedPackages[index].package.serviceName}',
+                        //       '${ctrl.selectedPackages[index].package.sessionsText} -  ${ctrl.selectedPackages[index].package.serviceName == "Dance Membership" ? "" : ctrl.selectedPackages[index].package.durationText}',
+                        //       "${ctrl.selectedPackages[index].package.price}",
+                        //     );
+                        //   },
+                        // ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: grouped.entries.map((entry) {
+                            final packages = entry.value;
+                            final student = packages.first.student;
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                /// Student Header
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 8,
+                                    bottom: 6,
+                                  ),
+                                  child: Text(
+                                    ctrl.isStudentNew == true
+                                        ? "${ctrl.customerController.firstNameCtrl.text} ${ctrl.customerController.lastNameCtrl.text}"
+                                        : student.fullName,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.black,
+                                    ),
+                                  ),
+                                ),
+
+                                /// Student Packages
+                                ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: packages.length,
+                                  separatorBuilder: (_, __) =>
+                                      SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final pkg = packages[index].package;
+
+                                    return _buildProductDetail(
+                                      pkg.serviceName,
+                                      "${pkg.sessionsText} - ${pkg.serviceName == "Dance Membership" ? "" : pkg.durationText}",
+                                      pkg.price.toString(),
+                                    );
+                                  },
+                                ),
+
+                                SizedBox(height: 12),
+                              ],
                             );
-                          },
+                          }).toList(),
                         ),
                         // _buildProductDetail(
                         //   'Dimension 1 (Dance Classes)',
@@ -207,10 +260,13 @@ class ReceiptScreen extends StatelessWidget {
                                 label: 'Student',
                                 value: ctrl.isStudentNew == true
                                     ? "${ctrl.customerController.firstNameCtrl.text} ${ctrl.customerController.lastNameCtrl.text}"
-                                    : ctrl
-                                          .customerController
-                                          .selectedStudent!
-                                          .fullName,
+                                    : ctrl.packagesGroupedByStudent.values
+                                          .map(
+                                            (list) =>
+                                                list.first.student.fullName,
+                                          )
+                                          .join(", \n"),
+
                                 valueColor: AppColors.secondaryText,
                               ),
                               // SummaryRow(
@@ -329,7 +385,8 @@ class ReceiptScreen extends StatelessWidget {
                           int totalClasses = 0;
                           ctrl.selectedPackages.map((e) {
                             // print('procdcut ${e.sessionstext}');
-                            final text = e.sessionstext; // e.g. "20 Classes"
+                            final text =
+                                e.package.sessionsText; // e.g. "20 Classes"
                             final count =
                                 int.tryParse(text.split(' ').first) ?? 0;
                             totalClasses += count;
@@ -419,6 +476,8 @@ class ReceiptScreen extends StatelessWidget {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(24),
         build: (context) {
+          final grouped = provider.packagesGroupedByStudent;
+
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
@@ -456,48 +515,110 @@ class ReceiptScreen extends StatelessWidget {
               pw.SizedBox(height: 10),
 
               pw.Column(
-                children: provider.selectedPackages
-                    .map(
-                      (pkg) => pw.Container(
-                        width: double.infinity,
-                        padding: const pw.EdgeInsets.all(8),
-                        margin: const pw.EdgeInsets.only(bottom: 6),
-                        decoration: pw.BoxDecoration(
-                          border: pw.Border.all(color: PdfColors.grey),
-                          borderRadius: pw.BorderRadius.circular(6),
-                        ),
-                        child: pw.Column(
-                          children: [
-                            pw.Row(
-                              mainAxisAlignment:
-                                  pw.MainAxisAlignment.spaceBetween,
-                              children: [
-                                pw.Column(
-                                  crossAxisAlignment:
-                                      pw.CrossAxisAlignment.start,
-                                  children: [
-                                    pw.Text('${pkg.service}'),
-                                    pw.Text('${pkg.sessionstext}'),
-                                  ],
-                                ),
-                                pw.Row(
-                                  children: [
-                                    pw.SvgImage(
-                                      svg: svgRaw,
-                                      width: 10,
-                                      height: 10,
-                                    ),
-                                    pw.Text(" ${pkg.price}"),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
+                children: grouped.entries.map((entry) {
+                  final packages = entry.value;
+                  final student = packages.first.student;
+
+                  return pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.SizedBox(height: 10),
+
+                      /// Student Name
+                      pw.Text(
+                        student.fullName,
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
                         ),
                       ),
-                    )
-                    .toList(),
+
+                      pw.SizedBox(height: 6),
+
+                      /// Packages
+                      ...packages.map((item) {
+                        final pkg = item.package;
+
+                        return pw.Container(
+                          width: double.infinity,
+                          padding: const pw.EdgeInsets.all(8),
+                          margin: const pw.EdgeInsets.only(bottom: 6),
+                          decoration: pw.BoxDecoration(
+                            border: pw.Border.all(color: PdfColors.grey),
+                            borderRadius: pw.BorderRadius.circular(6),
+                          ),
+                          child: pw.Row(
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(pkg.serviceName),
+                                  pw.Text(pkg.sessionsText),
+                                ],
+                              ),
+                              pw.Row(
+                                children: [
+                                  pw.SvgImage(
+                                    svg: svgRaw,
+                                    width: 10,
+                                    height: 10,
+                                  ),
+                                  pw.Text(" ${pkg.price}"),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  );
+                }).toList(),
               ),
+              // pw.Column(
+              //   children: provider.selectedPackages
+              //       .map(
+              //         (pkg) => pw.Container(
+              //           width: double.infinity,
+              //           padding: const pw.EdgeInsets.all(8),
+              //           margin: const pw.EdgeInsets.only(bottom: 6),
+              //           decoration: pw.BoxDecoration(
+              //             border: pw.Border.all(color: PdfColors.grey),
+              //             borderRadius: pw.BorderRadius.circular(6),
+              //           ),
+              //           child: pw.Column(
+              //             children: [
+              //               pw.Row(
+              //                 mainAxisAlignment:
+              //                     pw.MainAxisAlignment.spaceBetween,
+              //                 children: [
+              //                   pw.Column(
+              //                     crossAxisAlignment:
+              //                         pw.CrossAxisAlignment.start,
+              //                     children: [
+              //                       pw.Text('${pkg.package.serviceName}'),
+              //                       pw.Text('${pkg.package.sessionsText}'),
+              //                     ],
+              //                   ),
+              //                   pw.Row(
+              //                     children: [
+              //                       pw.SvgImage(
+              //                         svg: svgRaw,
+              //                         width: 10,
+              //                         height: 10,
+              //                       ),
+              //                       pw.Text(" ${pkg.package.price}"),
+              //                     ],
+              //                   ),
+              //                 ],
+              //               ),
+              //             ],
+              //           ),
+              //         ),
+              //       )
+              //       .toList(),
+              // ),
               pw.SizedBox(height: 10),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,

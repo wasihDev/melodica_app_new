@@ -1,15 +1,7 @@
-import 'package:melodica_app_new/models/student_models.dart';
-
-class SelectedPackageItem {
-  final Package package;
-  final Student student;
-
-  SelectedPackageItem({required this.package, required this.student});
-}
-
 class Package {
   final String itemName;
   final String locationName;
+  final String clientId;
   final String packageStatus;
   final String subject;
   final num totalClasses;
@@ -39,6 +31,7 @@ class Package {
     required this.totalClasses,
     required this.remainingSessions,
     required this.totalBooked,
+    required this.clientId,
     required this.totalAllowedCancellation,
     required this.remainingCancellations,
     required this.totalAllowedFreezings,
@@ -66,6 +59,7 @@ class Package {
       remainingSessions: json['Packages[Remaining Sessions]'] ?? 0,
       totalBooked: json['Packages[Total Booked]'] ?? 0,
       subject: json['Packages[Subject]'] ?? "",
+      clientId: json['Packages[ClientID]'] ?? '',
       remainingExtension: json["Packages[Remaining Extension]"] ?? 0,
       totalAllowedCancellation:
           json['Packages[Total Allowed Cancellation]'] ?? 0,

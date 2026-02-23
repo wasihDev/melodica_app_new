@@ -346,7 +346,7 @@ class DialogService {
             borderRadius: BorderRadius.circular(20.0),
           ),
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20.0),
@@ -378,13 +378,13 @@ class DialogService {
                   "Your request has been submitted.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16.adaptSize,
+                    fontSize: 15.adaptSize,
+                    fontWeight: FontWeight.w600,
                     color: const Color(0xff636363),
                   ),
                 ),
                 Text(
-                  "Up to 2 hours for reflecting",
-                  //    "You will receive an update shortly.",
+                  "You will receive an update shortly. Your schedule may take up to 2 hours to reflect the changes.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.adaptSize,

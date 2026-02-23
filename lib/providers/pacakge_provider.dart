@@ -1,17 +1,16 @@
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:melodica_app_new/constants/app_colors.dart';
+import 'package:melodica_app_new/models/freezing_period_model.dart';
+import 'package:melodica_app_new/models/get_cancellation_model.dart';
 import 'package:melodica_app_new/models/packages_model.dart';
 import 'package:melodica_app_new/providers/schedule_provider.dart';
 import 'package:melodica_app_new/providers/services_provider.dart';
 import 'package:melodica_app_new/providers/student_provider.dart';
-import 'package:melodica_app_new/routes/routes.dart';
 import 'package:melodica_app_new/services/api_config_service.dart';
-import 'package:melodica_app_new/utils/responsive_sizer.dart';
-import 'package:melodica_app_new/views/dashboard/home/faq/help_center.dart';
+import 'package:melodica_app_new/views/profile/packages/widget/affected_classes_screen.dart';
+import 'package:melodica_app_new/views/profile/packages/widget/packages_dialog_service.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -28,22 +27,22 @@ class PackageProvider extends ChangeNotifier {
   });
 
   bool _isLoading = false;
-  bool get isloading => _isLoading;
   String? error;
-
-  List<Package> _packages = [];
-  List<Package> get packages => _packages;
-
   DateTime? startDate;
   DateTime? endDate;
-
   int freezingRemaining = 0;
-  ///////////
-
   Package? selectedPackage;
   String? selectedReason;
-
+  List<GetCancellationModel> _requests = [];
   PaymentType? currentPaymentType;
+  List<Package> _packages = [];
+  List<FreezingSeason> seasons = [];
+  bool _isLoadingforSeason = false;
+
+  bool get isLoadingforSeason => _isLoadingforSeason;
+  List<Package> get packages => _packages;
+  bool get isloading => _isLoading;
+  List<GetCancellationModel> get requests => _requests;
 
   void setPaymentType(PaymentType type) {
     currentPaymentType = type;
@@ -58,7 +57,11 @@ class PackageProvider extends ChangeNotifier {
     selectedReason = reason;
   }
 
-  ///////////
+  void resetEndDate() {
+    endDate = null;
+    startDate = null;
+  }
+
   void setFreezingRemaining(int value) {
     freezingRemaining = value;
     // print('freezingRemaining $freezingRemaining');
@@ -67,22 +70,73 @@ class PackageProvider extends ChangeNotifier {
 
   int get freezeDays {
     if (startDate == null || endDate == null) return 0;
-    return endDate!.difference(startDate!).inDays + 1;
+
+    int totalDays = endDate!.difference(startDate!).inDays + 1;
+
+    final season = currentSeason;
+    if (season == null) return totalDays; // no season → full charge
+
+    final sStart = DateTime(
+      season.startDate.year,
+      season.startDate.month,
+      season.startDate.day,
+    );
+
+    final sEnd = DateTime(
+      season.endDate.year,
+      season.endDate.month,
+      season.endDate.day,
+    );
+
+    final uStart = DateTime(startDate!.year, startDate!.month, startDate!.day);
+    final uEnd = DateTime(endDate!.year, endDate!.month, endDate!.day);
+
+    final overlapStart = uStart.isAfter(sStart) ? uStart : sStart;
+    final overlapEnd = uEnd.isBefore(sEnd) ? uEnd : sEnd;
+
+    int seasonDays = 0;
+
+    if (!overlapEnd.isBefore(overlapStart)) {
+      seasonDays = overlapEnd.difference(overlapStart).inDays + 1;
+    }
+
+    // Only days OUTSIDE season will be charged
+    return totalDays - seasonDays;
   }
 
-  int get freezeWeeks => (freezeDays / 7).ceil();
+  int get freezeWeeks {
+    final days = freezeDays;
+    if (days <= 0) return 0;
+    return (days / 7).ceil();
+  }
 
-  bool get hasEnoughFreezing => freezeWeeks <= freezingRemaining;
+  bool get hasEnoughFreezing {
+    return extraFreezeWeeks == 0;
+  }
 
-  /// EXTRA WEEKS USER IS REQUESTING
+  int get extraFreezeWeeks {
+    final extra = freezeWeeks - freezingRemaining;
+    return extra > 0 ? extra : 0;
+  }
 
-  /// FINAL AMOUNT USER NEEDS TO PAY
+  bool get isFullyInsideSeason => freezeDays == 0;
+
+  double get totalWithVat {
+    if (extraCharge == 0) return 0;
+
+    final vat = extraCharge * 0.05;
+    return extraCharge + vat;
+  }
+
   int get extraWeeks {
+    if (isFullyInsideSeason) return 0;
+
     final extra = freezeWeeks - freezingRemaining;
     return extra > 0 ? extra : 0;
   }
 
   int get extraCharge {
+    if (freezeWeeks == 0) return 0;
     if (extraWeeks <= 0) return 0;
     return extraWeeks * 50;
   }
@@ -97,218 +151,112 @@ class PackageProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _showNotEnoughFreezingPopup(
+  Future<void> fetchRescheduleRequests({
+    required String packageId,
+    required String clientId,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    final String url = ApiConfigService.endpoints.getCancellation;
+    print('url $url');
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
+        body: jsonEncode({"packageid": packageId, "clientid": clientId}),
+      );
+      print('response.statusCode ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        _requests = data
+            .map((json) => GetCancellationModel.fromJson(json))
+            .toList();
+        print('_requests ${_requests}');
+      }
+    } catch (e) {
+      print('error $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  FreezingSeason? getActiveSeasonForDates(
+    DateTime startDate,
+    DateTime endDate,
+  ) {
+    if (seasons.isEmpty) return null;
+
+    for (final season in seasons) {
+      if (season.status.toLowerCase() != 'active') continue;
+
+      final sStart = DateTime(
+        season.startDate.year,
+        season.startDate.month,
+        season.startDate.day,
+      );
+
+      final sEnd = DateTime(
+        season.endDate.year,
+        season.endDate.month,
+        season.endDate.day,
+      );
+
+      final uStart = DateTime(startDate.year, startDate.month, startDate.day);
+      final uEnd = DateTime(endDate.year, endDate.month, endDate.day);
+
+      final isOverlap =
+          uStart.isBefore(sEnd.add(const Duration(days: 1))) &&
+          uEnd.isAfter(sStart.subtract(const Duration(days: 1)));
+
+      if (isOverlap) return season;
+    }
+
+    return null;
+  }
+
+  bool get isSeasonApplied => currentSeason != null;
+
+  bool? _validateSeasonDuration(
     BuildContext context,
-    String danceOrmusic, {
-    required VoidCallback ontap,
-  }) {
-    showDialog(
-      context: context,
-      builder: (_) => PopScope(
-        canPop: false,
-        child: Dialog(
-          child: Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(height: 18),
-                Icon(Icons.warning, color: Colors.orange, size: 40),
-                SizedBox(height: 25),
+    DateTime startDate,
+    DateTime endDate,
+  ) {
+    final season = getActiveSeasonForDates(startDate, endDate);
+    print('season ${season}');
 
-                Text(
-                  danceOrmusic == "Dance Classes"
-                      ? "You do not have enough remaining freezing allowance.\nAn extension fee is required to proceed"
-                      : "You do not have enough remaining freeze allowance.Reschedule to an earlier date or pay an extension fee",
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 25),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    danceOrmusic == "Dance Classes"
-                        ? SizedBox()
-                        : Material(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  AppRoutes.dashboard,
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              splashColor: AppColors.primary.withOpacity(0.2),
-                              highlightColor: AppColors.primary.withOpacity(
-                                0.1,
-                              ),
-                              child: Ink(
-                                height: 45.h,
-                                width: 110.w,
-                                padding: EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                // alignment: Alignment.center,
-                                child: Center(
-                                  child: Text(
-                                    'Reschedule',
-                                    style: TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14.fSize,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                    InkWell(
-                      onTap: ontap,
-                      child: Container(
-                        height: 50,
-                        width: 110.w,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/svg/dirham.svg',
-                                height: 10.h,
-                                width: 10.w,
-                              ),
-                              Text(
-                                " 50",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 14.fSize,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    "No, thanks",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.fSize,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    // No active season → use normal validation later
+    if (season == null) return null;
+    print('season.max ${season.max}');
+    var max = season.max;
+    //"2";
+
+    // Max is blank → no validation
+    if (max == "") return true;
+    final freezeWeeks = this.freezeWeeks;
+    // final freezeWeeks = (freezeDays / 7).ceil();
+    print('====>> $freezeWeeks ${max}');
+    if (freezeWeeks > num.parse(max)) {
+      PopupService.showErrorPopup(
+        context,
+        "During ${season.name}, freezing cannot exceed ${max} week(s).",
+      );
+      return false;
+    }
+
+    return true;
   }
 
-  Future<bool> _showConsumePopup(BuildContext context) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (_) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: Icon(Icons.warning, color: Colors.orange, size: 40),
-            content: Text(
-              "You're about to consume your Freezing.\nWould like to proceed?",
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text("No"),
-              ),
-              InkWell(
-                onTap: () => Navigator.pop(context, true),
-                child: Container(
-                  height: 50,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      "Yes",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+  // bool get isSeasonApplied => _validateSeasonDuration != null;
+  FreezingSeason? get currentSeason {
+    if (startDate == null || endDate == null) return null;
+    return getActiveSeasonForDates(startDate!, endDate!);
   }
 
-  void _showSuccessPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: Icon(Icons.check_circle, color: Colors.green, size: 40),
-        content: Text(
-          "Your request has been submitted.\nOur team will get back to you.",
-          textAlign: TextAlign.center,
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          InkWell(
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: Container(
-              height: 50,
-              width: 120,
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  "OK",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Future<bool> _isSameClass(String selectedClassId) async {
-  //   return freezingRequests.any((r) => r.classId == selectedClassId);
-  // }
-
-  // List<FreezingRequest> freezingRequests = [];
   double amountWithVat = 0;
-  // double get amountWithVat => _amountWithVat;
   Future<void> submitFreeze(
     BuildContext context,
     String reason,
@@ -316,22 +264,43 @@ class PackageProvider extends ChangeNotifier {
   ) async {
     selectedPackage = package;
     selectedReason = reason;
+    print('season $seasons');
     if (startDate == null || endDate == null) return;
-    print('package.totalClasses ${package.totalClasses}');
+    print('startDate ${startDate}');
+    // SEASON CHECK FIRST
+    // ///  Fully inside season → FREE
+    if (isFullyInsideSeason) {
+      print('Fully inside season → free');
+      await callFreezingApi(context, reason, package);
+      return;
+    }
+
+    /// 2️⃣ Validate season max (if season exists)
+    final seasonValidation = _validateSeasonDuration(
+      context,
+      startDate!,
+      endDate!,
+    );
+
+    if (seasonValidation == false) {
+      // exceeded season max
+      print('=========>>>> VALIDATE FOR MAX <<<<==========');
+      return;
+    }
+    // ==================== Normal validations (outside season)  ====================
+    // Yes means block i cannot freeze ( "4 Classes": "Yes" )
     final bool isFourClassPackage = package.totalClasses == 4;
-    // final isSameClass = await _isSameClass(selectedClassId);
-    final difference = endDate!.difference(startDate!).inDays;
-    if (difference > 28) {
-      _showErrorPopup(
+    if (freezeWeeks > 4) {
+      PopupService.showErrorPopup(
         context,
         "The freezing period cannot exceed 4 weeks (28 days).",
       );
       return;
     }
+
     if (isFourClassPackage) {
-      // Show the specific alert: 'You do not have freezing allowance...'
-      _showRestrictedFreezingPopup(context);
-      return; // Stop the process here
+      PopupService.showRestrictedFreezingPopup(context);
+      return;
     }
     final isDuplicate = await _isSameClassAndSameDates(
       startDate!,
@@ -339,25 +308,15 @@ class PackageProvider extends ChangeNotifier {
       package.danceOrMusic,
     );
 
-    // // 1️⃣ Local validation
-    // if (await _isExactMatch(startDate!, endDate!) ) {
     if (isDuplicate) {
-      _showErrorPopup(
+      PopupService.showErrorPopup(
         context,
         "You have submitted this freezing request before.",
       );
       return;
     }
-
-    // if (await _isOverlapping(startDate!, endDate!)) {
-    //   _showErrorPopup(
-    //     context,
-    //     "You already submitted a freezing request for this class date, adjust your date range if you want to submit another one.",
-    //   );
-    //   return;
-    // }
     if (!hasEnoughFreezing) {
-      _showNotEnoughFreezingPopup(
+      PopupService.showNotEnoughFreezingPopup(
         context,
         selectedPackage!.danceOrMusic,
         // pay here
@@ -390,18 +349,251 @@ class PackageProvider extends ChangeNotifier {
             }
           }
         },
+        price: '$extraCharge',
+        // ontapReschedule: () {
+        //   final provider = Provider.of<PackageProvider>(context, listen: false);
+        //   final affected = provider.scheduleProvider.getAffectedClasses(
+        //     startDate: provider.startDate!,
+        //     endDate: provider.endDate!,
+        //     subject: package.subject,
+        //   );
+        //   Navigator.push(
+        //     context,
+        //     MaterialPageRoute(
+        //       builder: (_) => AffectedClassesScreen(
+        //         affectedClasses: affected,
+        //         subject: package.subject,
+        //       ),
+        //     ),
+        //   );
+        // },
       );
       return;
     }
 
+    // ================= EXPIRY VALIDATION =================
+    final expiryDate = DateTime.parse(package.packageExpiry);
+    final exp = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
+    final start = DateTime(startDate!.year, startDate!.month, startDate!.day);
+
+    if (start.isAfter(exp)) {
+      PopupService.showErrorPopup(
+        context,
+        "Freezing cannot start after the package expiry date.",
+      );
+      return;
+    }
     // final proceed = await _showConsumePopup(context);
     // if (!proceed) return;
-
+    print('====>>> calling');
     await callFreezingApi(context, reason, package);
     // 4️⃣ Save request locally after successful submission
   }
 
-  // Save a freezing request locally
+  Future<bool> callFreezingApi(
+    BuildContext context,
+    String reason,
+    Package package, {
+    String? ref,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    if (ref == null || ref.isEmpty) {
+      servicesProvider.clearPaymentData();
+    }
+    final affectedClasses = scheduleProvider.getAffectedClasses(
+      startDate: startDate!,
+      endDate: endDate!,
+      subject: package.subject,
+    );
+    final nextClassDate = scheduleProvider.getNextClassAfterEndDate(
+      endDate: endDate!,
+      subject: package.subject,
+    );
+    // last affacteed and
+    print("======================================");
+    print("Next class date: $nextClassDate");
+    print("======================================");
+
+    if (affectedClasses.isEmpty) {
+      PopupService.showErrorPopup(
+        context,
+        "No classes are affected within the selected date range.Adjust the date range to proceed.",
+      );
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    print('freezingRemaining  ===>> ${freezingRemaining}');
+    final body = {
+      "firstname": "${customerController.customer!.firstName}",
+      "lastname": "${customerController.customer!.lastName}",
+      "customerid": "${customerController.customer!.mbId.toString()}",
+      "relatedcontact":
+          "${customerController.students.map((e) => e.mbId).join(",")}",
+      "studentfirstname": "${customerController.selectedStudent?.firstName}",
+      "studentlastname": "${customerController.selectedStudent?.lastName}",
+      "studentid": "${customerController.selectedStudent?.mbId}",
+      "subject": "${package.subject}",
+      "branch": "${customerController.selectedBranch}",
+      "freezingallowance": freezingRemaining,
+      "freezingallocation": "", // Purchased
+      "freezestart": "${startDate!.toIso8601String()}",
+      "freezeend": "${endDate!.toIso8601String()}",
+      "affectedclasses": affectedClasses,
+      "reason": "${reason}",
+      "packageid": "${package.paymentRef}",
+      "expiry": package.packageExpiry,
+      // "checkoutscreen": "",
+    };
+
+    if (servicesProvider.orderId != null &&
+        servicesProvider.orderReference != null) {
+      body['transactionid'] = servicesProvider.orderId!;
+      body['salesid'] = servicesProvider.orderReference!;
+    }
+    if (nextClassDate?.toIso8601String() != null) {
+      body['nextdate'] = "${nextClassDate?.toIso8601String()}";
+    }
+    print("Body===>>  ${body}");
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfigService.endpoints.freezingRequest),
+        headers: {
+          "Content-Type": "application/json",
+          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+        },
+        body: jsonEncode(body),
+      );
+      print('response ${response.statusCode}');
+      print('response freezing api ${response.body}');
+      if (response.statusCode == 200) {
+        if (nextClassDate == null) {
+          PopupService.showNoUpcomingClassesPopup(context, endDate, startDate);
+        } else {
+          PopupService.showSuccessPopup(context, endDate, startDate);
+        }
+        await _saveFreezingRequest(startDate!, endDate!, package.danceOrMusic);
+        return true;
+      } else {
+        PopupService.showErrorPopup(context, "Something went wrong");
+        return false;
+      }
+    } catch (e) {
+      PopupService.showErrorPopup(context, e.toString());
+      _isLoading = false;
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /////////////////////////////////  POPUPS ///////////////////////////////
+  Future<void> checkNextClassPopup(
+    BuildContext context,
+    Package package,
+  ) async {
+    print('selectedPackage $selectedPackage');
+    print('startDate $startDate');
+    print('endDate $endDate');
+    if (startDate == null || endDate == null || package == null) return;
+
+    final nextClass = scheduleProvider.getNextClassDateAfterEnd(
+      endDate: endDate!,
+      subject: package.subject,
+    );
+    print("nextClass ===>>> $nextClass");
+
+    /// CASE 2 — Regular student
+    await PopupService.showNextClassInfoPopup(
+      context,
+      nextClass!,
+      onNo: () {
+        endDate = null;
+        notifyListeners();
+      },
+      onYes: () {
+        // Navigator.pop(context);
+      },
+    );
+  }
+
+  Future<void> _showBranchSelectionDialog(
+    BuildContext context,
+    List<String> branches,
+  ) async {
+    final customerCtrl = Provider.of<CustomerController>(
+      context,
+      listen: false,
+    );
+
+    String? selectedBranch;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text('Select Branch'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: branches.map((branch) {
+                  return RadioListTile<String>(
+                    title: Text(branch),
+                    value: branch,
+                    groupValue: selectedBranch,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedBranch = value;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              actions: [
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStatePropertyAll(AppColors.primary),
+                  ),
+                  onPressed: selectedBranch == null
+                      ? null
+                      : () async {
+                          customerCtrl.setSelectedBranch(selectedBranch!);
+
+                          final cusprovider = Provider.of<CustomerController>(
+                            context,
+                            listen: false,
+                          );
+                          print('selectedBranch ${selectedBranch}');
+                          await cusprovider.getDisplayDance(selectedBranch!);
+                          Navigator.pop(context);
+                        },
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  /////////////////////////////////  POPUPS ///////////////////////////////
+
+  ///////////////////////////////// Dates in  Shared pref  ///////////////////////////////
+  Future<List<Map<String, dynamic>>> _getPreviousRequests() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getStringList('freezingRequests') ?? [];
+    return existing.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
+  }
+
   Future<void> _saveFreezingRequest(
     DateTime start,
     DateTime end,
@@ -420,13 +612,6 @@ class PackageProvider extends ChangeNotifier {
     await prefs.setStringList('freezingRequests', existing);
   }
 
-  // Fetch previous freezing requests
-  Future<List<Map<String, dynamic>>> _getPreviousRequests() async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList('freezingRequests') ?? [];
-    return existing.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
-  }
-
   Future<bool> _isSameClassAndSameDates(
     DateTime start,
     DateTime end,
@@ -441,256 +626,41 @@ class PackageProvider extends ChangeNotifier {
           f["class"] == className,
     );
   }
+  ///////////////////////////////// Dates in  Shared pref  ///////////////////////////////
 
-  // Check if exact same request exists
-  Future<bool> _isExactMatch(DateTime start, DateTime end) async {
-    final previous = await _getPreviousRequests();
-    return previous.any((f) => f["start"] == start && f["end"] == end);
-  }
-
-  // 4 class package popup
-  void _showRestrictedFreezingPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.info_outline, color: Colors.orange, size: 60),
-            const SizedBox(height: 16),
-            const Text(
-              "You do not have freezing allowance, consider rescheduling in advance to avoid session loss.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.4,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFD54F), // Melodica Yellow
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  "OK",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Check if dates overlap
-  Future<bool> _isOverlapping(DateTime start, DateTime end) async {
-    final previous = await _getPreviousRequests();
-    for (var f in previous) {
-      final s = f["start"]!;
-      final e = f["end"]!;
-      if (start.isBefore(e.add(const Duration(days: 1))) &&
-          end.isAfter(s.subtract(const Duration(days: 1)))) {
-        return true;
-      }
+  DateTime getNextMonday(DateTime date) {
+    int daysToAdd = (DateTime.monday - date.weekday) % 7;
+    if (daysToAdd == 0) {
+      daysToAdd = 7; // if already Monday → next Monday
     }
-    return false;
+    return date.add(Duration(days: daysToAdd));
   }
 
-  Future<bool> callFreezingApi(
-    BuildContext context,
-    String reason,
-    Package package, {
-    String? ref,
-  }) async {
-    _isLoading = true;
+  /// GET season api and packages api
+  Future<void> fetchSeasons() async {
+    _isLoadingforSeason = true;
     notifyListeners();
-    final bool isMusic = package.danceOrMusic.contains("Music Classes");
-    print('isMusic $isMusic');
-
-    // print('package.subject ${package.branch}');
-    final affectedClasses = scheduleProvider.getAffectedClasses(
-      startDate: startDate!,
-      endDate: endDate!,
-      subject: package.subject,
-    );
-    print('affectedClasses $affectedClasses');
-    if (affectedClasses.isEmpty) {
-      _showErrorPopup(
-        context,
-        "No classes are affected within the selected date range.Adjust the date range to proceed.",
-      );
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
-
-    print('affectedClasses${affectedClasses}');
-    print('reason ${reason}');
-    final body = {
-      "firstname": "${customerController.customer!.firstName}",
-      "lastname": "${customerController.customer!.lastName}",
-      "customerid": "${customerController.customer!.mbId.toString()}",
-      "relatedcontact":
-          "${customerController.students.map((e) => e.mbId).join(",")}",
-      "studentfirstname": "${customerController.selectedStudent?.firstName}",
-      "studentlastname": "${customerController.selectedStudent?.lastName}",
-      "studentid": "${customerController.selectedStudent?.mbId}",
-      "subject": "${package.subject}",
-      "branch": "${customerController.selectedBranch}",
-      "transactionid": "${ref ?? ""}",
-      "salesid": "", // i need to pass a transcation id when the payment is done
-      "freezingallowance": freezingRemaining,
-      "freezingallocation": "Purchased",
-      "freezestart": "${startDate!.toUtc().toIso8601String()}",
-      "freezeend": "${endDate!.toUtc().toIso8601String()}",
-      "affectedclasses": affectedClasses,
-      // isMusic ? affectedClasses : [],
-      // [
-      //   {
-      //     "bookingid": "10010340088375110",
-      //     "bookingstart": startDate!.toUtc().toIso8601String(),
-      //   },
-      //   // {
-      //   //   "bookingid": "10010340088375110",
-      //   //   "bookingstart": "2026-03-01T15:00:00Z",
-      //   // },
-      // ],
-      "reason": "${reason}",
-      "packageid": "${package.paymentRef}",
-      // "checkoutscreen": "",
-    };
 
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfigService.endpoints.freezingRequest),
+      final response = await http.get(
+        Uri.parse(ApiConfigService.endpoints.freezingSeasons),
         headers: {
           "Content-Type": "application/json",
-          'api-key': "60e35fdc-401d-494d-9d78-39b15e345547",
+          "api-key": "60e35fdc-401d-494d-9d78-39b15e345547",
         },
-        body: jsonEncode(body),
       );
-      print('response ${response.statusCode}');
-      print('response freezing api ${response.body}');
+      print('response.fetchSeasons ${response.statusCode}');
       if (response.statusCode == 200) {
-        _showSuccessPopup(context);
-        await _saveFreezingRequest(startDate!, endDate!, package.danceOrMusic);
-        return true;
-      } else {
-        _showErrorPopup(context, "Something went wrong");
-        return false;
+        final List data = jsonDecode(response.body);
+        seasons = data.map((e) => FreezingSeason.fromJson(e)).toList();
+        print('seasons ${seasons}');
       }
     } catch (e) {
-      _showErrorPopup(context, e.toString());
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      print("Season error: $e");
     }
-  }
 
-  void showNotCustomerDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) {
-        return PopScope(
-          canPop: false,
-          child: AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text(
-              "Welcome to Melodica 🎵",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: const Text(
-              "It looks like you don’t have an active Melodica account yet.\n\n"
-              "This app is currently available for Melodica students only. "
-              "If you believe this is a mistake, please contact your branch.",
-            ),
-            actions: [
-              ElevatedButton(
-                style: ButtonStyle(
-                  backgroundColor: WidgetStatePropertyAll(AppColors.primary),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => HelpCenter()),
-                  );
-                  // Navigator.pop(context);
-                },
-                child: const Text(
-                  "Help Center",
-                  style: TextStyle(color: Colors.black),
-                ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.login,
-                    (_) => false,
-                  );
-                },
-                child: const Text(
-                  "Logout",
-                  style: TextStyle(color: Colors.black),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showErrorPopup(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Icon(Icons.error_outline, color: Colors.red, size: 44),
-        content: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 15),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey.shade300,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                "OK",
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    _isLoadingforSeason = false;
+    notifyListeners();
   }
 
   Future<void> fetchPackages(BuildContext context) async {
@@ -727,7 +697,7 @@ class PackageProvider extends ChangeNotifier {
         } else if (branches.length == 0 && branches.isEmpty) {
           if (!customerController.isCustomerRegistered) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              showNotCustomerDialog(navigatorKey.currentContext!);
+              PopupService.showNotCustomerDialog(navigatorKey.currentContext!);
             });
           }
           print('branches.length == 0 && branches.isEmpty');
@@ -747,110 +717,5 @@ class PackageProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
-  }
-
-  // shared prefrences
-
-  Future<void> saveFreezingRequest(DateTime start, DateTime end) async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList('freezingRequests') ?? [];
-
-    final newRequest = jsonEncode({
-      "start": start.toIso8601String(),
-      "end": end.toIso8601String(),
-    });
-
-    existing.add(newRequest);
-    await prefs.setStringList('freezingRequests', existing);
-  }
-
-  Future<List<Map<String, DateTime>>> getPreviousRequests() async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList('freezingRequests') ?? [];
-
-    return existing.map((e) {
-      final data = jsonDecode(e);
-      return {
-        "start": DateTime.parse(data["start"]),
-        "end": DateTime.parse(data["end"]),
-      };
-    }).toList();
-  }
-
-  Future<void> _showBranchSelectionDialog(
-    BuildContext context,
-    List<String> branches,
-  ) async {
-    final customerCtrl = Provider.of<CustomerController>(
-      context,
-      listen: false,
-    );
-
-    String? selectedBranch;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Select Branch'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: branches.map((branch) {
-                  return RadioListTile<String>(
-                    title: Text(branch),
-                    value: branch,
-                    groupValue: selectedBranch,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedBranch = value;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: selectedBranch == null
-                      ? null
-                      : () async {
-                          customerCtrl.setSelectedBranch(selectedBranch!);
-
-                          final cusprovider = Provider.of<CustomerController>(
-                            context,
-                            listen: false,
-                          );
-                          print('selectedBranch ${selectedBranch}');
-                          await cusprovider.getDisplayDance(selectedBranch!);
-                          Navigator.pop(context);
-                        },
-                  child: const Text('Continue'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<bool> isExactMatch(DateTime start, DateTime end) async {
-    final previous = await getPreviousRequests();
-    return previous.any((f) => f["start"] == start && f["end"] == end);
-  }
-
-  Future<bool> isOverlapping(DateTime start, DateTime end) async {
-    final previous = await getPreviousRequests();
-    for (var f in previous) {
-      final s = f["start"]!;
-      final e = f["end"]!;
-      if (start.isBefore(e.add(const Duration(days: 1))) &&
-          end.isAfter(s.subtract(const Duration(days: 1)))) {
-        return true;
-      }
-    }
-    return false;
   }
 }
